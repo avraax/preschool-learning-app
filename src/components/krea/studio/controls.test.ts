@@ -11,7 +11,7 @@ test('studio controls act on the press, and the blocking confirm acts on the cli
   const c = code('./StudioControls.tsx')
   assert.match(c, /onPointerDown: \(e: React\.PointerEvent\) => \{[\s\S]*?fn\(\)/, 'pressHandlers no longer fires on pointerdown')
   assert.match(c, /activateOn === 'press' \? pressHandlers\(onPress\)/, 'StudioButton does not use the press path')
-  assert.match(c, /\{\.\.\.pressHandlers\(\(\) => onPick\(c\)\)\}/, 'the crayons do not use the press path')
+  assert.match(c, /\{\.\.\.pressHandlers\(it\.pick\)\}/, 'the crayons do not use the press path')
   assert.doesNotMatch(c, /onClick=\{onPress\}\s*\n/, 'a bare onClick is back on a studio button')
   // …but a button inside a BLOCKING overlay must close on the click, or the tap lands underneath.
   const confirm = code('./NewPaperConfirm.tsx')
@@ -23,4 +23,15 @@ test('studio controls act on the press, and the blocking confirm acts on the cli
 test('the glitter brush is not a tool any more, and a star is a stamp', () => {
   assert.doesNotMatch(code('./StudioControls.tsx'), /id: 'glitter'/)
   assert.match(code('./stamps.ts'), /\{ id: 'stjerne'/)
+})
+
+// The rainbow crayon is a VARIANT, lying last among the crayons — not a tool on the left (owner,
+// 2026-10-16). The crayon tool shows it when it is in hand.
+test('the rainbow crayon is in the crayon row, not in the tool row', () => {
+  const c = code('./StudioControls.tsx')
+  const toolRow = c.slice(c.indexOf('export const ToolRow'), c.indexOf('export interface CrayonPaletteProps'))
+  const palette = c.slice(c.indexOf('export const CrayonPalette'), c.indexOf('export interface StampTrayProps'))
+  assert.doesNotMatch(toolRow, /id: 'rainbow'/, 'rainbow is a tool again')
+  assert.match(palette, /id: 'rainbow' as const/, 'rainbow is missing from the crayon row')
+  assert.match(toolRow, /tool === 'rainbow' \? KREA_ART\.crayonRainbow/, 'the crayon tool does not show the rainbow in hand')
 })

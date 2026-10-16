@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, ButtonBase } from '@mui/material'
 import type { CrayonColor, Tool } from '../canvas/strokeModel'
-import { KREA_COLOR_NAME } from '../../../config/kreaPhrases'
+import { KREA_COLOR_NAME, KREA_RAINBOW_NAME } from '../../../config/kreaPhrases'
 import { CRAYON_ART, KREA_ART } from '../../../assets/games/krea'
 
 // The studio's controls (Krea PRD-01 §2.2.5, §4.10): six tools, the crayons, "Nyt papir", done and next.
@@ -126,8 +126,14 @@ export const StudioButton: React.FC<StudioButtonProps> = ({ label, onPress, sele
 
 export interface ToolRowProps {
   tool: Tool
-  /** The crayon tool shows the crayon in hand, so the child sees which colour they are drawing with. */
+  /** The crayon tool shows the crayon in hand — a colour or the rainbow — so the child sees what they draw with. */
   color: CrayonColor
+  /**
+   * The stamp tool shows the PICTURE it stamps (the sun, the star…), not a rubber stamp: a stamp is an
+   * office object a five-year-old may not know, and the picture says what the button does (owner,
+   * 2026-10-16). Same idea as the crayon tool showing the crayon in hand.
+   */
+  stampSrc: string
   onTool: (t: Tool) => void
   onUndo: () => void
   canUndo: boolean
@@ -136,22 +142,21 @@ export interface ToolRowProps {
 }
 
 /**
- * The tools, the same at every level — only the palette changes with level (§2.2.5). The glitter brush is
- * GONE from the row (owner, 2026-10-16: tap-and-hold strewing stars behaved unlike everything else);
- * stars are a stamp now, one per tap like every other stamp. Old glitter strokes in a resumed session
- * still render — the brush stays in `brushes.ts` for that.
+ * The tools, the same at every level — only the palette changes with level (§2.2.5): the crayon, the
+ * stamps, the eraser and undo. Two former tools are VARIANTS now (owner, 2026-10-16): the rainbow crayon
+ * lies with the other crayons, and a star is a stamp (the tap-and-hold glitter brush is gone; its
+ * renderer stays in `brushes.ts` so an old session's glitter still draws).
  */
-export const ToolRow: React.FC<ToolRowProps> = ({ tool, color, onTool, onUndo, canUndo, disabled, direction }) => {
-  const tools: Array<{ id: Tool; label: string; src: string }> = [
-    { id: 'crayon', label: 'Farvekridt', src: CRAYON_ART[color] },
-    { id: 'rainbow', label: 'Regnbue', src: KREA_ART.crayonRainbow },
-    { id: 'stamp', label: 'Stempler', src: KREA_ART.stamp },
-    { id: 'eraser', label: 'Viskelæder', src: KREA_ART.eraser },
+export const ToolRow: React.FC<ToolRowProps> = ({ tool, color, stampSrc, onTool, onUndo, canUndo, disabled, direction }) => {
+  const tools: Array<{ id: Tool; label: string; src: string; on: boolean }> = [
+    { id: 'crayon', label: 'Farvekridt', src: tool === 'rainbow' ? KREA_ART.crayonRainbow : CRAYON_ART[color], on: tool === 'crayon' || tool === 'rainbow' },
+    { id: 'stamp', label: 'Billeder', src: stampSrc, on: tool === 'stamp' },
+    { id: 'eraser', label: 'Viskelæder', src: KREA_ART.eraser, on: tool === 'eraser' },
   ]
   return (
     <Box data-krea-tools sx={{ display: 'flex', flexDirection: direction, gap: 'clamp(6px, 1.4vmin, 12px)', alignItems: 'center' }}>
       {tools.map((t) => (
-        <StudioButton key={t.id} dataId={`tool-${t.id}`} label={t.label} selected={tool === t.id} disabled={disabled} onPress={() => onTool(t.id)}>
+        <StudioButton key={t.id} dataId={`tool-${t.id}`} label={t.label} selected={t.on} disabled={disabled} onPress={() => onTool(t.id)}>
           <Art src={t.src} />
         </StudioButton>
       ))}
@@ -165,63 +170,70 @@ export const ToolRow: React.FC<ToolRowProps> = ({ tool, color, onTool, onUndo, c
 export interface CrayonPaletteProps {
   colors: readonly CrayonColor[]
   color: CrayonColor
-  active: boolean
+  /** Which crayon is in hand: a colour (`crayon`), the rainbow, or neither (another tool). */
+  inHand: 'crayon' | 'rainbow' | null
   onPick: (c: CrayonColor) => void
+  onPickRainbow: () => void
   disabled?: boolean
 }
 
 /**
- * The crayons, lying side by side on the table like a tipped-out box. The chosen one lifts off the
- * table with a glow; picking one also switches the tool back to the crayon. 8 at Let, 12 above
- * (`KREA_PALETTE`).
+ * The crayons, lying side by side on the table like a tipped-out box, with the RAINBOW crayon last. The
+ * chosen one lifts off the table with a glow. 8 colours at Let, 12 above (`KREA_PALETTE`) — plus the
+ * rainbow at every level.
  */
-export const CrayonPalette: React.FC<CrayonPaletteProps> = ({ colors, color, active, onPick, disabled }) => (
-  <Box
-    data-krea-palette
-    data-krea-palette-size={colors.length}
-    sx={{
-      display: 'flex',
-      flexWrap: 'wrap',
-      justifyContent: 'center',
-      alignItems: 'flex-end',
-      columnGap: 'clamp(0px, 0.4vmin, 6px)',
-      rowGap: '2px',
-      maxWidth: `calc(${BTN} * ${colors.length > 8 ? 13.4 : 9.4})`,
-      // Phone portrait: two rows of six rather than twelve slivers.
-      '@media (orientation: portrait) and (max-width: 480px)': { maxWidth: `calc(${BTN} * 6.8)` },
-    }}
-  >
-    {colors.map((c) => {
-      const on = active && c === color
-      return (
+export const CrayonPalette: React.FC<CrayonPaletteProps> = ({ colors, color, inHand, onPick, onPickRainbow, disabled }) => {
+  const items: Array<{ id: CrayonColor | 'rainbow'; label: string; src: string; on: boolean; pick: () => void }> = [
+    ...colors.map((c) => ({ id: c, label: KREA_COLOR_NAME[c], src: CRAYON_ART[c], on: inHand === 'crayon' && c === color, pick: () => onPick(c) })),
+    { id: 'rainbow' as const, label: KREA_RAINBOW_NAME, src: KREA_ART.crayonRainbow, on: inHand === 'rainbow', pick: onPickRainbow },
+  ]
+  const n = items.length
+  // One row on a tablet: 13 must fit 768 wide in portrait INSIDE the shell's side padding (measured: at
+  // `(100vw - 40px) / 13.6` the rainbow wrapped alone onto a second line). On a phone in portrait, two
+  // even rows.
+  const cell = `min(calc(${BTN} * 1.02), calc((100vw - 64px) / ${n + 1.2}))`
+  return (
+    <Box
+      data-krea-palette
+      data-krea-palette-size={colors.length}
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'flex-end',
+        columnGap: 'clamp(0px, 0.4vmin, 6px)',
+        rowGap: '2px',
+        maxWidth: `calc(${BTN} * ${n + 1.4})`,
+        '@media (orientation: portrait) and (max-width: 480px)': { maxWidth: `calc(${BTN} * ${Math.ceil(n / 2) + 0.8})` },
+      }}
+    >
+      {items.map((it) => (
         <ButtonBase
-          key={c}
-          aria-label={KREA_COLOR_NAME[c]}
-          aria-pressed={on}
-          data-krea-crayon={c}
+          key={it.id}
+          aria-label={it.label}
+          aria-pressed={it.on}
+          data-krea-crayon={it.id}
           disabled={disabled}
-          {...pressHandlers(() => onPick(c))}
+          {...pressHandlers(it.pick)}
           sx={{
-            // Twelve must fit ONE row on an iPad in portrait (768 wide): at the full size the row was
-            // 744 px in a 736 px track and the white crayon wrapped alone onto a second line.
-            width: `min(calc(${BTN} * 1.02), calc((100vw - 40px) / 12.6))`,
+            width: cell,
             minWidth: '44px',
-            height: `min(calc(${BTN} * 1.02), calc((100vw - 40px) / 12.6))`,
+            height: cell,
             minHeight: '44px',
             borderRadius: '50%',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
-            filter: on ? LIFT_SHADOW : REST_SHADOW,
-            transform: on ? 'translateY(-10px) scale(1.12)' : 'translateY(0px) scale(1)',
+            filter: it.on ? LIFT_SHADOW : REST_SHADOW,
+            transform: it.on ? 'translateY(-10px) scale(1.12)' : 'translateY(0px) scale(1)',
             transition: 'transform 140ms cubic-bezier(0.3,0.7,0.4,1), filter 140ms ease',
           }}
         >
-          <Art src={CRAYON_ART[c]} />
+          <Art src={it.src} />
         </ButtonBase>
-      )
-    })}
-  </Box>
-)
+      ))}
+    </Box>
+  )
+}
 
 export interface StampTrayProps {
   stamps: Array<{ id: string; src: string }>

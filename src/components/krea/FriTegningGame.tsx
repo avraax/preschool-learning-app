@@ -9,7 +9,7 @@ import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
 import { KREA_PALETTE } from '../../config/difficulty'
 import { paletteFor } from '../../config/kreaPalette'
-import { KREA_COLOR_NAME, NEW_PAPER_LINE, colorsUsedLine } from '../../config/kreaPhrases'
+import { KREA_COLOR_NAME, KREA_RAINBOW_NAME, NEW_PAPER_LINE, colorsUsedLine } from '../../config/kreaPhrases'
 import { hintPulse } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
 import { PHONE_PORTRAIT } from '../../theme/phoneMedia'
@@ -143,10 +143,13 @@ const FriTegningGame: React.FC = () => {
     if (t !== 'stamp' && t !== 'glitter') sfx.stopLoop('krea-crayon', 120)
   }
 
+  // The crayon in hand is a colour OR the rainbow; tapping the crayon tool picks it back up, whichever
+  // it was (the rainbow is a variant in the crayon row now, not a tool of its own).
+  const [rainbowInHand, setRainbowInHand] = useState(false)
   const pickTool = (t: Tool) => {
     markInteracted()
     sfx.play('tap')
-    setTool(t)
+    setTool(t === 'crayon' && rainbowInHand ? 'rainbow' : t)
   }
 
   // Picking a crayon SAYS ITS NAME — every choice becomes a Farver lesson for free. Fire-and-forget: a
@@ -157,8 +160,19 @@ const FriTegningGame: React.FC = () => {
     audio.cancelCurrentAudio()
     sfx.play('krea-pick')
     setColor(c)
+    setRainbowInHand(false)
     setTool('crayon')
     void audio.speak(KREA_COLOR_NAME[c]).catch(() => {})
+  }
+
+  const pickRainbow = () => {
+    markInteracted()
+    audio.updateUserInteraction()
+    audio.cancelCurrentAudio()
+    sfx.play('krea-shimmer')
+    setRainbowInHand(true)
+    setTool('rainbow')
+    void audio.speak(KREA_RAINBOW_NAME).catch(() => {})
   }
 
   const doUndo = () => {
@@ -173,7 +187,7 @@ const FriTegningGame: React.FC = () => {
     setSwapping(true)
     void swapPaper(paperRef.current, reduce, () => {
       setDrawing(emptyDrawing())
-      setTool('crayon')
+      setTool(rainbowInHand ? 'rainbow' : 'crayon')
       setPhase('drawing')
     }).then(() => setSwapping(false))
   }
@@ -218,6 +232,7 @@ const FriTegningGame: React.FC = () => {
   }
 
   const ink = hasInk(drawing)
+  const crayonInHand = tool === 'crayon' || tool === 'rainbow'
   const nextPulse = useMemo(() => hintPulse(reduce), [reduce])
 
   const side = (
@@ -290,7 +305,7 @@ const FriTegningGame: React.FC = () => {
         }}
       >
         <Box sx={{ gridArea: 'tools', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-          <ToolRow tool={tool} color={color} onTool={pickTool} onUndo={doUndo} canUndo={canUndo(drawing)} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
+          <ToolRow tool={tool} color={color} stampSrc={STAMP_URLS[stamp]} onTool={pickTool} onUndo={doUndo} canUndo={canUndo(drawing)} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
         </Box>
         <Paper paperRef={paperRef}>
           <DrawingSurface
@@ -313,12 +328,12 @@ const FriTegningGame: React.FC = () => {
         </Paper>
         {side}
         {/* The VARIANT row: the crayons for the crayon, the stamps for the stamp tool, and NOTHING for a
-            tool with no variants (rainbow, eraser) — a row of crayons that does nothing for the eraser
+            tool with no variants (the eraser) — a row of crayons that does nothing for the eraser
             read as "pick one" (owner, 2026-10-16). Both trays are stacked in ONE grid cell and only
             hidden, never removed, so the row keeps its height and the paper never jumps size. */}
-        <Box data-krea-variants={tool === 'crayon' ? 'crayons' : tool === 'stamp' ? 'stamps' : 'none'} sx={{ gridArea: 'pal', display: 'grid', justifyItems: 'center', alignItems: 'end', '& > *': { gridArea: '1 / 1' } }}>
-          <Box aria-hidden={tool !== 'crayon'} sx={{ visibility: tool === 'crayon' ? 'visible' : 'hidden' }}>
-            <CrayonPalette colors={palette} color={color} active={tool === 'crayon'} disabled={!drawingEnabled || tool !== 'crayon'} onPick={pickColor} />
+        <Box data-krea-variants={crayonInHand ? 'crayons' : tool === 'stamp' ? 'stamps' : 'none'} sx={{ gridArea: 'pal', display: 'grid', justifyItems: 'center', alignItems: 'end', '& > *': { gridArea: '1 / 1' } }}>
+          <Box aria-hidden={!crayonInHand} sx={{ visibility: crayonInHand ? 'visible' : 'hidden' }}>
+            <CrayonPalette colors={palette} color={color} inHand={tool === 'crayon' || tool === 'rainbow' ? tool : null} disabled={!drawingEnabled || !crayonInHand} onPick={pickColor} onPickRainbow={pickRainbow} />
           </Box>
           <Box aria-hidden={tool !== 'stamp'} sx={{ visibility: tool === 'stamp' ? 'visible' : 'hidden' }}>
             <StampTray stamps={STAMPS} stamp={stamp} disabled={!drawingEnabled || tool !== 'stamp'} onPick={(id) => { markInteracted(); sfx.play('tap'); setStamp(id) }} />

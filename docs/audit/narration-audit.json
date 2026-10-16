@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-16T14:16:36.234Z",
+  "updatedAt": "2026-10-16T18:57:29.272Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -24736,6 +24736,14 @@
       "text": "Du har brugt tolv farver!",
       "group": "krea",
       "updatedAt": 1792160196234
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|regnbue": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "regnbue",
+      "group": "krea",
+      "updatedAt": 1792177049272
     }
   }
 }

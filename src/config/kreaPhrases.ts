@@ -30,6 +30,9 @@ export const KREA_COLOR_NAME: Record<CrayonColor, string> = {
 
 export const KREA_COLORS = PALETTE_12
 
+/** The rainbow crayon's spoken name — said when it is picked, like every crayon. */
+export const KREA_RAINBOW_NAME = 'regnbue'
+
 /** The welcome titles = the tile titles (`categoryThemes.ts`). */
 export const KREA_WELCOME_TITLES = ['Fri Tegning', 'Tegn med Mig', 'Farvelæg'] as const
 
@@ -55,7 +58,7 @@ export function colorsUsedLine(n: number): string {
 
 /** Every Krea line the app can speak — the enumerator walks this, and the guards read it too. */
 export function allKreaLines(): string[] {
-  const lines: string[] = [...KREA_WELCOME_TITLES, NEW_PAPER_LINE, DRAW_ALIVE_LINE]
+  const lines: string[] = [...KREA_WELCOME_TITLES, NEW_PAPER_LINE, DRAW_ALIVE_LINE, KREA_RAINBOW_NAME]
   for (const c of KREA_COLORS) lines.push(KREA_COLOR_NAME[c])
   for (let n = 1; n <= KREA_MAX_COLORS; n++) lines.push(colorsUsedLine(n))
   return lines
