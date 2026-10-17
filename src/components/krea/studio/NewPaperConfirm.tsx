@@ -64,7 +64,7 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
           {keepContent ? (
             <Box
               data-krea-confirm-keep-piece
-              sx={{ position: 'relative', width: '88%', height: '88%', borderRadius: '10px', overflow: 'hidden', background: '#FFFEFB', boxShadow: '0 6px 14px rgba(80,50,20,0.3), 0 1px 3px rgba(80,50,20,0.2)', transform: 'rotate(1.5deg)', pointerEvents: 'none' }}
+              sx={{ position: 'relative', width: '88%', height: '88%', borderRadius: '10px', overflow: 'hidden', background: '#FFFEFB', boxShadow: '0 6px 14px rgba(80,50,20,0.3), 0 1px 3px rgba(80,50,20,0.2)', pointerEvents: 'none' }}
             >
               {keepContent}
             </Box>
