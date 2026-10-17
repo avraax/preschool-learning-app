@@ -78,8 +78,9 @@ const homeItems: HomeItem[] = FOUR_DOORS
 // pattern layout-contract.md bans: at 958×714 the dino sat on the "Alfabetet" label. With four doors the
 // seating field starts where the mascot's column ends, so the left door can never reach it, on any
 // viewport — by construction rather than by a nudged xPct.
-// ~15% smaller than the first cut (128/156/184) — "a tad too big" (owner, 2026-10-17).
-const HOME_MASCOT = { xs: 110, sm: 134, md: 156 } as const
+// ~30% smaller than the first cut (128/156/184): "a tad too big", then "still takes too much focus from
+// the menu items" (owner, 2026-10-17 ×2). The doors are the point of this screen; the mascot accompanies.
+const HOME_MASCOT = { xs: 92, sm: 110, md: 128 } as const
 const MASCOT_INSET_LEFT = 6
 const MASCOT_GAP = 10
 const reserveFor = (px: number) => `calc(env(safe-area-inset-left) + ${MASCOT_INSET_LEFT + px + MASCOT_GAP}px)`
