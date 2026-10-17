@@ -36,8 +36,6 @@ import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from './transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
-import { BOAT_TILE_ID } from '../../config/boatGate'
-import { boatGameShown } from '../../utils/boatGame'
 
 // A breath after the reveal before the door's name, so it lands on a settled screen rather than on the
 // last frame of the wipe (and safely after the navigation's audio cleanup on the reduced-motion path).
@@ -52,11 +50,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
   // picture and its tiles (possibly from two sections, in the owner's order) come from `doors.ts`.
   // Off, it is the section's own menu exactly as before.
   const door = fourDoorsShown() ? doorAtRoute(SECTION_MENU_ROUTE[categoryId]) : undefined
-  // Fyld Båden is staging-only until the owner signs it off (Harbour PRD-01 §2.3.19) — its route is
-  // gated too, in App.tsx.
-  const games: MenuTile[] = (door ? doorTiles(door.games) : sectionTiles(categoryId)).filter(
-    (t) => t.section !== 'math' || t.game.id !== BOAT_TILE_ID || boatGameShown()
-  )
+  const games: MenuTile[] = door ? doorTiles(door.games) : sectionTiles(categoryId)
   const menuTitle = door ? door.label : getCategoryTheme(categoryId).name
   const menuIcon = door ? doorIconImages[door.id] : sectionIconImages[categoryId]
   // Explicit balanced rows for a door (D2/T12): the most a row may hold on this viewport — three on

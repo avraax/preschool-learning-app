@@ -78,7 +78,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
     description: 'Lær tal, optælling og grundlæggende matematik på en sjov måde',
     games: [
       // Fyld Båden (Harbour PRD-01) — FIRST in the menu (owner 2026-10-16); may replace Tal Quiz later.
-      // Staging-only: the menu filters this tile through `boatGameShown()` until the owner signs it off.
+      // Ships in 1.3 (owner, 2026-10-17) — the staging gate is deleted.
       {
         id: 'boat',
         title: 'Fyld Båden',

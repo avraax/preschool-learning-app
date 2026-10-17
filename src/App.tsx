@@ -1,7 +1,6 @@
 import React, { useEffect, Suspense } from 'react'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { boatGameShown } from './utils/boatGame'
 import { kreaShown } from './utils/kreaShown'
 import { fourDoorsShown } from './utils/fourDoors'
 import { logIOSIssue } from './utils/remoteConsole'
@@ -300,7 +299,7 @@ function App() {
         <Route path="/math/comparison" element={<ComparisonGame />} />
         <Route path="/math/patterns" element={<HvadManglerGame />} />
         {/* Staging-only until the owner signs it off (Harbour PRD-01): production redirects to the menu. */}
-        <Route path="/math/boat" element={boatGameShown() ? <FyldBaadenGame /> : <Navigate to="/math" replace />} />
+        <Route path="/math/boat" element={<FyldBaadenGame />} />
 
         {/* Farver Routes */}
         <Route path="/farver" element={<FarverSelection />} />
