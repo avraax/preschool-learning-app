@@ -428,11 +428,12 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
         attract={attractOn}
         sx={{
           left: 'calc(env(safe-area-inset-left) + 4px)',
-          bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
+          // Lifted ~10 % of its own height off the bottom edge, the same share as home's (owner, 2026-10-17).
+          bottom: 'calc(env(safe-area-inset-bottom) + 13px)',
           width: { xs: 84, sm: 96, md: 112 },
           height: { xs: 84, sm: 96, md: 112 },
           // Phones: keep the buddy out of the tile flow.
-          [PHONE_ANY]: { width: 52, height: 52 },
+          [PHONE_ANY]: { width: 52, height: 52, bottom: 'calc(env(safe-area-inset-bottom) + 7px)' },
         }}
       />
     </Box>
