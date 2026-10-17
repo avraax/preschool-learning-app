@@ -57,7 +57,7 @@ export const NUMBER_BROWSE_RATE = NUMBER_RATE
 // added/renamed.
 export const WELCOME_TITLES = [
   'Bogstav Quiz', 'Lær Alfabetet', 'Tal Quiz', 'Lær Tal', 'Plus Opgaver', 'Minus Opgaver',
-  'Stav Ordet', 'Sammenlign Tal', 'Hukommelsesspil', 'Farver', 'Farvejagt', 'Ram Farven',
+  'Stav Ordet', 'Sammenlign Tal', 'Vendespil', 'Farver', 'Farvejagt', 'Ram Farven',
   'Lær Farver', 'Hvilken Farve?', 'Nuancer', 'Lyt og Find', 'Find det Engelske Ord',
   'Læs Ordet', 'Hvad Mangler?', 'Fyld Båden', 'Fri Tegning', 'Tegn med Mig', 'Farvelæg', 'Perleplade',
 ]

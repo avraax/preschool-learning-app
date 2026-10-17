@@ -76,7 +76,7 @@ const MemoryGame: React.FC = () => {
       return audio.speakLetter(letter)
     },
     
-    title: 'Hukommelsesspil - Bogstaver',
+    title: 'Vendespil - Bogstaver',
     instructions: MEMORY_LETTERS_INSTRUCTION,
     theme: categoryThemes.alphabet,
 
@@ -114,7 +114,7 @@ const MemoryGame: React.FC = () => {
       return audio.speakNumber(parseInt(number))
     },
     
-    title: 'Hukommelsesspil - Tal',
+    title: 'Vendespil - Tal',
     instructions: MEMORY_NUMBERS_INSTRUCTION,
     theme: categoryThemes.math,
 

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-17T12:45:05.505Z",
+  "updatedAt": "2026-10-17T17:20:36.899Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -25760,6 +25760,14 @@
       "text": "Farver og Krea",
       "group": "doors",
       "updatedAt": 1792241105505
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Vendespil": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Vendespil",
+      "group": "phrases",
+      "updatedAt": 1792257636899
     }
   }
 }

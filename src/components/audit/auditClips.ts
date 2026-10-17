@@ -70,7 +70,7 @@ export const GROUP_LABELS: Record<AuditGroup, string> = {
   ordleg: 'Ordleg',
   krea: 'Krea',
   doors: 'Forsidens døre',
-  memory: 'Hukommelsesspil',
+  memory: 'Vendespil',
   levelup: 'Belønninger',
   mixed: 'Blandet',
   english: 'Engelsk',

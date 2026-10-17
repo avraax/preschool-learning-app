@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-17T12:45:05.505Z
+Last updated: 2026-10-17T17:20:36.899Z
 
-**3219 OK · 1 wrong · 0 unaudited** (of 3220 clips)
+**3220 OK · 1 wrong · 0 unaudited** (of 3221 clips)
 
 ## Bogstaver
 
@@ -953,6 +953,7 @@ Last updated: 2026-10-17T12:45:05.505Z
 | ✅ | Sådan! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Tal Quiz | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Tegn med Mig | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Vendespil | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Vildt godt! | Bulk-approved (PRD-11 owner listen pass) |  |
 
 ## Farver

@@ -388,7 +388,7 @@ export class SimplifiedAudioController {
       subtraction: 'Minus Opgaver',
       spelling: 'Stav Ordet',
       comparison: 'Sammenlign Tal',
-      memory: 'Hukommelsesspil',
+      memory: 'Vendespil',
       colors: 'Farver',
       farvejagt: 'Farvejagt',
       ramfarven: 'Ram Farven',

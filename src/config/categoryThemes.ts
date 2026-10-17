@@ -67,7 +67,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
       // place a difficulty was ever named in the child-facing UI.
       {
         id: 'memory',
-        title: 'Hukommelse',
+        title: 'Vendespil',
         route: '/learning/memory/letters',
         gradient: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)'
       }
@@ -77,7 +77,8 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
     name: 'Tal og Regning',
     description: 'Lær tal, optælling og grundlæggende matematik på en sjov måde',
     games: [
-      // Fyld Båden (Harbour PRD-01) — FIRST in the menu (owner 2026-10-16); may replace Tal Quiz later.
+      // Fyld Båden (Harbour PRD-01). The MENU order is `doors.ts` (owner 2026-10-17: after Minus Opgaver),
+      // not this list's order.
       // Ships in 1.3 (owner, 2026-10-17) — the staging gate is deleted.
       {
         id: 'boat',
@@ -124,7 +125,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
       // ONE Hukommelse tile — see the note on the alphabet section's tile above.
       {
         id: 'memory',
-        title: 'Hukommelse',
+        title: 'Vendespil',
         route: '/learning/memory/numbers',
         gradient: 'linear-gradient(135deg, #7B1FA2 0%, #6A1B9A 100%)'
       }
