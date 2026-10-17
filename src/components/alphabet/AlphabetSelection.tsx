@@ -1,14 +1,7 @@
 import React from 'react'
 import GameSelectionLayout from '../common/GameSelectionLayout'
-import { categoryThemes } from '../../config/categoryThemes'
 
-const AlphabetSelection: React.FC = () => {
-  return (
-    <GameSelectionLayout 
-      categoryId="alphabet"
-      games={categoryThemes.alphabet.games}
-    />
-  )
-}
+// With four doors this is "Bogstaver og Ord" (Alfabetet + Ordleg) — GameSelectionLayout reads the door.
+const AlphabetSelection: React.FC = () => <GameSelectionLayout categoryId="alphabet" />
 
 export default AlphabetSelection

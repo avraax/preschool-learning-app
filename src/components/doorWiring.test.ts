@@ -33,6 +33,27 @@ test('no game hard-codes a back route — GameShell derives it from the game\'s 
   assert.ok(!/backRoute\s*[?]?:\s*string/.test(shell), 'GameShell grew a backRoute prop again')
 })
 
+// T2: in a merged door the MENU's section is not the TILE's — keying art by the menu's would silently
+// hand every Ordleg/Krea tile the section icon (the `??` fallback), with every icon file still present.
+test('menu tile art is keyed by each tile\'s own gameId/section, never the menu\'s categoryId', () => {
+  const menu = codeOf('components/common/GameSelectionLayout.tsx')
+  assert.match(menu, /art: gameIconImages\[gameId\]/)
+  assert.match(menu, /<GameTileIcon section=\{section\} id=\{game\.id\}/)
+  assert.ok(!/gameIconImages\[`\$\{categoryId\}/.test(menu), 'tile art keyed by the menu section again')
+  assert.ok(!/GameTileIcon section=\{categoryId\}/.test(menu), 'tile icon keyed by the menu section again')
+  // And the door is what decides the tiles, through doors.ts, when the gate is on.
+  assert.match(menu, /fourDoorsShown\(\) \? doorAtRoute\(SECTION_MENU_ROUTE\[categoryId\]\) : undefined/)
+  assert.match(menu, /door \? doorTiles\(door\.games\) : sectionTiles\(categoryId\)/)
+})
+
+// A2: the two retired menus redirect to their door under four doors — through the router.
+test('the Ordleg and Krea menus redirect to their door when four doors are on', () => {
+  for (const [file, section] of [['components/ordleg/OrdlegSelection.tsx', 'ordleg'], ['components/krea/KreaSelection.tsx', 'krea']]) {
+    const code = codeOf(file)
+    assert.match(code, new RegExp(`fourDoorsShown\\(\\) \\? <Navigate to=\\{menuRouteFor\\('${section}', true\\)\\} replace />`), file)
+  }
+})
+
 // A3: the colour alias is registered once, before the first render, from the same gate as the doors.
 test('the door colour alias is registered at startup from the four-door gate', () => {
   const main = codeOf('main.tsx')

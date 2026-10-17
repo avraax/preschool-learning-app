@@ -12,7 +12,8 @@ import {
   sectionOfGame,
   tileIdOfGame,
 } from './doors.ts'
-import { categoryThemes, getCategoryTheme, setCategoryPaletteAlias } from './categoryThemes.ts'
+import { existsSync } from 'node:fs'
+import { categoryThemes, doorTiles, getCategoryTheme, setCategoryPaletteAlias } from './categoryThemes.ts'
 import { SECTION_IDS } from './progressSchema.ts'
 
 // Every shipped game, from the menu content — the set a door may neither drop nor duplicate.
@@ -98,6 +99,22 @@ test('the palette alias swaps COLOURS only, and is empty with four doors off', (
     setCategoryPaletteAlias({})
   }
   assert.notEqual(getCategoryTheme('ordleg').accentColor, getCategoryTheme('alphabet').accentColor)
+})
+
+// T2/T3: a door's tiles resolve to the right section's game, and each has its own baked icon — keyed
+// by the full gameId, since `alphabet.memory` and `math.memory` share a bare id.
+test('every door tile resolves to its own section\'s game and its own icon art', () => {
+  const iconDir = new URL('../assets/themes/icons/games/', import.meta.url)
+  for (const d of DOORS) {
+    const tiles = doorTiles(d.games)
+    assert.deepEqual(tiles.map((t) => t.gameId), [...d.games])
+    for (const t of tiles) {
+      assert.equal(t.section, sectionOfGame(t.gameId))
+      assert.equal(`${t.section}.${t.game.id}`, t.gameId)
+      assert.ok(existsSync(new URL(`${t.gameId}.webp`, iconDir)), `no icon for ${t.gameId}`)
+    }
+  }
+  assert.throws(() => doorTiles(['alphabet.read']), /no such game/)
 })
 
 test('gameId helpers split on the FIRST dot only', () => {

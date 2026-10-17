@@ -7,11 +7,15 @@ import {
   Typography,
   Box,
   AppBar,
-  Toolbar
+  Toolbar,
+  useMediaQuery
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { getCategoryTheme } from '../../config/categoryThemes'
-import { sectionIconImages } from '../../assets/themes/icons'
+import { doorTiles, getCategoryTheme, sectionTiles, type MenuTile } from '../../config/categoryThemes'
+import { SECTION_MENU_ROUTE, doorAtRoute } from '../../config/doors'
+import { balancedRows } from '../../config/menuRows'
+import { fourDoorsShown } from '../../utils/fourDoors'
+import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
 import { gameIconImages } from '../../assets/themes/icons/games'
 import ThemeMascot from './ThemeMascot'
 import LivingCard from './LivingCard'
@@ -31,25 +35,30 @@ import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMed
 import { BOAT_TILE_ID } from '../../config/boatGate'
 import { boatGameShown } from '../../utils/boatGame'
 
-interface Game {
-  id: string
-  title: string
-  route: string
-  gradient: string
-}
-
 interface GameSelectionLayoutProps {
   categoryId: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
-  games: Game[]
 }
 
-const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
-  categoryId,
-  games: allGames
-}) => {
+const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId }) => {
+  // FOUR DOORS (Category restructure PRD-01): with the gate on, this menu is a DOOR — its title, its
+  // picture and its tiles (possibly from two sections, in the owner's order) come from `doors.ts`.
+  // Off, it is the section's own menu exactly as before.
+  const door = fourDoorsShown() ? doorAtRoute(SECTION_MENU_ROUTE[categoryId]) : undefined
   // Fyld Båden is staging-only until the owner signs it off (Harbour PRD-01 §2.3.19) — its route is
   // gated too, in App.tsx.
-  const games = allGames.filter((g) => g.id !== BOAT_TILE_ID || boatGameShown())
+  const games: MenuTile[] = (door ? doorTiles(door.games) : sectionTiles(categoryId)).filter(
+    (t) => t.section !== 'math' || t.game.id !== BOAT_TILE_ID || boatGameShown()
+  )
+  const menuTitle = door ? door.label : getCategoryTheme(categoryId).name
+  const menuIcon = door ? doorIconImages[door.id] : sectionIconImages[categoryId]
+  // Explicit balanced rows for a door (D2/T12): the most a row may hold on this viewport — three on
+  // anything under 768 wide (phone portrait, Split View), five on a phone in landscape (no landmark
+  // there) and on an iPad in landscape, four in between.
+  const narrow = useMediaQuery('(max-width: 767.98px)')
+  const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
+  const wide = useMediaQuery('(min-width: 1024px)')
+  const maxPerRow = phoneLandscape ? 5 : narrow ? 3 : wide ? 5 : 4
+  const rows = door ? balancedRows(games.length, maxPerRow) : undefined
   const { navigateWithTransition } = useTransitionNav()
   const transitionPhase = useTransitionContext()?.phase ?? 'idle'
   const frozen = transitionPhase !== 'idle'
@@ -73,9 +82,11 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
 
   // Game tiles as tactile soft-3D objects seated on the framed scene (immersive). Built with the
   // per-game icon art (B2 registry, keyed <section>.<id>), falling back to the section object.
-  const tileItems: SceneFieldItem[] = games.map((game) => ({
-    key: game.id,
-    art: gameIconImages[`${categoryId}.${game.id}`] ?? sectionIconImages[categoryId],
+  // Keyed by the TILE's own section (T2): in a door, `alphabet.read` does not exist, and the `??` would
+  // quietly hand every Ordleg tile the section icon instead of its own art.
+  const tileItems: SceneFieldItem[] = games.map(({ gameId, section, game }) => ({
+    key: gameId,
+    art: gameIconImages[gameId] ?? sectionIconImages[section],
     label: game.title,
     accent: catTheme.accentColor,
     onActivate: () => navigateWithTransition(game.route),
@@ -96,7 +107,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
   }, [games.length])
   useIdleAttract({ onAttract })
   useEffect(() => () => { if (attractTimer.current) clearTimeout(attractTimer.current) }, [])
-  const attractKey = attractOn ? (games[attractIndex]?.id ?? null) : null
+  const attractKey = attractOn ? (games[attractIndex]?.gameId ?? null) : null
 
   return (
     <Box
@@ -135,7 +146,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
             {/* Soft-3D section icon (theme-constant) replaces the flat emoji. */}
             <Box
               component="img"
-              src={sectionIconImages[categoryId]}
+              src={menuIcon}
               alt=""
               draggable={false}
               sx={{
@@ -166,7 +177,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                 whiteSpace: 'nowrap'
               }}
             >
-              {catTheme.name}
+              {menuTitle}
             </Typography>
           </Box>
 
@@ -259,7 +270,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
             >
               <Box
                 component="img"
-                src={sectionIconImages[categoryId]}
+                src={menuIcon}
                 alt=""
                 draggable={false}
                 sx={{ display: 'block', width: '100%', height: 'auto', objectFit: 'contain', filter: softShadow(2.4), userSelect: 'none' }}
@@ -271,7 +282,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                 so a row that is *almost* wide enough for all 7 Tal og Regning tiles drops exactly one
                 onto a second line — the orphan the quiz grids refuse. Narrowing the track forces the
                 break earlier and the wrap comes out balanced (5+2 / 4+3) instead. */}
-            <Box data-bl-tileflow="" sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: 860 }}>
+            {/* A door brings its own balanced rows, so it needs no brake — and must not have one: the
+                brake would wrap a 5-wide row it was never tuned for. */}
+            <Box data-bl-tileflow="" sx={{ flex: '1 1 auto', minWidth: 0, maxWidth: rows ? 'none' : 860 }}>
               <SceneObjectField
                 items={tileItems}
                 frozen={frozen}
@@ -280,6 +293,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                 float={darkScene}
                 flowSize="clamp(62px, 10.5vh, 100px)"
                 flowGapX="clamp(10px, 2vw, 26px)"
+                rows={rows}
               />
             </Box>
           </Box>
@@ -304,9 +318,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
               },
             }}
           >
-            {games.map((game, index) => (
+            {games.map(({ gameId, section, game }, index) => (
               <motion.div
-                key={game.id}
+                key={gameId}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.08 }}
@@ -351,7 +365,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({
                       p: { xs: 1, md: 1.5 },
                       '&:last-child': { pb: { xs: 1, md: 1.5 } }
                     }}>
-                      <GameTileIcon section={categoryId} id={game.id} />
+                      <GameTileIcon section={section} id={game.id} />
                       <Typography
                         sx={{
                           fontWeight: 700,

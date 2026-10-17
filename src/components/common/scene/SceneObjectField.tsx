@@ -38,6 +38,10 @@ interface SceneObjectFieldProps {
   // menus reserve a left column for the landmark) — the gap is what decides whether the widest
   // section still fits on one line instead of dropping a lone orphan tile onto a second.
   flowGapX?: string
+  // Explicit ROW SIZES for flow mode (`balancedRows`, Category restructure PRD-01 D2). When given, each
+  // row renders as its own centred, non-wrapping line, so a 9-tile door reads 5+4 rather than whatever a
+  // greedy wrap leaves on its last line. Absent → today's single wrapping band.
+  rows?: number[]
 }
 
 const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
@@ -49,6 +53,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
   float = false,
   flowSize = 'clamp(72px, 12vh, 116px)',
   flowGapX = 'clamp(14px, 3vw, 40px)',
+  rows,
 }) => {
   const isPhone = useMediaQuery(PHONE_ANY)
   const seated = !!anchors && anchors.length === items.length && !isPhone
@@ -87,6 +92,45 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
     )
   }
 
+  const renderObject = (item: SceneFieldItem, i: number) => (
+    <SceneObject
+      key={item.key}
+      art={item.art}
+      label={item.label}
+      accent={item.accent}
+      index={i}
+      frozen={frozen}
+      attract={attractKey === item.key}
+      burstMotion={burstMotion}
+      shadow={shadow}
+      rotate={item.rotate ?? 0}
+      onActivate={item.onActivate}
+      size={flowSize}
+    />
+  )
+
+  // FLOW in explicit rows — the door menus. The sizes sum to the item count by construction.
+  if (rows && rows.reduce((a, b) => a + b, 0) === items.length) {
+    let start = 0
+    return (
+      <Box
+        data-bl-rows={rows.join('+')}
+        sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'clamp(10px, 2.4vh, 26px)', px: 2 }}
+      >
+        {rows.map((size, r) => {
+          const line = items.slice(start, start + size)
+          const offset = start
+          start += size
+          return (
+            <Box key={r} sx={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'flex-end', columnGap: flowGapX }}>
+              {line.map((item, j) => renderObject(item, offset + j))}
+            </Box>
+          )
+        })}
+      </Box>
+    )
+  }
+
   // FLOW — a centred wrap band. Used for phones/portrait home AND all section-menu tiles.
   return (
     <Box
@@ -100,22 +144,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
         px: 2,
       }}
     >
-      {items.map((item, i) => (
-        <SceneObject
-          key={item.key}
-          art={item.art}
-          label={item.label}
-          accent={item.accent}
-          index={i}
-          frozen={frozen}
-          attract={attractKey === item.key}
-          burstMotion={burstMotion}
-          shadow={shadow}
-          rotate={item.rotate ?? 0}
-          onActivate={item.onActivate}
-          size={flowSize}
-        />
-      ))}
+      {items.map(renderObject)}
     </Box>
   )
 }

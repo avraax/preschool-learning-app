@@ -1,14 +1,7 @@
 import React from 'react'
 import GameSelectionLayout from '../common/GameSelectionLayout'
-import { categoryThemes } from '../../config/categoryThemes'
 
-const FarverSelection: React.FC = () => {
-  return (
-    <GameSelectionLayout 
-      categoryId="colors"
-      games={categoryThemes.colors.games}
-    />
-  )
-}
+// With four doors this is "Farver og Krea" (Farver + Krea) — GameSelectionLayout reads the door.
+const FarverSelection: React.FC = () => <GameSelectionLayout categoryId="colors" />
 
 export default FarverSelection

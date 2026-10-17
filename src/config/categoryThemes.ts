@@ -13,6 +13,7 @@ import type { ThemeTokens } from '../theme/tokens/types'
 import { getActiveTokens } from '../theme/tokens/activeTokens.ts'
 import { kidThemeTokens } from '../theme/tokens/kidTheme.tokens.ts'
 import { onTileColor } from '../theme/tokens/helpers.ts'
+import { sectionOfGame, tileIdOfGame } from './doors.ts'
 
 export interface Game {
   id: string
@@ -287,6 +288,28 @@ export const getCategoryTheme = (categoryId: string): CategoryTheme => {
   const id = (categoryId in tokens.categories ? categoryId : 'alphabet') as CategoryId
   return toCategoryTheme(id, tokens)
 }
+
+/** One tile on a menu: the game AND the section it belongs to (Category restructure PRD-01 T2). A
+ *  merged door shows games from two sections, so a tile can never borrow the menu's section to key its
+ *  art (`alphabet.read` does not exist — the lookup would silently fall back to the section icon). */
+export interface MenuTile {
+  gameId: string
+  section: CategoryId
+  game: Game
+}
+
+/** Resolve a door's ordered gameIds (`doors.ts`) to tiles. Throws on an id no section ships. */
+export const doorTiles = (gameIds: readonly string[]): MenuTile[] =>
+  gameIds.map((gameId) => {
+    const section = sectionOfGame(gameId) as CategoryId
+    const game = categoryContent[section]?.games.find((g) => g.id === tileIdOfGame(gameId))
+    if (!game) throw new Error(`door lists "${gameId}" but no such game ships`)
+    return { gameId, section, game }
+  })
+
+/** A single section's own tiles, in its own order — the five-section menus production still shows. */
+export const sectionTiles = (section: CategoryId): MenuTile[] =>
+  categoryContent[section].games.map((game) => ({ gameId: `${section}.${game.id}`, section, game }))
 
 // Helper function to get all theme IDs
 export const getCategoryIds = (): string[] => {
