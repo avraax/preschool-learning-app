@@ -12,9 +12,10 @@ import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
 import { homeAnchorsFor } from '../../theme/tokens/helpers'
 import { kreaShown } from '../../utils/kreaShown'
 import { fourDoorsShown } from '../../utils/fourDoors'
-import { DOORS } from '../../config/doors'
+import { DOORS, doorOf } from '../../config/doors'
 import { balancedRows } from '../../config/menuRows'
-import { isNewDoor } from '../../config/newThisRelease'
+import { isNewDoor, showsNewDoor } from '../../config/newThisRelease'
+import { newSeen } from '../../services/newSeen'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import RewardRing from '../common/RewardRing'
 import ProfileChip from '../common/ProfileChip'
@@ -123,7 +124,8 @@ const HomePage: React.FC = () => {
       accent: cat.accentColor,
       rotate: a.rotate,
       onActivate: () => navigateWithTransition(item?.route ?? SECTION_ROUTES[a.section]),
-      isNew: item?.isNew ?? false,
+      // A door sparkles while it still holds a new game THIS child has not opened (`newSeen`).
+      isNew: (item?.isNew ?? false) && showsNewDoor(doorOf(a.section).id, newSeen.opened()),
     }
   })
 

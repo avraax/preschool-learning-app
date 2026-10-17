@@ -78,8 +78,14 @@ test('a door speaks its name only on arrival from home, from the transition\'s c
 
 // The 1.3 "new" glow (`newThisRelease.ts`): the config can be right while nothing renders it.
 test('new games and their doors carry the release glow through to SceneObject', () => {
-  assert.match(codeOf('components/common/GameSelectionLayout.tsx'), /isNew: isNewGame\(gameId\)/)
-  assert.match(codeOf('components/home/HomePage.tsx'), /isNew: isNewDoor\(d\.id\)/)
+  const menu = codeOf('components/common/GameSelectionLayout.tsx')
+  assert.match(menu, /isNew: showsNewGame\(gameId, newSeen\.opened\(\)\)/)
+  // "Remove once opened": both tap paths (seated objects and the flat card grid) record the open.
+  assert.match(menu, /newSeen\.markOpened\(gameId\)\s*\n\s*navigateWithTransition\(route\)/)
+  assert.equal((menu.match(/openGame\(gameId, game\.route\)/g) ?? []).length, 2, 'both tile paths open through openGame')
+  const home = codeOf('components/home/HomePage.tsx')
+  assert.match(home, /isNew: isNewDoor\(d\.id\)/)
+  assert.match(home, /showsNewDoor\(doorOf\(a\.section\)\.id, newSeen\.opened\(\)\)/)
   const field = codeOf('components/common/scene/SceneObjectField.tsx')
   assert.equal((field.match(/isNew=\{item\.isNew\}/g) ?? []).length, 2, 'both seated and flow objects must pass isNew')
   assert.match(codeOf('components/common/scene/SceneObject.tsx'), /\{isNew && <NewSparkles size=\{newSize\} \/>\}/)

@@ -15,6 +15,7 @@ import { devKidCount, devKidName } from '../utils/devHarness.ts'
 import { authStore } from './authStore.ts'
 import { practiceLedger } from './practiceLedger.ts'
 import { kreaSession } from './kreaSession.ts'
+import { newSeen } from './newSeen.ts'
 import { progressStore } from './progressStore.ts'
 import { progressSync } from './progressSync.ts'
 
@@ -363,6 +364,8 @@ class ProfileStore {
     practiceLedger.attach(id)
     // Krea's session-only drawings (Krea PRD-01 §4.6) follow the same lifecycle.
     kreaSession.attach(id)
+    // …and which "new in this release" games this child has opened (the stars go once tried).
+    newSeen.attach(id)
     this.publish({ status: 'ready', accountId, activeProfileId: id, error: null })
     // Reconcile with the server in the background — NEVER awaited, because gameplay already runs off
     // the local state that attach() just hydrated.
@@ -375,6 +378,7 @@ class ProfileStore {
     progressStore.detach()
     practiceLedger.detach()
     kreaSession.detach()
+    newSeen.detach()
     writePointer(null)
     this.publish({ status: 'choosing', activeProfileId: null })
   }
@@ -477,6 +481,7 @@ class ProfileStore {
       // record of what they got wrong on the device — it is per-child data like the book.
       practiceLedger.clear(id)
       kreaSession.clear(id)
+      newSeen.clear(id)
       return true
     } catch {
       return false
@@ -494,6 +499,7 @@ class ProfileStore {
     progressStore.detach()
     practiceLedger.detach()
     kreaSession.detach()
+    newSeen.detach()
     writePointer(null)
     try {
       localStorage.removeItem(ROSTER_KEY)

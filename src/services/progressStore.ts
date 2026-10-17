@@ -67,6 +67,7 @@ import { mergeProgress, type MergeReport } from '../config/progressMerge.ts'
 import { getDeviceId } from './deviceId.ts'
 import { practiceLedger } from './practiceLedger.ts'
 import { kreaSession } from './kreaSession.ts'
+import { newSeen } from './newSeen.ts'
 
 // Re-exported so all 45 consumers keep importing their types from here, unchanged.
 export type {
@@ -708,6 +709,7 @@ class ProgressStore {
     // letters the previous run got wrong. Settings survive; a miss record is not a preference.
     practiceLedger.clear(prev.profileId)
     kreaSession.clear(prev.profileId)
+    newSeen.clear(prev.profileId)
     const next = defaultPersisted(prev.profileId, getDeviceId(), nowMs())
     next.settings = structuredClone(prev.settings)
     next.settingsMeta = structuredClone(prev.settingsMeta)

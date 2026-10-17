@@ -17,7 +17,8 @@ import { routeDepth } from '../../config/routeDepth'
 import { useLocation } from 'react-router-dom'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { balancedRows } from '../../config/menuRows'
-import { isNewGame } from '../../config/newThisRelease'
+import { showsNewGame } from '../../config/newThisRelease'
+import { newSeen } from '../../services/newSeen'
 import { fourDoorsShown } from '../../utils/fourDoors'
 import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
 import { gameIconImages } from '../../assets/themes/icons/games'
@@ -82,6 +83,13 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
   // inside its own flex track.
   const landmarkFloat = idleFloat(reduce, { distance: 10, durationS: 5.5 })
 
+  // Opening a game from the menu is what retires its "new" stars for this child (owner, 2026-10-17:
+  // "remove once opened") — recorded on the tap, before the wipe, so the way back shows it gone.
+  const openGame = (gameId: string, route: string) => {
+    newSeen.markOpened(gameId)
+    navigateWithTransition(route)
+  }
+
   // Game tiles as tactile soft-3D objects seated on the framed scene (immersive). Built with the
   // per-game icon art (B2 registry, keyed <section>.<id>), falling back to the section object.
   // Keyed by the TILE's own section (T2): in a door, `alphabet.read` does not exist, and the `??` would
@@ -91,9 +99,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
     art: gameIconImages[gameId] ?? sectionIconImages[section],
     label: game.title,
     accent: catTheme.accentColor,
-    onActivate: () => navigateWithTransition(game.route),
-    // New in this release (1.3 only — `newThisRelease.ts` goes red when the version moves on).
-    isNew: isNewGame(gameId),
+    onActivate: () => openGame(gameId, game.route),
+    // New in this release AND not yet opened by this child (`newThisRelease.ts` + `newSeen`).
+    isNew: showsNewGame(gameId, newSeen.opened()),
   }))
 
   // THE DOOR SAYS ITS NAME (D9/T7): once, when the child arrives here FROM HOME — never on the way back
@@ -361,7 +369,7 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
                   frozen={frozen}
                   attract={attractOn && attractIndex === index}
                   burstMotion={burstMotion}
-                  onActivate={() => navigateWithTransition(game.route)}
+                  onActivate={() => openGame(gameId, game.route)}
                   sx={{ width: '100%' }}
                 >
                   <Card
