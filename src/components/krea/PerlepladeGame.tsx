@@ -28,7 +28,7 @@ import {
 } from '../../config/kreaBeads'
 import { KREA_TASKS_IN_ROUND } from '../../config/kreaSubjects'
 import { PALETTE_12 } from '../../config/kreaPalette'
-import { KREA_COLOR_NAME, NEW_BOARD_LINE, NEW_BOARD_TITLE } from '../../config/kreaPhrases'
+import { NEW_BOARD_LINE, NEW_BOARD_TITLE } from '../../config/kreaPhrases'
 import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { idlePulse } from '../../theme/idleMotion'
 import {
@@ -234,11 +234,10 @@ const PerlepladeGame: React.FC = () => {
     return r.result
   }
 
-  const pickColour = (c: BeadColor) => {
+  // Picking a bead is SILENT apart from its click — no colour name (owner, 2026-10-17: a name on every one
+  // of ~100 beads is noise). The legend chips still speak their numbers.
+  const pickColour = (_c: BeadColor) => {
     sfx.play('bead-pick')
-    // Each pick names the colour (PRD-01 §2.2.6) — fire-and-forget; a fast child cancels the last one.
-    audio.cancelCurrentAudio()
-    void audio.speak(KREA_COLOR_NAME[c]).catch(() => {})
   }
 
   // ----- tap ---------------------------------------------------------------------------------------
