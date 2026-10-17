@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { COVERAGE_PASS, HELP_AFTER_FAR, NEVER_FAIL_STROKES, STROKES_CAP, coverage, guideSamples, judgeStep, toleranceInPaper } from './guideMatch.ts'
+import { COVERAGE_PASS, HELP_AFTER_FAR, NEAR_ZONE, NEVER_FAIL_STROKES, STROKES_CAP, coverage, guideSamples, judgeStep, toleranceInPaper } from './guideMatch.ts'
 import { subjectXToPaper } from '../../../config/kreaShapes.ts'
 import { MIRROR_AXIS, type GuideStep } from '../../../config/kreaSubjects.ts'
 import { KREA_GUIDE } from '../../../config/difficulty.ts'
@@ -33,8 +33,8 @@ test('60% of the guide is the pass mark, checked against the step', () => {
 })
 
 test('never fail, for wobbly hands: the 3rd stroke NEAR the guide that still misses is accepted', () => {
-  // Just outside the 30-unit band (so it doesn't cover the guide) but well inside the near zone.
-  const wobbly = along(45, 0.5)
+  // Just outside the 30-unit band (so it doesn't cover the guide) but inside the near zone (1.25× = 37.5).
+  const wobbly = along(34, 0.5)
   assert.equal(NEVER_FAIL_STROKES, 3)
   assert.equal(judgeStep(lineStep, [wobbly], 30).passed, false)
   assert.equal(judgeStep(lineStep, [wobbly, wobbly], 30).passed, false)
@@ -95,4 +95,15 @@ test('Tegn med Mig levels: a narrower band each level, all forgiving, demo at Le
   assert.deepEqual([KREA_GUIDE.let.tolerancePx, KREA_GUIDE.normal.tolerancePx, KREA_GUIDE.svaer.tolerancePx], [48, 36, 28])
   assert.deepEqual([KREA_GUIDE.let.demo, KREA_GUIDE.normal.demo, KREA_GUIDE.svaer.demo], [true, false, false])
   assert.deepEqual([KREA_GUIDE.let.palette, KREA_GUIDE.normal.palette, KREA_GUIDE.svaer.palette], [8, 12, 12])
+})
+
+// Owner, 2026-10-17: lines "way off" still counted at 2× the band. A line ~1.7× the band away is NOT about
+// the guide: three of them bring help, never a pass (at 2× they were "near" and the 3rd one passed).
+test('a line well beside the guide is far, not a near miss', () => {
+  const beside = along(50, 0.8)
+  assert.equal(NEAR_ZONE, 1.25)
+  const three = judgeStep(lineStep, [beside, beside, beside], 30)
+  assert.equal(three.near, 0)
+  assert.equal(three.passed, false)
+  assert.equal(three.help, true)
 })

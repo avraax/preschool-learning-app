@@ -24,9 +24,13 @@ export const COVERAGE_PASS = 0.6
 /** Strokes NEAR the guide that still don't pass before the step is accepted anyway. */
 export const NEVER_FAIL_STROKES = 3
 /** A stroke is "about the guide" when at least this share of its points lie in the near zone. */
-export const NEAR_SHARE = 0.4
-/** The near zone is this many times the pass band — generous: it decides "is this about the line". */
-export const NEAR_ZONE = 2
+export const NEAR_SHARE = 0.6
+/**
+ * The near zone is this many times the pass band. It was 2× and 40% (2026-10-16) and the owner still saw
+ * lines "way off" count on the iPad (2026-10-17): at Let on a 785 px paper 2× is ~110 px from the line, so
+ * on a big circle nearly anything inside it was "near". 1.25× is ~70 px — just past the pass band.
+ */
+export const NEAR_ZONE = 1.25
 /** Far strokes in a row that call for help (the demo again), never a pass. */
 export const HELP_AFTER_FAR = 3
 /** Strokes on one step after which it is accepted whatever they were — the child is never stuck. */

@@ -15,8 +15,9 @@ import { KREA_COLOR_NAME, KREA_RAINBOW_NAME, NEW_PAPER_LINE } from '../../config
 import { KREA_SUBJECTS, KREA_TASKS_IN_ROUND, MIRROR_AXIS, subjectById, type KreaSubject } from '../../config/kreaSubjects'
 import { SUBJECT_VIEWBOX, mirrorShape, shapePath, subjectXToPaper } from '../../config/kreaShapes'
 import DrawingSurface from './canvas/DrawingSurface'
-import { addStroke, deserialise, emptyDrawing, serialise, undo, type CrayonColor, type Drawing, type Stroke, type Tool } from './canvas/strokeModel'
+import { addStroke, deserialise, emptyDrawing, serialise, type CrayonColor, type Drawing, type Stroke, type Tool } from './canvas/strokeModel'
 import { judgeStep, toleranceInPaper } from './canvas/guideMatch'
+import { undoPiece, type Piece } from './canvas/guidedPiece'
 import { StudioBackdrop, Paper } from './studio/StudioScene'
 import { CrayonPalette, ToolRow } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
@@ -44,35 +45,29 @@ const SAVE_DEBOUNCE_MS = 500
 /** Stalled this long on a step → the guide pulses and the step line repeats once (§4.3). */
 const STALL_MS = 8000
 
-interface Piece {
-  drawing: Drawing
-  /** The step being drawn; `steps.length` once every step is done. */
-  step: number
-  /** Index of the first stroke drawn during the current step. */
-  start: number
-  /** The done ✓ was pressed: the piece has come alive and earned its XP. */
-  done: boolean
-}
-
-const freshPiece = (): Piece => ({ drawing: emptyDrawing(), step: 0, start: 0, done: false })
+const freshPiece = (): Piece => ({ drawing: emptyDrawing(), step: 0, start: 0, starts: [], done: false })
 
 function loadPiece(id: string): Piece | null {
   const raw = kreaSession.load(GAME_ID, id)
   if (!raw) return null
   try {
-    const p = JSON.parse(raw) as { v?: number; d?: string; step?: number; start?: number; done?: boolean }
+    const p = JSON.parse(raw) as { v?: number; d?: string; step?: number; start?: number; starts?: unknown; done?: boolean }
     const drawing = deserialise(p.d) ?? emptyDrawing()
     const steps = subjectById(id)?.steps.length ?? 0
     const step = Math.max(0, Math.min(steps, Number(p.step) || 0))
     const start = Math.max(0, Math.min(drawing.strokes.length, Number(p.start) || 0))
-    return { drawing, step, start, done: !!p.done && step >= steps }
+    // `starts` must be one per completed step, ascending and inside the drawing — anything else (an
+    // older session copy) degrades to [] and undo simply stops at the current step's start.
+    const raw0 = Array.isArray(p.starts) ? p.starts.map(Number) : []
+    const ok = raw0.length === step && raw0.every((n, i) => Number.isInteger(n) && n >= 0 && n <= start && (i === 0 || n >= raw0[i - 1]))
+    return { drawing, step, start, starts: ok ? raw0 : [], done: !!p.done && step >= steps }
   } catch {
     return null
   }
 }
 
 const savePiece = (id: string, p: Piece) =>
-  kreaSession.save(GAME_ID, id, JSON.stringify({ v: 1, d: serialise(p.drawing), step: p.step, start: p.start, done: p.done }))
+  kreaSession.save(GAME_ID, id, JSON.stringify({ v: 1, d: serialise(p.drawing), step: p.step, start: p.start, starts: p.starts, done: p.done }))
 
 /** A subject's finished line drawing for its grid card: every step's guide, mirror halves included. */
 const SubjectCard: React.FC<{ subject: KreaSubject; drawing: Drawing | null }> = ({ subject, drawing }) => {
@@ -263,7 +258,7 @@ const TegnMedMigGame: React.FC = () => {
         // way again (demo pencil + pulse + the step's line) instead of waving the step through.
         if (verdict.help) helpWanted.current = true
         if (!verdict.passed) return { ...p, drawing }
-        return { ...p, drawing, step: p.step + 1, start: drawing.strokes.length }
+        return { ...p, drawing, step: p.step + 1, start: drawing.strokes.length, starts: [...p.starts, p.start] }
       })
     },
     [subjectId, tuning.tolerancePx],
@@ -331,11 +326,13 @@ const TegnMedMigGame: React.FC = () => {
   }
 
   // Undo reaches back only to the start of the current step: a passed step stays passed.
-  const canUndoStep = piece.drawing.strokes.length > piece.start && !piece.done
+  // Undo takes back the LAST LINE, always — also the one that finished a step: the step then goes back
+  // with it (its guide returns). Only a finished, shown piece can't be undone.
+  const canUndoStep = !piece.done && (piece.drawing.strokes.length > piece.start || piece.starts.length > 0)
   const doUndo = () => {
     markInteracted()
     sfx.play('krea-undo')
-    setPiece((p) => (p.drawing.strokes.length > p.start && !p.done ? { ...p, drawing: undo(p.drawing) } : p))
+    setPiece((p) => undoPiece(p))
   }
 
   // ----- "Nyt papir?" — start this subject over (unfinished work only) ----------------------------
