@@ -33,6 +33,7 @@ export type AuditGroup =
   | 'english'
   | 'levelup'
   | 'krea'
+  | 'doors'
 
 export interface AuditClip {
   key: string // ttsCacheKey — the verdict + prebaked-manifest key
@@ -46,6 +47,7 @@ export interface AuditClip {
 }
 
 export const GROUP_ORDER: AuditGroup[] = [
+  'doors',
   'letters',
   'numbers',
   'math',
@@ -67,6 +69,7 @@ export const GROUP_LABELS: Record<AuditGroup, string> = {
   colours: 'Farver',
   ordleg: 'Ordleg',
   krea: 'Krea',
+  doors: 'Forsidens døre',
   memory: 'Hukommelsesspil',
   levelup: 'Belønninger',
   mixed: 'Blandet',

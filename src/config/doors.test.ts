@@ -12,7 +12,7 @@ import {
   sectionOfGame,
   tileIdOfGame,
 } from './doors.ts'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { categoryThemes, doorTiles, getCategoryTheme, setCategoryPaletteAlias } from './categoryThemes.ts'
 import { SECTION_IDS } from './progressSchema.ts'
 
@@ -125,4 +125,17 @@ test('gameId helpers split on the FIRST dot only', () => {
 
 test('the spoken door names are the labels, one per door', () => {
   assert.deepEqual(allDoorNameLines(), ['Bogstaver og Ord', 'Tal', 'Engelsk', 'Farver og Krea'])
+})
+
+// audio-system.md protocol steps 3–5: the enumerator bakes exactly these strings, and each one ships
+// as a prebaked clip — a door name that reached live Azure would be SILENT for a guest.
+test('every door name is enumerated for prebake and present in the prebaked manifest', async () => {
+  const { collectNarrationClips } = await import('../../shared-narration-clips.js')
+  const clips = collectNarrationClips() as Array<{ text: string; key: string }>
+  const manifest = readFileSync(new URL('./prebakedTts.ts', import.meta.url), 'utf8')
+  for (const line of allDoorNameLines()) {
+    const clip = clips.find((c) => c.text === line)
+    assert.ok(clip, `"${line}" is not enumerated`)
+    assert.ok(manifest.includes(clip.key), `"${line}" (${clip.key}) is not prebaked — run npm run tts:prebake`)
+  }
 })

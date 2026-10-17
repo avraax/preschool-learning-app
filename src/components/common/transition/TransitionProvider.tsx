@@ -27,6 +27,10 @@ interface TransitionContextValue {
   // Public API (via useTransitionNav)
   navigateWithTransition: (to: string, opts?: { replace?: boolean }) => void
   goBack: (to: string) => void
+  // The last COMPLETED hop (from → to), stamped when the reveal finishes — i.e. once the new page is on
+  // screen and NavigationAudioCleanup has already run. A door menu reads it to say its name only when
+  // the child arrived FROM HOME, never on the way back from a game (Category restructure PRD-01 D9/T7).
+  lastArrival: { from: string; to: string; id: number } | null
   // Internal (consumed by TransitionOverlay)
   phase: TransitionPhase
   direction: TravelDirection
@@ -59,6 +63,9 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Live refs so the framer onAnimationComplete callbacks (async) always read fresh values with
   // stable identities (they never need to change between renders).
   const pendingRef = useRef<{ to: string; replace?: boolean } | null>(null)
+  const fromRef = useRef<string>('')
+  const arrivalSeq = useRef(0)
+  const [lastArrival, setLastArrival] = useState<{ from: string; to: string; id: number } | null>(null)
   const phaseRef = useRef<TransitionPhase>('idle')
   phaseRef.current = phase
   const pathnameRef = useRef(location.pathname)
@@ -84,9 +91,12 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       sfx.play(dir === 'back' ? 'back' : descriptor.sfx)
       // Leaving for a game → the music bed starts fading on the tap, under the wipe.
       musicClient.leavingFor(to)
-      // Reduced motion, `none` fallback → plain navigate, no overlay at all.
+      fromRef.current = pathnameRef.current
+      // Reduced motion, `none` fallback → plain navigate, no overlay at all — so the hop is complete
+      // as soon as the route changes; stamp the arrival now (the menu waits a beat before speaking).
       if (reduce && descriptor.reduced === 'none') {
         navigate(to, opts?.replace ? { replace: true } : undefined)
+        setLastArrival({ from: fromRef.current, to, id: ++arrivalSeq.current })
         return
       }
       pendingRef.current = { to, replace: opts?.replace }
@@ -120,12 +130,14 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setWithUsher(false)
     setReducedFade(false)
     pendingRef.current = null
+    setLastArrival({ from: fromRef.current, to: pathnameRef.current, id: ++arrivalSeq.current })
     if (routeKind(pathnameRef.current) !== 'menu') mascotBus.emit('welcome')
   }, [])
 
   const value: TransitionContextValue = {
     navigateWithTransition,
     goBack,
+    lastArrival,
     phase,
     direction,
     descriptor,

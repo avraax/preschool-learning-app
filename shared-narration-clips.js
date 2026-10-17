@@ -41,6 +41,7 @@ import { primaryColors, possibleTargets, mixingRules, recipeNamesFor } from './s
 import { spokenOrdlegWords } from './src/config/ordlegWords.ts'
 import { NUMBER_BROWSE_RATE as NUMBER_RATE } from './src/config/numberAutoplay.ts'
 import { allKreaLines } from './src/config/kreaPhrases.ts'
+import { allDoorNameLines } from './src/config/doors.ts'
 
 // Danish narration + English section voices, straight from the single source of voice truth.
 const DA = TTS_CONFIG.voices.primary // da-DK-ChristelNeural / da-DK
@@ -242,6 +243,10 @@ export function collectNarrationClips() {
   // Krea (Krea PRD-01 §2.3.15): the colour name on every crayon pick, the done line, the "Nyt papir?"
   // confirm and the welcome titles — every one built by `kreaPhrases.ts`, the module the games call.
   for (const t of allKreaLines()) da('krea', t)
+
+  // The four front-page doors say their name when the child arrives from home (Category restructure
+  // PRD-01 D9) — built by `doors.ts`, the module the menu calls.
+  for (const t of allDoorNameLines()) da('doors', t)
 
   // English words — spoken via the en-US voice, no lexicon.
   for (const w of allEnglishWords) en('english', w.en)

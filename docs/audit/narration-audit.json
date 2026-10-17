@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-17T08:29:05.311Z",
+  "updatedAt": "2026-10-17T12:45:05.505Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -25728,6 +25728,38 @@
       "text": "en ræv",
       "group": "krea",
       "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Bogstaver og Ord": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Bogstaver og Ord",
+      "group": "doors",
+      "updatedAt": 1792241105505
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tal": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tal",
+      "group": "doors",
+      "updatedAt": 1792241105505
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Engelsk": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Engelsk",
+      "group": "doors",
+      "updatedAt": 1792241105505
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Farver og Krea": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Farver og Krea",
+      "group": "doors",
+      "updatedAt": 1792241105505
     }
   }
 }

@@ -12,7 +12,10 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { doorTiles, getCategoryTheme, sectionTiles, type MenuTile } from '../../config/categoryThemes'
-import { SECTION_MENU_ROUTE, doorAtRoute } from '../../config/doors'
+import { SECTION_MENU_ROUTE, doorAtRoute, doorNameLine } from '../../config/doors'
+import { routeDepth } from '../../config/routeDepth'
+import { useLocation } from 'react-router-dom'
+import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { balancedRows } from '../../config/menuRows'
 import { fourDoorsShown } from '../../utils/fourDoors'
 import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
@@ -34,6 +37,10 @@ import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { BOAT_TILE_ID } from '../../config/boatGate'
 import { boatGameShown } from '../../utils/boatGame'
+
+// A breath after the reveal before the door's name, so it lands on a settled screen rather than on the
+// last frame of the wipe (and safely after the navigation's audio cleanup on the reduced-motion path).
+const DOOR_NAME_DELAY_MS = 250
 
 interface GameSelectionLayoutProps {
   categoryId: 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
@@ -91,6 +98,31 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
     accent: catTheme.accentColor,
     onActivate: () => navigateWithTransition(game.route),
   }))
+
+  // THE DOOR SAYS ITS NAME (D9/T7): once, when the child arrives here FROM HOME — never on the way back
+  // from a game, so a child who plays five games in a row does not hear "Farver og Krea" five times.
+  // Most of the audience cannot read the label, so this is how the word and the picture meet. It keys
+  // on the transition's COMPLETED hop (stamped after the reveal, i.e. after NavigationAudioCleanup), not
+  // on mount, which also fires on back-from-game. Prebaked line (`doorNameLine`), fire-and-forget.
+  const { pathname } = useLocation()
+  const lastArrival = useTransitionContext()?.lastArrival ?? null
+  const audio = useSimplifiedAudioHook({ componentId: 'GameSelectionLayout', autoInitialize: false })
+  const spokenArrival = useRef<number | null>(null)
+  const doorNameTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const doorName = door ? doorNameLine(door) : null
+  useEffect(() => {
+    if (!doorName || !lastArrival || lastArrival.to !== pathname) return
+    if (routeDepth(lastArrival.from) !== 0 || spokenArrival.current === lastArrival.id) return
+    spokenArrival.current = lastArrival.id
+    // The timer is cleared on UNMOUNT only (below) — a deps-change cleanup would cancel it on the
+    // first re-render (the attract loop re-renders this page) after the arrival was already marked.
+    doorNameTimer.current = setTimeout(() => { void audio.speak(doorName).catch(() => {}) }, DOOR_NAME_DELAY_MS)
+  }, [doorName, lastArrival, pathname, audio])
+  useEffect(() => () => {
+    // Reset the mark with the timer: StrictMode's dev remount runs this between two mounts, and a
+    // kept mark would then skip the re-run and leave the name unsaid.
+    if (doorNameTimer.current) { clearTimeout(doorNameTimer.current); spokenArrival.current = null }
+  }, [])
 
   // Idle / attract loop (PRD-02 §6): after ~8s idle, wiggle the mascot + exactly one tile.
   const [attractIndex, setAttractIndex] = useState(-1)
