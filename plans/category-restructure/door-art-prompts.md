@@ -3,8 +3,10 @@
 One render: the **Bogstaver og Ord** door (PRD §2 D7). Farver og Krea reuses the palette; Tal and
 Engelsk keep theirs.
 
-**Attach as STYLE references:** `art-src/icons/alphabet.png` (it is also the CONTENT reference — the
-book stack must look like this one) and `art-src/icons/colors.png`.
+**Attach as STYLE references:**
+- `C:\Source\preschool-learning-app\art-src\icons\alphabet.png` (also the CONTENT reference — the book
+  stack must look like this one)
+- `C:\Source\preschool-learning-app\art-src\icons\colors.png`
 
 **Paste this (one image, so no batch-of-4 opener):**
 
