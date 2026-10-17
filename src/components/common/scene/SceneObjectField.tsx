@@ -24,6 +24,7 @@ export interface SceneFieldItem {
   accent: string
   onActivate: () => void
   rotate?: number
+  isNew?: boolean               // "new in this release" glow (`newThisRelease.ts`)
 }
 
 interface SceneObjectFieldProps {
@@ -77,6 +78,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
               shadow={shadow}
               rotate={item.rotate ?? a.rotate ?? 0}
               onActivate={item.onActivate}
+              isNew={item.isNew}
               size={`clamp(${Math.round(98 * a.scale)}px, ${(15 * a.scale).toFixed(1)}vh, ${Math.round(158 * a.scale)}px)`}
               sx={{
                 position: 'absolute',
@@ -105,6 +107,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
       shadow={shadow}
       rotate={item.rotate ?? 0}
       onActivate={item.onActivate}
+      isNew={item.isNew}
       size={flowSize}
     />
   )

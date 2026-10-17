@@ -14,6 +14,7 @@ import { kreaShown } from '../../utils/kreaShown'
 import { fourDoorsShown } from '../../utils/fourDoors'
 import { DOORS } from '../../config/doors'
 import { balancedRows } from '../../config/menuRows'
+import { isNewDoor } from '../../config/newThisRelease'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import RewardRing from '../common/RewardRing'
 import ProfileChip from '../common/ProfileChip'
@@ -66,10 +67,12 @@ const homeCards = allHomeCards.filter((c) => c.id !== 'krea' || SHOW_KREA)
 // the sections. Each door is keyed by its PRIMARY section, which is also its anchor's key and its
 // colour. Production (gate off) keeps the five section objects above, byte-identical, until v1.3.
 const FOUR_DOORS = fourDoorsShown()
-interface HomeItem { key: HomeCardId; route: string; label: string; art: string }
+// `isNew`: the door holds a game new in this release (Tal + Farver og Krea in 1.3) → it glows for the
+// whole release (`newThisRelease.ts`). Only the four-door home carries it — that is the 1.3 front page.
+interface HomeItem { key: HomeCardId; route: string; label: string; art: string; isNew: boolean }
 const homeItems: HomeItem[] = FOUR_DOORS
-  ? DOORS.map((d) => ({ key: d.primary as HomeCardId, route: d.route, label: d.label, art: doorIconImages[d.id] }))
-  : homeCards.map((c) => ({ key: c.id, route: c.route, label: categoryThemes[c.id].name, art: sectionIconImages[c.id] }))
+  ? DOORS.map((d) => ({ key: d.primary as HomeCardId, route: d.route, label: d.label, art: doorIconImages[d.id], isNew: isNewDoor(d.id) }))
+  : homeCards.map((c) => ({ key: c.id, route: c.route, label: categoryThemes[c.id].name, art: sectionIconImages[c.id], isNew: false }))
 
 // The home mascot's footprint, ONE definition for both the mascot and the room reserved for it (PRD T4).
 // The seated doors' anchors were percentages of the WHOLE viewport, which is exactly the tuned-percentage
@@ -120,6 +123,7 @@ const HomePage: React.FC = () => {
       accent: cat.accentColor,
       rotate: a.rotate,
       onActivate: () => navigateWithTransition(item?.route ?? SECTION_ROUTES[a.section]),
+      isNew: item?.isNew ?? false,
     }
   })
 

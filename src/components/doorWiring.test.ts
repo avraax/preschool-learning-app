@@ -76,6 +76,20 @@ test('a door speaks its name only on arrival from home, from the transition\'s c
   assert.match(provider, /fromRef\.current = pathnameRef\.current/)
 })
 
+// The 1.3 "new" glow (`newThisRelease.ts`): the config can be right while nothing renders it.
+test('new games and their doors carry the release glow through to SceneObject', () => {
+  assert.match(codeOf('components/common/GameSelectionLayout.tsx'), /isNew: isNewGame\(gameId\)/)
+  assert.match(codeOf('components/home/HomePage.tsx'), /isNew: isNewDoor\(d\.id\)/)
+  const field = codeOf('components/common/scene/SceneObjectField.tsx')
+  assert.equal((field.match(/isNew=\{item\.isNew\}/g) ?? []).length, 2, 'both seated and flow objects must pass isNew')
+  const obj = codeOf('components/common/scene/SceneObject.tsx')
+  assert.match(obj, /const newGlow = idleGlow\(reduce \|\| !isNew, NEW_GLOW\)/)
+  assert.match(obj, /\{isNew && \(/)
+  // It must never fade OUT — the breathing floor stays well above zero.
+  const floor = Number(obj.match(/NEW_GLOW = \{ from: ([\d.]+)/)?.[1])
+  assert.ok(floor >= 0.4, `the glow dims to ${floor} — the owner asked that it never fades away`)
+})
+
 // A3: the colour alias is registered once, before the first render, from the same gate as the doors.
 test('the door colour alias is registered at startup from the four-door gate', () => {
   const main = codeOf('main.tsx')

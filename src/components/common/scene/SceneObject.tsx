@@ -7,6 +7,7 @@ import { useLivingCard } from '../../../hooks/useLivingCard'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { softShadow, contactShadow, usePointerTilt } from '../../../theme/depth'
 import { hexToRgba } from '../../../theme/tokens/helpers'
+import { idleGlow } from '../../../theme/idleMotion'
 import ThemedBurst, { type ThemedBurstHandle } from '../ThemedBurst'
 
 // SceneObject (Liveliness PRD-05 W1.1) — the tactile soft-3D object that REPLACES the frosted
@@ -40,7 +41,14 @@ interface SceneObjectProps {
   rotate?: number              // small resting tilt (deg)
   onActivate: () => void
   sx?: SxProps<Theme>          // caller positioning (e.g. absolute left/top for seating)
+  // "New in this release" (`src/config/newThisRelease.ts`): a warm halo behind the object that BREATHES
+  // in brightness but never fades out — it is always there for the whole release. CSS keyframes
+  // (`idleGlow`), so it costs nothing in JS; reduced motion → the same halo, static.
+  isNew?: boolean
 }
+
+// The new-glow's range: dim → bright, never invisible (owner: it must not stop or fade away).
+const NEW_GLOW = { from: 0.55, to: 1, durationS: 3.2 } as const
 
 const SceneObject: React.FC<SceneObjectProps> = ({
   art,
@@ -55,6 +63,7 @@ const SceneObject: React.FC<SceneObjectProps> = ({
   rotate = 0,
   onActivate,
   sx,
+  isNew = false,
 }) => {
   const theme = useTheme()
   const dark = theme.scene.dark
@@ -63,6 +72,7 @@ const SceneObject: React.FC<SceneObjectProps> = ({
   const burstRef = useRef<ThemedBurstHandle>(null)
   const [pressed, setPressed] = useState(false)
   const tilt = usePointerTilt({ strength: 7, disabled: reduce })
+  const newGlow = idleGlow(reduce || !isNew, NEW_GLOW)
 
   // Idle-attract: one-shot wiggle + gentle burst when the parent flags this object (motion only).
   useEffect(() => {
@@ -114,6 +124,34 @@ const SceneObject: React.FC<SceneObjectProps> = ({
           {/* Object + its grounded contact shadow. The shadow sits UNDER the art and shrinks a
               touch on press (the object lifts toward the camera). */}
           <Box sx={{ position: 'relative', width: size, aspectRatio: '1 / 1' }}>
+            {/* NEW-IN-THIS-RELEASE halo — warm gold, wider than the light-pool and behind it, so the
+                object reads as "lit up" rather than recoloured. Opacity-only keyframes (compositor). */}
+            {isNew && (
+              <Box
+                aria-hidden
+                data-bl-new-glow=""
+                {...newGlow.props}
+                sx={[
+                  {
+                    position: 'absolute',
+                    left: '50%',
+                    top: '46%',
+                    width: '185%',
+                    height: '185%',
+                    transform: 'translate(-50%, -50%)',
+                    borderRadius: '50%',
+                    // A near-white core + saturated gold rim: it has to stand out from the section's own
+                    // accent light-pool, which on Farver og Krea is already a warm orange.
+                    background: `radial-gradient(circle, ${hexToRgba('#FFFBE0', 0.95)} 0%, ${hexToRgba('#FFE066', 0.8)} 30%, ${hexToRgba('#FFC21F', 0.45)} 50%, ${hexToRgba('#FFC21F', 0)} 70%)`,
+                    filter: 'blur(5px)',
+                    opacity: reduce ? 0.85 : NEW_GLOW.to,
+                    zIndex: 0,
+                    pointerEvents: 'none',
+                  },
+                  newGlow.sx,
+                ]}
+              />
+            )}
             {/* Grounding light-pool: a soft glow behind the object that SEATS it (a pool of light
                 it rests in) and lifts it off busy or empty backdrops so it reads as the hero, not
                 a pasted icon. Warm-white core → accent-tinted edge; brighter on dark worlds. */}

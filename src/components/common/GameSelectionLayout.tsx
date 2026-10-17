@@ -17,6 +17,7 @@ import { routeDepth } from '../../config/routeDepth'
 import { useLocation } from 'react-router-dom'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { balancedRows } from '../../config/menuRows'
+import { isNewGame } from '../../config/newThisRelease'
 import { fourDoorsShown } from '../../utils/fourDoors'
 import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
 import { gameIconImages } from '../../assets/themes/icons/games'
@@ -97,6 +98,8 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
     label: game.title,
     accent: catTheme.accentColor,
     onActivate: () => navigateWithTransition(game.route),
+    // New in this release (1.3 only — `newThisRelease.ts` goes red when the version moves on).
+    isNew: isNewGame(gameId),
   }))
 
   // THE DOOR SAYS ITS NAME (D9/T7): once, when the child arrives here FROM HOME — never on the way back
