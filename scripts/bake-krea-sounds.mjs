@@ -25,12 +25,7 @@ const SR = 44100
 const ping = (a, f, t0, k) => `${a}*gte(t,${t0})*exp(-${k}*(t-${t0}))*sin(2*PI*${f}*(t-${t0}))`
 
 const CUES = {
-  // A wax crayon on paper: pink noise in the scratch band, pulsed at 10 Hz like short strokes. LOOPED
-  // while the finger moves, so it has no fades — 1.2 s is exactly 12 tremolo periods, no seam.
-  'krea-crayon': {
-    lufs: -30,
-    graph: `anoisesrc=color=pink:sample_rate=${SR}:duration=1.2:seed=7,highpass=f=900,lowpass=f=5200,tremolo=f=10:d=0.55`,
-  },
+  // (No crayon scratch: drawing and erasing are SILENT — owner, 2026-10-16, "remove that noise".)
   // Rainbow: a quick rising glassy arpeggio.
   'krea-shimmer': {
     lufs: -26,

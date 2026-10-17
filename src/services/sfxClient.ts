@@ -56,8 +56,8 @@ export type SfxCue =
   | 'harbour-ambience'
   | 'boat-motor'
   // Krea's studio (Krea PRD-01 §2.3.14), synthesised by scripts/bake-krea-sounds.mjs. No ambience: it is
-  // quiet while creating, only the tools make sound. `krea-crayon` is a LOOP held while a brush moves.
-  | 'krea-crayon'
+  // quiet while creating. Drawing and erasing make NO sound at all (owner, 2026-10-16: the crayon
+  // scratch loop read as noise) — only picking, stamping, filling, undo and the paper do.
   | 'krea-shimmer'
   | 'krea-twinkle'
   | 'krea-stamp'
@@ -106,7 +106,6 @@ const CUE_FILES: Record<SfxCue, string> = {
   splash: '/sounds/ui/flip.mp3',
   'harbour-ambience': '/sounds/ui/harbour-ambience.mp3',
   'boat-motor': '/sounds/ui/boat-motor.mp3',
-  'krea-crayon': '/sounds/ui/krea-crayon.mp3',
   'krea-shimmer': '/sounds/ui/krea-shimmer.mp3',
   'krea-twinkle': '/sounds/ui/krea-twinkle.mp3',
   'krea-stamp': '/sounds/ui/krea-stamp.mp3',
@@ -158,8 +157,6 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   // atmosphere; owner 2026-10-15 asked for "a bit louder" than the first ~-42) and ~-34 for the motor.
   'harbour-ambience': 0.5,
   'boat-motor': 0.4,
-  // Baked -30 LUFS loop → ~-36 effective: it runs under every stroke, so it stays the quietest tool.
-  'krea-crayon': 0.5,
   'krea-shimmer': 0.45,
   'krea-twinkle': 0.45,
   'krea-stamp': 0.6,

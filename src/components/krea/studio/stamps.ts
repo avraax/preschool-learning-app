@@ -1,7 +1,8 @@
 // The stamp tray (Krea PRD-01 §2.2.5): EXISTING baked game art, no new renders. Ids are stable data —
 // a stamp on a resumed paper is looked up by id, so renaming one drops it from a resumed picture.
 import sol from '../../../assets/games/farver/sun.webp'
-import hjerte from '../../../assets/games/farver/heart.webp'
+// The Farver heart has a flattened left lobe; Krea's is built whole from its right lobe (optimize-theme-art.mjs krea).
+import hjerte from '../../../assets/games/krea/stamp-hjerte.webp'
 import stjerne from '../../../assets/games/farver/star_yellow.webp'
 import blomst from '../../../assets/games/farver/flower_orange.webp'
 import fisk from '../../../assets/games/farver/fish_orange.webp'

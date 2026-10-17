@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-16T21:57:37.816Z",
+  "updatedAt": "2026-10-17T07:17:54.668Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -13726,7 +13726,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "stjerne",
-      "group": "english-da",
+      "group": "krea",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|træ": {
@@ -13742,7 +13742,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "blomst",
-      "group": "english-da",
+      "group": "krea",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|regn": {
@@ -25480,6 +25480,22 @@
       "text": "Se, regnbuen skinner!",
       "group": "krea",
       "updatedAt": 1792187857816
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hjerte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hjerte",
+      "group": "krea",
+      "updatedAt": 1792221474668
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sommerfugl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sommerfugl",
+      "group": "krea",
+      "updatedAt": 1792221474668
     }
   }
 }

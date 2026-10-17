@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { COVERAGE_PASS, NEVER_FAIL_STROKES, coverage, guideSamples, judgeStep, toleranceInPaper } from './guideMatch.ts'
+import { COVERAGE_PASS, HELP_AFTER_FAR, NEVER_FAIL_STROKES, STROKES_CAP, coverage, guideSamples, judgeStep, toleranceInPaper } from './guideMatch.ts'
 import { subjectXToPaper } from '../../../config/kreaShapes.ts'
 import { MIRROR_AXIS, type GuideStep } from '../../../config/kreaSubjects.ts'
 import { KREA_GUIDE } from '../../../config/difficulty.ts'
@@ -32,14 +32,48 @@ test('60% of the guide is the pass mark, checked against the step', () => {
   assert.equal(judgeStep(lineStep, [a, b], 30).passed, true)
 })
 
-test('never fail: the 3rd stroke that still misses is accepted anyway', () => {
-  const far = [10, 10, 20, 20]
+test('never fail, for wobbly hands: the 3rd stroke NEAR the guide that still misses is accepted', () => {
+  // Just outside the 30-unit band (so it doesn't cover the guide) but well inside the near zone.
+  const wobbly = along(45, 0.5)
   assert.equal(NEVER_FAIL_STROKES, 3)
-  assert.equal(judgeStep(lineStep, [far], 30).passed, false)
-  assert.equal(judgeStep(lineStep, [far, far], 30).passed, false)
-  const third = judgeStep(lineStep, [far, far, far], 30)
+  assert.equal(judgeStep(lineStep, [wobbly], 30).passed, false)
+  assert.equal(judgeStep(lineStep, [wobbly, wobbly], 30).passed, false)
+  const third = judgeStep(lineStep, [wobbly, wobbly, wobbly], 30)
   assert.equal(third.passed, true)
   assert.equal(third.waved, true)
+})
+
+// Owner, 2026-10-16: "if I draw way outside the lines it still counts". A stroke far from the guide
+// stays on the paper but does not move the step on; three of them in a row ask for HELP (the demo
+// again), and only STROKES_CAP strokes accept a step whatever they were.
+test('strokes far from the guide do not count: help after 3, accepted only at the cap', () => {
+  const far = [10, 10, 20, 20, 40, 40]
+  assert.equal(HELP_AFTER_FAR, 3)
+  assert.equal(STROKES_CAP, 6)
+  const one = judgeStep(lineStep, [far], 30)
+  assert.deepEqual([one.passed, one.near, one.far, one.help], [false, 0, 1, false])
+  const three = judgeStep(lineStep, [far, far, far], 30)
+  assert.equal(three.passed, false, 'three strokes far away must not pass the step')
+  assert.equal(three.help, true, 'three far strokes in a row should bring the demo back')
+  assert.equal(judgeStep(lineStep, [far, far, far, far], 30).help, false)
+  assert.equal(judgeStep(lineStep, Array(5).fill(far), 30).passed, false)
+  const capped = judgeStep(lineStep, Array(6).fill(far), 30)
+  assert.equal(capped.passed, true, 'never stuck: the cap accepts the step')
+  assert.equal(capped.waved, true)
+})
+
+test('a scribble over everything does not pass: most of its ink is far from the line', () => {
+  // A zig-zag across the whole paper height that crosses the guide line many times.
+  const zig: number[] = []
+  for (let i = 0; i <= 40; i++) zig.push(gx0 + ((gx1 - gx0) * i) / 40, i % 2 ? 100 : 850)
+  const j = judgeStep(lineStep, [zig], 30)
+  assert.equal(j.near, 0, 'a page-wide scribble is not "about" the guide')
+  assert.equal(j.passed, false)
+})
+
+test('a far stroke beside a good one does not cancel it', () => {
+  const far = [10, 10, 20, 20, 40, 40]
+  assert.equal(judgeStep(lineStep, [far, along(0, 0.7)], 30).passed, true)
 })
 
 test('a mirror step accepts the child drawing the OTHER side', () => {

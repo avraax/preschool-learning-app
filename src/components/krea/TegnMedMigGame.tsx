@@ -148,7 +148,6 @@ const TegnMedMigGame: React.FC = () => {
     return () => {
       mounted.current = false
       for (const t of Object.values(pending)) if (t) clearTimeout(t)
-      sfx.stopLoop('krea-crayon', 0)
     }
   }, [])
 
@@ -238,7 +237,6 @@ const TegnMedMigGame: React.FC = () => {
     markInteracted()
     sfx.play('tap')
     audio.cancelCurrentAudio()
-    sfx.stopLoop('krea-crayon', 0)
     setSubjectId(null)
     setConfirmOpen(false)
     setParams((prev) => {
@@ -262,6 +260,9 @@ const TegnMedMigGame: React.FC = () => {
         const ink = drawing.strokes.slice(p.start).flatMap((x) => (x.tool === 'stamp' || x.tool === 'eraser' ? [] : [x.points]))
         const w = paperRef.current?.getBoundingClientRect().width ?? 0
         const verdict = judgeStep(step, ink, toleranceInPaper(tuning.tolerancePx, w))
+        // Three strokes in a row far from the guide: they stay on the paper but don't count — show the
+        // way again (demo pencil + pulse + the step's line) instead of waving the step through.
+        if (verdict.help) helpWanted.current = true
         if (!verdict.passed) return { ...p, drawing }
         return { ...p, drawing, step: p.step + 1, start: drawing.strokes.length }
       })
@@ -290,12 +291,21 @@ const TegnMedMigGame: React.FC = () => {
     setHint(false)
     setDemoKey(null)
     if (t === 'rainbow') sfx.play('krea-shimmer')
-    sfx.startLoop('krea-crayon', 60)
   }
   const onStrokeEnd = () => {
-    sfx.stopLoop('krea-crayon', 120)
     armStall()
   }
+
+  // Help after far strokes (`judgeStep`'s `help`), raised from the commit and acted on here — the state
+  // updater may run twice under StrictMode, so it only sets a flag.
+  const helpWanted = useRef(false)
+  useEffect(() => {
+    if (!helpWanted.current || !current) return
+    helpWanted.current = false
+    setDemoKey(`${stepKey}:help:${Date.now()}`)
+    setHint(true)
+    speak(current.line)
+  }, [piece, current, stepKey, speak])
 
   // Picking a crayon SAYS ITS NAME (a Farver lesson for free); fire-and-forget, a fast child's earlier
   // names are cancelled (one audio at a time).
@@ -423,7 +433,8 @@ const TegnMedMigGame: React.FC = () => {
                   onStrokeEnd={onStrokeEnd}
                 />
               </Box>
-              {tuning.demo && <DemoPencil step={current} runKey={demoKey} reduce={reduce} />}
+              {/* The demo runs at every step at Let, and at any level as HELP after three far strokes. */}
+              {demoKey && <DemoPencil step={current} runKey={demoKey} reduce={reduce} />}
             </Box>
           </Paper>
         }

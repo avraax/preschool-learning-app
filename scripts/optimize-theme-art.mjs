@@ -663,6 +663,44 @@ async function optimizeKrea() {
       console.log(`  ${('beads/' + id).padEnd(16)} → beads/${id}.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB`)
     }
   }
+  // Fri Tegning's heart picture: the Farver heart render has a FLATTENED left lobe (owner spotted it in
+  // the stamp tray), the right lobe is whole — and a heart is symmetric, so the whole heart is the right
+  // half plus its mirror. Built from the shipped WebP (real alpha), no re-key.
+  {
+    const src = join(ROOT, 'src', 'assets', 'games', 'farver', 'heart.webp')
+    const { data, info } = await sharp(await readFile(src)).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    const { width: w, height: h } = info
+    let minX = w, maxX = -1
+    for (let q = 0; q < w * h; q++) {
+      if (data[q * 4 + 3] <= 24) continue
+      const x = q % w
+      if (x < minX) minX = x
+      if (x > maxX) maxX = x
+    }
+    // The axis is the dip between the lobes: the top-most opaque row's two humps meet at the column
+    // with the LOWEST first-opaque row inside the middle third.
+    let axis = Math.round((minX + maxX) / 2), deepest = -1
+    for (let x = Math.round(w / 3); x < Math.round((2 * w) / 3); x++) {
+      let y = 0
+      while (y < h && data[(y * w + x) * 4 + 3] <= 24) y++
+      if (y > deepest) {
+        deepest = y
+        axis = x
+      }
+    }
+    const half = maxX - axis + 1
+    const right = await sharp(data, { raw: { width: w, height: h, channels: 4 } }).extract({ left: axis, top: 0, width: half, height: h }).png().toBuffer()
+    const left = await sharp(right).flop().png().toBuffer()
+    const whole = await sharp({ create: { width: half * 2, height: h, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+      .composite([{ input: left, left: 0, top: 0 }, { input: right, left: half, top: 0 }])
+      .png()
+      .toBuffer()
+    const tmp = join(KREA_OUT, '.stamp-hjerte.png')
+    await writeFile(tmp, whole)
+    await retrimSprite(tmp, join(KREA_OUT, 'stamp-hjerte.webp'), { size: 320, fill: 0.9 })
+    await (await import('node:fs/promises')).unlink(tmp)
+    console.log(`  ${'stamp-hjerte'.padEnd(16)} → stamp-hjerte.webp (whole heart from the right lobe, axis x=${axis})`)
+  }
   const sec = find('section-icon')
   if (sec) {
     // Matched to the five shipped section icons, which are 512² with their ink at 0.81 of the frame:

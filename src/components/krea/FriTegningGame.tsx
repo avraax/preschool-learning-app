@@ -10,6 +10,7 @@ import { kreaSession } from '../../services/kreaSession'
 import { KREA_PALETTE } from '../../config/difficulty'
 import { paletteFor } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, KREA_RAINBOW_NAME, NEW_PAPER_LINE } from '../../config/kreaPhrases'
+import { KREA_STAMP_NAME, type KreaStampId } from '../../config/kreaStamps'
 import { PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import DrawingSurface from './canvas/DrawingSurface'
 import {
@@ -80,11 +81,10 @@ const FriTegningGame: React.FC = () => {
     }, ms)
   }
 
-  // Unmount hygiene: every timer, and the scratch loop, in their own empty-dep effect.
+  // Unmount hygiene: every timer, in its own empty-dep effect.
   useEffect(
     () => () => {
       for (const t of Object.values(timers.current)) if (t) clearTimeout(t)
-      sfx.stopLoop('krea-crayon', 0)
     },
     [],
   )
@@ -125,15 +125,8 @@ const FriTegningGame: React.FC = () => {
   const onStrokeStart = (t: Tool) => {
     markInteracted()
     audio.updateUserInteraction()
+    // Drawing and erasing are SILENT (owner, 2026-10-16); a stamp still lands with its thump.
     if (t === 'stamp') sfx.play('krea-stamp')
-    else if (t === 'glitter') sfx.play('krea-twinkle')
-    else {
-      if (t === 'rainbow') sfx.play('krea-shimmer')
-      sfx.startLoop('krea-crayon', 60)
-    }
-  }
-  const onStrokeEnd = (t: Tool) => {
-    if (t !== 'stamp' && t !== 'glitter') sfx.stopLoop('krea-crayon', 120)
   }
 
   // The crayon in hand is a colour OR the rainbow; tapping the crayon tool picks it back up, whichever
@@ -156,6 +149,17 @@ const FriTegningGame: React.FC = () => {
     setRainbowInHand(false)
     setTool('crayon')
     void audio.speak(KREA_COLOR_NAME[c]).catch(() => {})
+  }
+
+  // A picture SAYS ITS NAME too (owner, 2026-10-16), exactly like a crayon.
+  const pickStamp = (id: string) => {
+    markInteracted()
+    audio.updateUserInteraction()
+    audio.cancelCurrentAudio()
+    sfx.play('tap')
+    setStamp(id)
+    const name = KREA_STAMP_NAME[id as KreaStampId]
+    if (name) void audio.speak(name).catch(() => {})
   }
 
   const pickRainbow = () => {
@@ -271,7 +275,6 @@ const FriTegningGame: React.FC = () => {
             disabled={!drawingEnabled}
             onCommit={onCommit}
             onStrokeStart={onStrokeStart}
-            onStrokeEnd={onStrokeEnd}
           />
         </Paper>
         {side}
@@ -284,7 +287,7 @@ const FriTegningGame: React.FC = () => {
             <CrayonPalette colors={palette} color={color} inHand={tool === 'crayon' || tool === 'rainbow' ? tool : null} disabled={!drawingEnabled || !crayonInHand} onPick={pickColor} onPickRainbow={pickRainbow} />
           </Box>
           <Box aria-hidden={tool !== 'stamp'} sx={{ visibility: tool === 'stamp' ? 'visible' : 'hidden' }}>
-            <StampTray stamps={STAMPS} stamp={stamp} disabled={!drawingEnabled || tool !== 'stamp'} onPick={(id) => { markInteracted(); sfx.play('tap'); setStamp(id) }} />
+            <StampTray stamps={STAMPS} stamp={stamp} disabled={!drawingEnabled || tool !== 'stamp'} onPick={pickStamp} />
           </Box>
         </Box>
       </Box>

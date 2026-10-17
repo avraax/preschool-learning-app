@@ -12,6 +12,7 @@
 // Explicit `.ts` extension: this module is in `shared-narration-clips.js`'s plain-Node import graph.
 
 import { PALETTE_12, type CrayonColor } from './kreaPalette.ts'
+import { KREA_STAMP_IDS, KREA_STAMP_NAME } from './kreaStamps.ts'
 import { allSubjectLines } from './kreaSubjects.ts'
 import { allPageLines } from './kreaPages.ts'
 import { allBeadLines } from './kreaBeads.ts'
@@ -52,6 +53,7 @@ export const NEW_BOARD_LINE = 'Vil du have en ny plade? Dine perler forsvinder.'
 export function allKreaLines(): string[] {
   const lines: string[] = [...KREA_WELCOME_TITLES, NEW_PAPER_LINE, NEW_BOARD_LINE, KREA_RAINBOW_NAME]
   for (const c of KREA_COLORS) lines.push(KREA_COLOR_NAME[c])
+  for (const id of KREA_STAMP_IDS) lines.push(KREA_STAMP_NAME[id])
   lines.push(...allSubjectLines(), ...allPageLines(), ...allBeadLines())
   return lines
 }
