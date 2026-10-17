@@ -1,9 +1,9 @@
-// "NEW IN THIS RELEASE" — the soft glow on what v1.3 added (owner, 2026-10-17).
+// "NEW IN THIS RELEASE" — the marker on what v1.3 added (owner, 2026-10-17).
 //
 // The four Krea games, Fyld Båden, and the two front-page doors they stand behind (Tal, Farver og Krea)
-// breathe a warm halo for the WHOLE of 1.3, every visit, for every child — owner's choice over the usual
-// "until opened" rule. No text ("NY" is unreadable to the audience) and no emoji (CLAUDE.md): a glow is
-// the one marker a pre-reader can see.
+// carry three twinkling white stars (`NewSparkles`) for the WHOLE of 1.3, every visit, for every child —
+// owner's choice over the usual "until opened" rule. It replaced a soft gold halo the owner rejected as
+// smudged and too wide. No text ("NY" is unreadable to the audience) and no emoji (CLAUDE.md).
 //
 // IT MUST NOT OUTLIVE 1.3. `newThisRelease.test.ts` reads package.json and goes RED the moment the
 // version leaves 1.3.x, so bumping to 1.4.0 cannot ship with a stale glow. The 1.4 fix is to empty

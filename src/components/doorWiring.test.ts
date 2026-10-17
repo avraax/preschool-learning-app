@@ -82,12 +82,12 @@ test('new games and their doors carry the release glow through to SceneObject', 
   assert.match(codeOf('components/home/HomePage.tsx'), /isNew: isNewDoor\(d\.id\)/)
   const field = codeOf('components/common/scene/SceneObjectField.tsx')
   assert.equal((field.match(/isNew=\{item\.isNew\}/g) ?? []).length, 2, 'both seated and flow objects must pass isNew')
-  const obj = codeOf('components/common/scene/SceneObject.tsx')
-  assert.match(obj, /const newGlow = idleGlow\(reduce \|\| !isNew, NEW_GLOW\)/)
-  assert.match(obj, /\{isNew && \(/)
-  // It must never fade OUT — the breathing floor stays well above zero.
-  const floor = Number(obj.match(/NEW_GLOW = \{ from: ([\d.]+)/)?.[1])
-  assert.ok(floor >= 0.4, `the glow dims to ${floor} — the owner asked that it never fades away`)
+  assert.match(codeOf('components/common/scene/SceneObject.tsx'), /\{isNew && <NewSparkles \/>\}/)
+  // The owner's pick: three WHITE stars, twinkling through the shared CSS vocabulary (never a JS loop).
+  const sparkles = codeOf('components/common/scene/NewSparkles.tsx')
+  assert.equal((sparkles.match(/delayS: [\d.]+ \}/g) ?? []).length, 3, 'three stars')
+  assert.match(sparkles, /fill="#FFFFFF"/)
+  assert.match(sparkles, /const twinkle = idleTwinkle\(reduce, \{ delayS \}\)/)
 })
 
 // A3: the colour alias is registered once, before the first render, from the same gate as the doors.

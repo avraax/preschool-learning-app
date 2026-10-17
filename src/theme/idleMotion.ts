@@ -226,6 +226,26 @@ export const idleGlow = (
   )
 }
 
+// --- twinkle ------------------------------------------------------------------------------------
+/**
+ * The "new in this release" star (`NewSparkles`): grows from 55% to full size with a small turn while
+ * it brightens, then settles back — a twinkle, never a fade-out (it is always at least 35% visible).
+ * Staggered by `delayS` so a cluster of three never pulses in unison.
+ */
+export const idleTwinkle = (reduce: boolean, { durationS = 1.8, delayS = 0 }: { durationS?: number; delayS?: number } = {}): IdleMotionBundle => {
+  if (reduce) return IDLE_NONE
+  const name = 'blIdleTwinkle'
+  return bundle(
+    name,
+    {
+      '0%, 100%': { transform: 'scale(0.55) rotate(0deg)', opacity: 0.35 },
+      '50%': { transform: 'scale(1) rotate(20deg)', opacity: 1 },
+    },
+    `${name} ${durationS}s ease-in-out ${delayS}s infinite`,
+    { animate: { scale: [0.55, 1, 0.55], rotate: [0, 20, 0], opacity: [0.35, 1, 0.35] }, durationS, delayS },
+  )
+}
+
 // --- equalizer --------------------------------------------------------------------------------
 /**
  * `ListenHero`'s equalizer bar — framer's `{ scaleY: [0.4, 1, 0.5, 0.9, 0.4] }`, 0.9s, staggered
