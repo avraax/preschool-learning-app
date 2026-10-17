@@ -332,7 +332,7 @@ en-GB — `Learn Danish letters, numbers and colours — and draw, colour in and
 **App Review note, 1.3 addition** (append to the 1.2 note):
 *"NEW IN 1.3: a drawing area (Krea) and a place-value game (Fyld Båden). Drawings and bead boards exist
 only on the device for the current session — nothing is saved, uploaded, shared or shown to anyone
-else; there is no gallery, export or chat. The adult area gains a "Bedøm appen" row that opens the App
+else; there is no gallery, export or chat. The settings area gains a "Bedøm appen" row that opens the App
 Store's review page; like every external link it sits behind the parental gate."*
 
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
@@ -706,7 +706,7 @@ node -e "…" # ageRatingDeclaration → kidsAgeBand   ← the authoritative che
   capabilities, medical/wellness, violent themes). Everything here answers to the mildest option; the app
   has no violence, no user-generated content, no chat, no ads, no gambling, no web browsing.
 - **App Review Information.** Contact details, plus **notes in English** stating: no account is required
-  (just tap and play), the adult area is behind a passcode, the passcode for review is `<supply one>`, and
+  (just tap and play), the settings area is behind a passcode, the passcode for review is `<supply one>`, and
   it is Danish-only by design. **Until 1.1 the note also said "the app requests no device permissions at
   all" — FALSE from 1.2**, which asks for notifications. Replace that clause with the reminders note:
   *"Optional weekly reminders are local notifications scheduled on the device. The adult is asked once on
@@ -737,7 +737,7 @@ node -e "…" # ageRatingDeclaration → kidsAgeBand   ← the authoritative che
 | Name availability | **Only resolvable in App Store Connect** — needs the paid account |
 | Azure voice redistribution rights | **RESOLVED** — permitted; see PRD §3.11 |
 | Azure paid-tier vs F0 for the prebake | **Waiting on you** — Azure portal check, PRD step C0 |
-| AI-voice disclosure in the adult area | **TODO** — PRD item B9 |
+| AI-voice disclosure in the settings area | **TODO** — PRD item B9 |
 | Export compliance answer | **UNKNOWN** — read Apple's page at submission time |
 | Everything requiring the account | **Waiting on you** — enrolment, 99 USD, trader status |
 
