@@ -732,8 +732,15 @@ export const BEAD_LAYOUT = {
   /**
    * A bowl cell. The bowls stand in 2 columns beside the board (landscape), or in 3 ROWS under it
    * (portrait) — 3, not 2, so the pattern card and the way on fit beside them in that row (W3).
+   *
+   * Grown from 64 (owner, 2026-10-17: "the bowls and the beads in them are too small"; the heap beads
+   * are a % of the bowl, so they grow with it). Each size is the most that costs the BOARD nothing it
+   * needs: landscape 84 is exactly where the board stops being height-limited on the iPad stage (2×84+8
+   * + side + gaps = 960 − 584), and 6 rows (6×84 + 5×8 = 544) still fit its 584 height; portrait 70
+   * keeps Svær's 16×16 above its 35 px floor (`kreaBeads.test.ts` measures both).
    */
-  bowlPx: 64,
+  bowlPx: 84,
+  portraitBowlPx: 70,
   bowlGapPx: 8,
   portraitBowlRows: 3,
   /** The side column (landscape): the picker door, the pattern card, the way on. */
@@ -751,6 +758,6 @@ export function boardPitch(n: number, stage: { w: number; h: number }, orientati
   const box =
     orientation === 'landscape'
       ? Math.min(stage.w - bowlsAcross - L.sidePx - 2 * L.gapPx, stage.h)
-      : Math.min(stage.w, stage.h - (L.portraitBowlRows * L.bowlPx + (L.portraitBowlRows - 1) * L.bowlGapPx) - L.gapPx)
+      : Math.min(stage.w, stage.h - (L.portraitBowlRows * L.portraitBowlPx + (L.portraitBowlRows - 1) * L.bowlGapPx) - L.gapPx)
   return box / (n + L.rimPitches)
 }

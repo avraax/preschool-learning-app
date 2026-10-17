@@ -65,8 +65,10 @@ import { KreaPicker } from './studio/KreaPicker'
 // ONE RESOLVER, TWO GESTURES (house rule, drag-and-drop.md): drag a bead out of a bowl onto a peg, or tap
 // a bowl (one bead lifts out of it, in hand) and then tap a peg. Both end in `resolve()`, the only caller
 // of `placeBead` here — `perleplade.test.ts` fails the build if a second path appears. A placed bead comes
-// off the same two ways: drag it back to the bowls, or tap it with nothing in hand (it lifts off; tap a
-// bowl to put it away, or another peg to move it). All by hand — no tweezers (owner, 2026-10-16).
+// off the same two ways: drag it back to the bowls, or tap it with nothing in hand — it goes home to its
+// bowl, which shows it lifted for `RETURN_SHOW_MS` so the child sees where it went, then settles back to
+// normal (owner, 2026-10-17; it used to stay "in hand" until another tap). All by hand — no tweezers
+// (owner, 2026-10-16).
 //
 // Two kinds of item on the picture grid:
 //   - COPY A PATTERN (§2.3): a card beside the board. A peg takes only its pattern colour; anything else
@@ -102,6 +104,9 @@ const itemById = (id: string | null): Item | null => {
 }
 
 type Grab = { from: 'bowl'; colour: BeadColor } | { from: 'peg'; peg: number; colour: BeadColor } | null
+
+// How long a tapped-off bead is shown lifted over its bowl before it settles back in (owner: 500 ms).
+const RETURN_SHOW_MS = 500
 type Stage = 'building' | 'finished' | 'alive' | 'shown'
 
 const PerlepladeGame: React.FC = () => {
@@ -141,6 +146,17 @@ const PerlepladeGame: React.FC = () => {
     setBoardState(b)
   }
   const [held, setHeld] = useState<BeadColor | null>(null)
+  // A bead tapped off the board, shown lifted over its bowl for RETURN_SHOW_MS on its way home. It is
+  // only a LOOK — not in hand, so a tap on a peg meanwhile places nothing.
+  const [returning, setReturning] = useState<BeadColor | null>(null)
+  const returnTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (returnTimer.current) clearTimeout(returnTimer.current) }, [])
+  const showReturn = (c: BeadColor | null) => {
+    if (returnTimer.current) clearTimeout(returnTimer.current)
+    returnTimer.current = null
+    setReturning(c)
+    if (c) returnTimer.current = setTimeout(() => setReturning(null), RETURN_SHOW_MS)
+  }
   const [grab, setGrab] = useState<Grab>(null)
   const [lastPlaced, setLastPlaced] = useState<{ peg: number; n: number } | null>(null)
   const [hint, setHint] = useState<BeadColor | null>(null)
@@ -248,6 +264,7 @@ const PerlepladeGame: React.FC = () => {
     if (!enabled) return
     markInteracted()
     audio.updateUserInteraction()
+    showReturn(null)
     if (held === c) {
       sfx.play('bead-back')
       setHeld(null)
@@ -272,9 +289,10 @@ const PerlepladeGame: React.FC = () => {
       return
     }
     if (peg >= 0 && b.beads[peg]) {
+      // Off the board and home to its bowl: shown lifted there briefly, then it settles (never in hand).
       const lifted = removeBead(b, peg)
       setBoard(lifted.board)
-      setHeld(lifted.colour)
+      showReturn(lifted.colour)
       sfx.play('bead-pick')
       return
     }
@@ -329,6 +347,7 @@ const PerlepladeGame: React.FC = () => {
     if (!b || !enabled) return
     markInteracted()
     audio.updateUserInteraction()
+    showReturn(null)
     const p = pointOf(e.activatorEvent)
     liftPitches.current = (e.activatorEvent as PointerEvent | null)?.pointerType === 'mouse' ? 0 : TOUCH_LIFT_PITCHES
     startPt.current = p
@@ -501,7 +520,7 @@ const PerlepladeGame: React.FC = () => {
 
   // ----- render ------------------------------------------------------------------------------------
   const cssVars = {
-    '--bead-bowl': `${BEAD_LAYOUT.bowlPx}px`,
+    '--bead-bowl': `${landscape ? BEAD_LAYOUT.bowlPx : BEAD_LAYOUT.portraitBowlPx}px`,
     '--bead-bowl-gap': `${BEAD_LAYOUT.bowlGapPx}px`,
     '--bead-bowl-rows': BEAD_LAYOUT.portraitBowlRows,
     '--bead-side': `${BEAD_LAYOUT.sidePx}px`,
@@ -653,7 +672,7 @@ const PerlepladeGame: React.FC = () => {
           ]}
         >
           <Box sx={{ gridArea: 'bowls', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-            <BeadBowls colours={palette} held={held} glow={hint} dragging={grab?.from === 'bowl' ? grab.colour : null} disabled={!enabled} orientation={orientation} onTap={tapBowl} />
+            <BeadBowls colours={palette} held={held ?? returning} glow={hint} dragging={grab?.from === 'bowl' ? grab.colour : null} disabled={!enabled} orientation={orientation} onTap={tapBowl} />
           </Box>
           <Box sx={{ gridArea: 'board', minWidth: 0, minHeight: 0, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', containerType: 'size' }}>
             <Box sx={{ width: 'min(100cqw, 100cqh)', height: 'min(100cqw, 100cqh)' }}>

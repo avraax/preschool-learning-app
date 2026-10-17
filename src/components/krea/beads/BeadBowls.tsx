@@ -16,15 +16,18 @@ import type { BeadColor } from './beadBoard'
 
 // The heap in the bowl's mouth: fixed spots (% of the bowl box), so every bowl looks the same and
 // nothing is random.
-// Centred in the mouth (x 50%, y ~33% of the keyed render): two at the back, three in front, each 22%
-// wide, so these are left/top = centre − 11. Index 2 (front middle) is the one that leaves.
+// Centred in the mouth (x 50%, y ~33% of the keyed render): two at the back, three in front, each
+// HEAP_BEAD wide, so these are left/top = centre − HEAP_BEAD/2. Index 2 (front middle) is the one that
+// leaves. The beads grew 22% → 27% of the bowl (owner, 2026-10-17: "the beads in the bowls are too
+// small"), so neighbours now overlap a little — a heap, not a row of separate dots.
+const HEAP_BEAD = 27
 const HEAP = [
-  { x: 29, y: 14 },
-  { x: 49, y: 14 },
-  { x: 39, y: 25 },
-  { x: 19, y: 25 },
-  { x: 59, y: 25 },
-]
+  { cx: 40, cy: 25 },
+  { cx: 60, cy: 25 },
+  { cx: 50, cy: 36 },
+  { cx: 30, cy: 36 },
+  { cx: 70, cy: 36 },
+].map(({ cx, cy }) => ({ x: cx - HEAP_BEAD / 2, y: cy - HEAP_BEAD / 2 }))
 
 export const BeadBowls: React.FC<{
   colours: readonly BeadColor[]
@@ -82,8 +85,8 @@ export const BeadBowls: React.FC<{
                   position: 'absolute',
                   left: `${p.x}%`,
                   top: `${p.y}%`,
-                  width: '22%',
-                  height: '22%',
+                  width: `${HEAP_BEAD}%`,
+                  height: `${HEAP_BEAD}%`,
                   // The top bead of the heap is the one that leaves: hidden while it is in the finger or in hand.
                   visibility: i === 2 && (dragging === c || held === c) ? 'hidden' : 'visible',
                 }}
