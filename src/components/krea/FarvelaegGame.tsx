@@ -16,13 +16,12 @@ import { KREA_PAGES, pageById } from '../../config/kreaPages'
 import { KREA_TASKS_IN_ROUND } from '../../config/kreaSubjects'
 import { PAGE_REGIONS } from '../../config/kreaPageRegions'
 import { PAGE_ART } from '../../assets/games/krea/pages'
-import { KREA_ART } from '../../assets/games/krea'
 import FillSurface from './canvas/FillSurface'
 import { CRAYON_HEX } from './canvas/brushes'
 import { allFilled, decodeLabels, deserialiseFills, fillsOf, serialiseFills, unfilled, type FillAction } from './canvas/regionFill'
-import type { CrayonColor } from './canvas/strokeModel'
+import type { CrayonColor, Tool } from './canvas/strokeModel'
 import { StudioBackdrop, Paper } from './studio/StudioScene'
-import { CrayonPalette, StudioButton } from './studio/StudioControls'
+import { CrayonPalette, ToolRow } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { playAlive, swapPaper } from './studio/alive'
 import { KreaPicker } from './studio/KreaPicker'
@@ -271,10 +270,11 @@ const FarvelaegGame: React.FC = () => {
     setTool('crayon')
     speak(KREA_COLOR_NAME[c])
   }
-  const pickEraser = () => {
+  // Same as Fri Tegning: a tap on a tool picks THAT tool (no toggling), and the crayon row follows it.
+  const pickTool = (t: Tool) => {
     markInteracted()
     sfx.play('tap')
-    setTool((t) => (t === 'eraser' ? 'crayon' : 'eraser'))
+    if (t === 'crayon' || t === 'eraser') setTool(t)
   }
 
   const doUndo = () => {
@@ -334,7 +334,7 @@ const FarvelaegGame: React.FC = () => {
   // ----- render ------------------------------------------------------------------------------------
   if (!page || !info) {
     return (
-      <GameShell categoryId="krea" title="Farvelæg" backRoute="/krea" dense guide={false} lightScene>
+      <GameShell categoryId="krea" title="Farvelæg" backRoute="/krea" dense guide={false} lightScene inlineTitle>
         <StudioBackdrop />
         <KreaPicker items={KREA_PAGES.map((p) => ({ id: p.id, label: p.name, picture: <PageCard id={p.id} actions={loadPiece(p.id)?.actions ?? null} /> }))} onPick={openPage} />
       </GameShell>
@@ -342,20 +342,14 @@ const FarvelaegGame: React.FC = () => {
   }
 
   return (
-    <GameShell categoryId="krea" title="Farvelæg" backRoute="/krea" dense guide={false} lightScene>
+    <GameShell categoryId="krea" title="Farvelæg" backRoute="/krea" dense guide={false} lightScene inlineTitle>
       <StudioBackdrop />
       <PieceStudio
         landscape={landscape}
         tools={
-          <>
-            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
-            <StudioButton dataId="tool-eraser" label="Viskelæder" selected={tool === 'eraser'} disabled={!enabled} onPress={pickEraser}>
-              <Box component="img" src={KREA_ART.eraser} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-            </StudioButton>
-            <StudioButton dataId="undo" label="Fortryd" disabled={!enabled || !piece.actions.length} onPress={doUndo}>
-              <Box component="img" src={KREA_ART.undo} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-            </StudioButton>
-          </>
+          // The same left column as Fri Tegning: the crayon (in hand), the eraser and undo — and, as there,
+          // the crayon row shows only while the crayon is picked (empty for the eraser).
+          <ToolRow tool={tool} color={color} available={['crayon', 'eraser']} onTool={pickTool} onUndo={doUndo} canUndo={piece.actions.length > 0} disabled={!enabled} direction={landscape ? 'column' : 'row'} />
         }
         paper={
           <Paper paperRef={paperRef} aspect={1}>
@@ -367,10 +361,13 @@ const FarvelaegGame: React.FC = () => {
           </Paper>
         }
         side={
-          <PieceWayOn stage={stage} hasInk={piece.actions.length > 0} disabled={confirmOpen || busy} reduce={reduce} onNewPaper={askNewPaper} onDone={onDone} onNext={onNext} />
+          <>
+            <PieceWayOn stage={stage} hasInk={piece.actions.length > 0} disabled={confirmOpen || busy} reduce={reduce} onNewPaper={askNewPaper} onDone={onDone} onNext={onNext} />
+            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
+          </>
         }
         palette={
-          <Box sx={{ visibility: piece.done ? 'hidden' : 'visible' }}>
+          <Box aria-hidden={tool !== 'crayon' || piece.done} sx={{ visibility: tool === 'crayon' && !piece.done ? 'visible' : 'hidden' }}>
             <CrayonPalette colors={palette} color={color} inHand={tool === 'crayon' ? 'crayon' : null} disabled={!enabled} onPick={pickColor} />
           </Box>
         }

@@ -233,7 +233,7 @@ const FriTegningGame: React.FC = () => {
   )
 
   return (
-    <GameShell categoryId="krea" title="Fri Tegning" backRoute="/krea" dense guide={false} lightScene>
+    <GameShell categoryId="krea" title="Fri Tegning" backRoute="/krea" dense guide={false} lightScene inlineTitle>
       <StudioBackdrop />
       <Box
         data-krea-stage

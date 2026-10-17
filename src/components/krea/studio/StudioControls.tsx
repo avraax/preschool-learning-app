@@ -138,7 +138,13 @@ export interface ToolRowProps {
    * office object a five-year-old may not know, and the picture says what the button does (owner,
    * 2026-10-16). Same idea as the crayon tool showing the crayon in hand.
    */
-  stampSrc: string
+  stampSrc?: string
+  /**
+   * The tools this game HAS, in the one fixed order crayon · pictures · eraser (undo always follows).
+   * All three drawing games use this one row so the left column behaves the same everywhere (owner,
+   * 2026-10-16): Fri Tegning has all three, Farvelæg crayon + eraser, Tegn med Mig the crayon.
+   */
+  available?: ReadonlyArray<'crayon' | 'stamp' | 'eraser'>
   onTool: (t: Tool) => void
   onUndo: () => void
   canUndo: boolean
@@ -152,12 +158,13 @@ export interface ToolRowProps {
  * lies with the other crayons, and a star is a stamp (the tap-and-hold glitter brush is gone; its
  * renderer stays in `brushes.ts` so an old session's glitter still draws).
  */
-export const ToolRow: React.FC<ToolRowProps> = ({ tool, color, stampSrc, onTool, onUndo, canUndo, disabled, direction }) => {
-  const tools: Array<{ id: Tool; label: string; src: string; on: boolean }> = [
+export const ToolRow: React.FC<ToolRowProps> = ({ tool, color, stampSrc = '', available = ['crayon', 'stamp', 'eraser'], onTool, onUndo, canUndo, disabled, direction }) => {
+  const all: Array<{ id: 'crayon' | 'stamp' | 'eraser'; label: string; src: string; on: boolean }> = [
     { id: 'crayon', label: 'Farvekridt', src: tool === 'rainbow' ? KREA_ART.crayonRainbow : CRAYON_ART[color], on: tool === 'crayon' || tool === 'rainbow' },
     { id: 'stamp', label: 'Billeder', src: stampSrc, on: tool === 'stamp' },
     { id: 'eraser', label: 'Viskelæder', src: KREA_ART.eraser, on: tool === 'eraser' },
   ]
+  const tools = all.filter((t) => available.includes(t.id))
   return (
     <Box data-krea-tools sx={{ display: 'flex', flexDirection: direction, gap: 'clamp(6px, 1.4vmin, 12px)', alignItems: 'center' }}>
       {tools.map((t) => (

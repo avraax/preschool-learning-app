@@ -50,7 +50,10 @@ export const PieceStudio: React.FC<{
         display: 'flex',
         flexDirection: landscape ? 'column' : 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        // The way-on control sits in the SAME spot as Fri Tegning's "Nyt papir" (the top of the column);
+        // the way back to the picture grid sits under it.
+        justifyContent: 'flex-start',
+        gap: 'clamp(10px, 2.4vmin, 22px)',
         minHeight: 0,
         minWidth: `calc(${BTN} * 1.7)`,
         [PHONE_PORTRAIT]: { minWidth: 0, px: 1 },

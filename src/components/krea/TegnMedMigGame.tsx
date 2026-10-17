@@ -18,8 +18,7 @@ import DrawingSurface from './canvas/DrawingSurface'
 import { addStroke, deserialise, emptyDrawing, serialise, undo, type CrayonColor, type Drawing, type Stroke, type Tool } from './canvas/strokeModel'
 import { judgeStep, toleranceInPaper } from './canvas/guideMatch'
 import { StudioBackdrop, Paper } from './studio/StudioScene'
-import { CrayonPalette, StudioButton } from './studio/StudioControls'
-import { KREA_ART } from '../../assets/games/krea'
+import { CrayonPalette, ToolRow } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { playAlive, swapPaper } from './studio/alive'
 import { GuideLayer, DemoPencil } from './studio/GuideLayer'
@@ -317,6 +316,12 @@ const TegnMedMigGame: React.FC = () => {
     setTool('crayon')
     speak(KREA_COLOR_NAME[c])
   }
+  // The one tool here is the crayon; tapping it keeps whichever crayon is in hand (colour or rainbow).
+  const pickTool = () => {
+    markInteracted()
+    sfx.play('tap')
+  }
+
   const pickRainbow = () => {
     markInteracted()
     audio.updateUserInteraction()
@@ -391,7 +396,7 @@ const TegnMedMigGame: React.FC = () => {
   // ----- render ------------------------------------------------------------------------------------
   if (!subject) {
     return (
-      <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false} lightScene>
+      <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false} lightScene inlineTitle>
         <StudioBackdrop />
         <KreaPicker
           items={KREA_SUBJECTS.map((s) => ({ id: s.id, label: s.name, picture: <SubjectCard subject={s} drawing={loadPiece(s.id)?.drawing ?? null} /> }))}
@@ -403,17 +408,13 @@ const TegnMedMigGame: React.FC = () => {
 
   const crayonInHand = tool === 'crayon' || tool === 'rainbow'
   return (
-    <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false} lightScene>
+    <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false} lightScene inlineTitle>
       <StudioBackdrop />
       <PieceStudio
         landscape={landscape}
         tools={
-          <>
-            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
-            <StudioButton dataId="undo" label="Fortryd" disabled={!drawingEnabled || !canUndoStep} onPress={doUndo}>
-              <Box component="img" src={KREA_ART.undo} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-            </StudioButton>
-          </>
+          // The same left column as Fri Tegning: tools only — here the crayon (in hand) and undo.
+          <ToolRow tool={tool} color={color} available={['crayon']} onTool={pickTool} onUndo={doUndo} canUndo={canUndoStep} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
         }
         paper={
           <Paper paperRef={paperRef}>
@@ -439,18 +440,21 @@ const TegnMedMigGame: React.FC = () => {
           </Paper>
         }
         side={
-          <PieceWayOn
-            stage={stage}
-            hasInk={piece.drawing.strokes.length > 0}
-            disabled={confirmOpen || busy}
-            reduce={reduce}
-            onNewPaper={askNewPaper}
-            onDone={onDone}
-            onNext={onNext}
-          />
+          <>
+            <PieceWayOn
+              stage={stage}
+              hasInk={piece.drawing.strokes.length > 0}
+              disabled={confirmOpen || busy}
+              reduce={reduce}
+              onNewPaper={askNewPaper}
+              onDone={onDone}
+              onNext={onNext}
+            />
+            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
+          </>
         }
         palette={
-          <Box aria-hidden={!crayonInHand || piece.done} sx={{ visibility: piece.done ? 'hidden' : 'visible' }}>
+          <Box aria-hidden={!crayonInHand || piece.done} sx={{ visibility: crayonInHand && !piece.done ? 'visible' : 'hidden' }}>
             <CrayonPalette colors={palette} color={color} inHand={tool === 'crayon' || tool === 'rainbow' ? tool : null} disabled={!drawingEnabled} onPick={pickColor} onPickRainbow={pickRainbow} />
           </Box>
         }

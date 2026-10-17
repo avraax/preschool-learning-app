@@ -60,6 +60,10 @@ interface GameShellProps {
   // The game paints its OWN light full-bleed scene (Krea's studio), so the skin's dark-world title
   // treatment (white text) would sit on a cream wall and vanish — measured on Rummet. Light-scene text.
   lightScene?: boolean
+  // The title goes INTO the header row (as on a phone in landscape) and the body's padding tightens, so
+  // the play surface gets that height. For Krea's studio, where the paper wants every pixel (owner,
+  // 2026-10-16: "have the paper take up more space").
+  inlineTitle?: boolean
   children: React.ReactNode
 }
 
@@ -75,6 +79,7 @@ const GameShell: React.FC<GameShellProps> = ({
   guide = true,
   dense = false,
   lightScene = false,
+  inlineTitle = false,
   children,
 }) => {
   const theme = useTheme()
@@ -84,6 +89,7 @@ const GameShell: React.FC<GameShellProps> = ({
   // Phone landscape: play-surface first — the title moves INTO the header row (between back
   // and the ring) so its own row's height goes to the game body instead.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
+  const titleInHeader = phoneLandscape || inlineTitle
   const { navigateWithTransition } = useTransitionNav()
 
   // Bridge the legacy `guideReaction` prop onto the mascot bus so EVERY game that already reports
@@ -118,19 +124,19 @@ const GameShell: React.FC<GameShellProps> = ({
         <Toolbar
           sx={{
             justifyContent: 'space-between',
-            py: 2,
+            py: inlineTitle ? 1 : 2,
             [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' },
           }}
         >
           {/* Shared animated back button — reverses the themed wipe (PRD-02 §8). */}
           <BackButton to={backRoute} variant="game" />
 
-          {phoneLandscape && (
+          {titleInHeader && (
             <Typography
               sx={{
                 fontFamily: theme.titleFontFamily,
                 fontWeight: 700,
-                fontSize: '1rem',
+                fontSize: phoneLandscape ? '1rem' : 'clamp(1.2rem, 3vmin, 1.6rem)',
                 // Title on the scene: white on dark worlds, the readable-on-white accent on light
                 // worlds (a light section accent — Havet yellow etc. — was washed out). See onTileColor.
                 color: dark ? '#FFFFFF' : category.onTileColor,
@@ -187,14 +193,15 @@ const GameShell: React.FC<GameShellProps> = ({
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          py: dense ? { xs: 1, md: 2 } : { xs: 2, md: 3 },
+          py: inlineTitle ? { xs: 0.5, md: 1 } : dense ? { xs: 1, md: 2 } : { xs: 2, md: 3 },
+          ...(inlineTitle ? { px: { xs: 1.5, md: 1.5 } } : {}),
           overflow: 'hidden',
           [PHONE_LANDSCAPE]: { py: 0.5 },
         }}
       >
         {/* Themed title (dark worlds → light text + glow; light → accent + soft shadow).
             Phone landscape renders it inline in the toolbar instead — no title row at all. */}
-        {!phoneLandscape && (
+        {!titleInHeader && (
           <Box
             sx={{
               textAlign: 'center',
