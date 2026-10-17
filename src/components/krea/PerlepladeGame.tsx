@@ -619,8 +619,10 @@ const PerlepladeGame: React.FC = () => {
   const newBoardPicture = (
     // Board 12–88 % + the corner badge to 102 %: shifted so their union is centred in the column, like "Nyt papir".
     <Box sx={{ position: 'relative', width: '100%', height: '100%', transform: 'translate(-7%, 5%)' }}>
+      {/* A fresh copy of THE BOARD IN USE — its shape, and a pattern's guide as this level shows it —
+          so "Ny plade" says "this board, empty again", not a generic one (owner, 2026-10-17). */}
       <Box sx={{ position: 'absolute', inset: '12%' }}>
-        <BoardArt n={4} mask={Array(16).fill(true)} />
+        <BoardArt n={board.n} mask={board.mask} guide={board.target ?? null} guideMode={tuning.guide} />
       </Box>
       <PlusBadge />
     </Box>
