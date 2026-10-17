@@ -306,10 +306,11 @@ reads at a glance; safe-area insets around the mascot on the real device.
 
 ## 10. Progress log (implemented 2026-10-17, same session, owner away; not pushed)
 
-Status: **W0–W3, W5–W7 IMPLEMENTED** on master, behind the Krea gate. **W4 partly done**: the palette is
-wired, the prompt doc has been handed over, and **the Bogstaver og Ord render is owed by the owner** —
-until then that door shows the plain book stack (D7's fallback). **R (release) has not been done** and
-is the owner's call at 1.3.
+Status: **W0–W7 IMPLEMENTED** on master, behind the Krea gate. W4 finished the same day, once the owner
+delivered the Bogstaver og Ord render: `art-src/icons/letters.jpg` → `optimize-theme-art.mjs doors` →
+`icons/letters.webp`. It keyed clean, with zero green-excess pixels left and A/B/Æ legible at home size.
+The new `doors.test.ts` coverage guard is re-broken: wiring `letters` back to the book stack goes red.
+**R (release) has not been done**, and it is the owner's call at 1.3.
 
 Commits: 9d38a24 W0 · 3a23366 W1 · 34aab62 W2 · 850c963 W3 · 3ec08be W5 · ac4140d W6 · daf1f47 W7 ·
 fixes after re-break/sweep (rowLevel, sweep hidden trays, centred home field).

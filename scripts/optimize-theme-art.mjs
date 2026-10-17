@@ -831,6 +831,17 @@ async function optimizeRewards() {
   console.log(`  ${String(count).padStart(2)} total   ${kb(total)} KB   (avg ${Math.round(kb(total) / Math.max(1, count))} KB)`)
 }
 
+// Door icons (Category restructure PRD-01 D7) — art-src/icons/letters.jpg (green screen, the
+// Bogstaver og Ord door: books + clay A/B/Æ) → src/assets/themes/icons/letters.webp, at the five
+// section icons' 512² / 0.81 fill. No green in the subject, so the default thresholds hold.
+async function optimizeDoors() {
+  console.log('\n[doors]')
+  const srcPath = join(ROOT, 'art-src', 'icons', 'letters.jpg')
+  const outPath = join(ROOT, 'src', 'assets', 'themes', 'icons', 'letters.webp')
+  await greenKeySprite(srcPath, outPath, { size: 512, fill: UI_FILL })
+  console.log(`  ${'letters'.padEnd(14)} → icons/letters.webp  ${String(kb((await stat(outPath)).size)).padStart(4)} KB`)
+}
+
 const args = process.argv.slice(2)
 const themes = args.length ? args : await readdir(SRC_ROOT)
 
@@ -861,6 +872,10 @@ for (const id of themes) {
   }
   if (id === 'krea') {
     await optimizeKrea()
+    continue
+  }
+  if (id === 'doors') {
+    await optimizeDoors()
     continue
   }
   if (!(await stat(join(SRC_ROOT, id)).then((s) => s.isDirectory()).catch(() => false))) continue

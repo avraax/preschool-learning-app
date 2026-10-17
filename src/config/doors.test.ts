@@ -117,6 +117,18 @@ test('every door tile resolves to its own section\'s game and its own icon art',
   assert.throws(() => doorTiles(['alphabet.read']), /no such game/)
 })
 
+// D7: every door has its own baked picture, and Bogstaver og Ord shows the books+letters render — not
+// the plain book stack it borrowed while the render was owed. Read as TEXT: the manifest imports WebP.
+test('every door has door art, and Bogstaver og Ord has its own render', () => {
+  const manifest = readFileSync(new URL('../assets/themes/icons/index.ts', import.meta.url), 'utf8')
+  const block = manifest.slice(manifest.indexOf('export const doorIconImages'))
+  const body = block.slice(0, block.indexOf('}'))
+  for (const d of DOORS) assert.match(body, new RegExp(`\\b${d.id}\\b`), `door "${d.id}" has no art entry`)
+  assert.match(body, /^\s*letters,\s*$/m, 'Bogstaver og Ord is not wired to its own render')
+  assert.match(manifest, /^import letters from '\.\/letters\.webp'$/m)
+  assert.ok(existsSync(new URL('../assets/themes/icons/letters.webp', import.meta.url)), 'letters.webp missing')
+})
+
 test('gameId helpers split on the FIRST dot only', () => {
   assert.equal(sectionOfGame('colors.ram-farven'), 'colors')
   assert.equal(tileIdOfGame('colors.ram-farven'), 'ram-farven')
