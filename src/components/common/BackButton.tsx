@@ -14,9 +14,11 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 interface BackButtonProps {
   to: string
   variant?: 'menu' | 'game' // reserved; the look is intentionally identical everywhere
+  /** One step back INSIDE the page instead (a Krea piece → its picture grid); `to` is then unused. */
+  onBack?: () => void
 }
 
-const BackButton: React.FC<BackButtonProps> = ({ to }) => {
+const BackButton: React.FC<BackButtonProps> = ({ to, onBack }) => {
   const { goBack } = useTransitionNav()
   const reduce = useReducedMotion()
 
@@ -25,7 +27,7 @@ const BackButton: React.FC<BackButtonProps> = ({ to }) => {
       component={motion.button}
       type="button"
       aria-label="Tilbage"
-      onClick={() => goBack(to)}
+      onClick={() => (onBack ? onBack() : goBack(to))}
       initial={reduce ? false : { opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={reduce ? { duration: 0 } : { duration: 0.35, ease: 'easeOut' }}

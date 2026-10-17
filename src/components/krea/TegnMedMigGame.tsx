@@ -407,7 +407,7 @@ const TegnMedMigGame: React.FC = () => {
 
   const crayonInHand = tool === 'crayon' || tool === 'rainbow'
   return (
-    <GameShell categoryId="krea" title="Tegn med Mig" dense guide={false} lightScene inlineTitle>
+    <GameShell categoryId="krea" title="Tegn med Mig" dense guide={false} lightScene inlineTitle onBackWithin={toPicker}>
       <StudioBackdrop />
       <PieceStudio
         landscape={landscape}

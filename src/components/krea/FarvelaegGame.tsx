@@ -344,7 +344,7 @@ const FarvelaegGame: React.FC = () => {
   }
 
   return (
-    <GameShell categoryId="krea" title="Farvelæg" dense guide={false} lightScene inlineTitle>
+    <GameShell categoryId="krea" title="Farvelæg" dense guide={false} lightScene inlineTitle onBackWithin={toPicker}>
       <StudioBackdrop />
       <PieceStudio
         landscape={landscape}

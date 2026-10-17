@@ -70,6 +70,10 @@ interface GameShellProps {
   // the play surface gets that height. For Krea's studio, where the paper wants every pixel (owner,
   // 2026-10-16: "have the paper take up more space").
   inlineTitle?: boolean
+  // A game with its own picture grid (Tegn med Mig, Farvelæg, Perleplade) passes this while a piece is
+  // open, so the back arrow steps back to that grid first and only the grid's arrow leaves for the menu
+  // (owner, 2026-10-17). A step inside the page, not a route — the menu route is still derived above.
+  onBackWithin?: () => void
   children: React.ReactNode
 }
 
@@ -85,6 +89,7 @@ const GameShell: React.FC<GameShellProps> = ({
   dense = false,
   lightScene = false,
   inlineTitle = false,
+  onBackWithin,
   children,
 }) => {
   const theme = useTheme()
@@ -135,7 +140,7 @@ const GameShell: React.FC<GameShellProps> = ({
           }}
         >
           {/* Shared animated back button — reverses the themed wipe (PRD-02 §8). */}
-          <BackButton to={backRoute} variant="game" />
+          <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
 
           {titleInHeader && (
             <Typography

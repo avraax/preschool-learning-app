@@ -659,7 +659,7 @@ const PerlepladeGame: React.FC = () => {
   ) : null
 
   return (
-    <GameShell categoryId="krea" title="Perleplade" dense guide={false} lightScene>
+    <GameShell categoryId="krea" title="Perleplade" dense guide={false} lightScene onBackWithin={toPicker}>
       <StudioBackdrop />
       <DndContext sensors={sensors} collisionDetection={kidCollision} autoScroll={false} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={endDrag}>
         <Box
