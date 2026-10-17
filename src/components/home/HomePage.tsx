@@ -78,7 +78,8 @@ const homeItems: HomeItem[] = FOUR_DOORS
 // pattern layout-contract.md bans: at 958×714 the dino sat on the "Alfabetet" label. With four doors the
 // seating field starts where the mascot's column ends, so the left door can never reach it, on any
 // viewport — by construction rather than by a nudged xPct.
-const HOME_MASCOT = { xs: 128, sm: 156, md: 184 } as const
+// ~15% smaller than the first cut (128/156/184) — "a tad too big" (owner, 2026-10-17).
+const HOME_MASCOT = { xs: 110, sm: 134, md: 156 } as const
 const MASCOT_INSET_LEFT = 6
 const MASCOT_GAP = 10
 const reserveFor = (px: number) => `calc(env(safe-area-inset-left) + ${MASCOT_INSET_LEFT + px + MASCOT_GAP}px)`
@@ -437,10 +438,11 @@ const HomePage: React.FC = () => {
         attract={attractOn}
         sx={{
           left: `calc(env(safe-area-inset-left) + ${MASCOT_INSET_LEFT}px)`,
-          bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
+          // Lifted off the bottom edge — it sat too close to it (owner, 2026-10-17; was +2px).
+          bottom: 'calc(env(safe-area-inset-bottom) + 18px)',
           width: HOME_MASCOT,
           height: HOME_MASCOT,
-          [PHONE_ANY]: { width: 64, height: 64 },
+          [PHONE_ANY]: { width: 64, height: 64, bottom: 'calc(env(safe-area-inset-bottom) + 8px)' },
         }}
       />
     </Box>
