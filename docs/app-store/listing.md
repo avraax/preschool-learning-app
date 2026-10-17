@@ -166,11 +166,11 @@ back** — a paste truncated the da description once (§1.4). After 1.3 is live,
 for 2–3 weeks; if nothing moves, the indexing claim was wrong for Denmark and the locale costs nothing to
 leave in place.
 
-### 1.4 Description — Danish (primary), 1384 characters
+### 1.4 Description — Danish (primary)
 
-**1.3: the Ordleg bullet is corrected in the repo and NOT yet live** — ASC 1.2 still says "stav, læs og
-sig ord højt", a microphone game deleted 2026-09-18. `desc:check` reports exactly that one line;
-`desc:sync` it onto the 1.3 version record.
+**Rewritten for 1.3 (2026-10-17):** "Fem verdener, 20 spil" → "Fire døre, 25 spil" and the area list
+follows the four front-page doors (Krea + Fyld Båden released). The old Ordleg bullet's mic-game wording
+goes with it. `desc:sync` writes this onto the 1.3 record; the en-GB text in §1.5 changed in step.
 
 The bullet character is `•` (U+2022), not an emoji, so it is consistent with the app's no-emoji rule.
 
@@ -184,14 +184,13 @@ the paste landed** — the API round-trip is in `.claude/rules/ios-shell.md`. Re
 verified byte-identical on read-back, all four sections present.
 
 ```
-Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fem verdener, 20 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
+Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fire døre, 25 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
 
-FEM OMRÅDER
-• Alfabetet — find bogstaver, hør deres lyd og stav korte ord
-• Tal og regning — tæl, sammenlign, plus og minus med ting, man kan tælle
-• Farver — kend farverne, bland dem og find dem ude i verden
+FIRE DØRE
+• Bogstaver og Ord — find bogstaver, hør deres lyd, stav og læs korte ord
+• Tal — tæl, sammenlign, plus og minus, og fyld båden med tiere og enere
 • Engelsk — de første engelske ord, læst op af en engelsk stemme
-• Ordleg — stav og læs korte ord
+• Farver og Krea — kend farverne og bland dem, tegn frit eller trin for trin, farvelæg og lav perleplader
 
 EN BOG FULD AF BELØNNINGER
 Barnet samler klistermærker i sin egen bog. Der er én vej og én belønning ad gangen, så det er let at se, hvad der kommer næst. Ingen point, der forsvinder, og ingen konkurrence mod andre.
@@ -202,6 +201,7 @@ LAVET TIL BØRN
 • Ingen sporing og ingen analyseværktøjer fra tredjeparter
 • Ingen konto nødvendig for at spille
 • Al tale er dansk, syntetisk og lavet på forhånd, så spillene virker uden internet
+• Tegninger og perleplader bliver på enheden og deles aldrig
 
 FOR DE VOKSNE
 Under "Indstillinger" kan du vælge sværhedsgrad, oprette flere børneprofiler og læse hvad appen sender hvorhen. Området er beskyttet af en opgave, et barn ikke kan løse. Appen bruger hverken mikrofon eller kamera. Synkronisering mellem enheder kræver en konto.
@@ -293,17 +293,58 @@ Denne opdatering giver spillene mere variation — og en roligere lyd.
 • Diverse fejlrettelser og små forbedringer.
 ```
 
+### 1.4d "Nyheder" / "What's New" — 1.3 (da + en-GB, BOTH required)
+
+1.3 = "everything" (owner, 2026-10-17): Krea, Fyld Båden, the four doors, the "new" stars, calmer
+answer sounds, "Bedøm appen". Bullet lines were drafted by the sessions that built each feature. The
+counter's new events are deliberately NOT mentioned (its session's advice: nothing for a parent to do).
+
+```
+Denne opdatering har fem nye spil — og en ny forside.
+
+• Nyt område: Krea. Tegn frit, tegn med trin for trin, farvelæg og lav perleplader. Tegningerne bliver på enheden og gemmes ikke.
+• Ny regneleg: Fyld Båden. Barnet lærer tiere og enere ved at laste fisk og fiskekasser på en fiskerbåd.
+• Forsiden har fået fire døre: Bogstaver og Ord, Tal, Engelsk og Farver og Krea. Hver dør siger sit navn højt, så børn der ikke kan læse endnu, kan finde vej.
+• Nye spil har små stjerner, indtil barnet har prøvet dem.
+• Roligere lyde, når barnet svarer rigtigt eller forkert.
+• Under Indstillinger kan I nu give appen en bedømmelse i App Store.
+• Diverse fejlrettelser og små forbedringer.
+```
+
+en-GB (shown only to English-language devices on the Danish store — mostly expat parents):
+
+```
+Five new games — and a new front page.
+
+• New area: Krea. Draw freely, draw step by step, colour in and make bead pictures. Drawings stay on the device and are not saved.
+• New maths game: Fill the Boat. Children learn tens and ones by loading fish and fish boxes onto a fishing boat.
+• The front page now has four doors: Letters and words, Numbers, English, and Colours and Krea. Each door says its name aloud, so children who can't read yet can find their way.
+• New games carry small stars until your child has tried them.
+• Calmer sounds for right and wrong answers.
+• Under Indstillinger (settings) you can now rate the app on the App Store.
+• Bug fixes and small improvements.
+```
+
+**Promotional text 1.3** (any time, no review): da adds drawing —
+`Fra førskole til 1. klasse: bogstaver, tal, farver, tegning og engelsk, læst højt af en tydelig dansk stemme. Ingen reklamer, ingen køb inde i appen og ingen sporing.`
+en-GB — `Learn Danish letters, numbers and colours — and draw, colour in and make bead pictures — with every word read aloud by a clear Danish voice. No ads, no in-app purchases.`
+
+**App Review note, 1.3 addition** (append to the 1.2 note):
+*"NEW IN 1.3: a drawing area (Krea) and a place-value game (Fyld Båden). Drawings and bead boards exist
+only on the device for the current session — nothing is saved, uploaded, shared or shown to anyone
+else; there is no gallery, export or chat. The adult area gains a "Bedøm appen" row that opens the App
+Store's review page; like every external link it sits behind the parental gate."*
+
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
 
 ```
-Børnelæring is a calm Danish learning app for children in preschool and the first two years of Danish primary school (børnehaveklasse and 1. klasse). Five worlds, 20 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
+Børnelæring is a calm Danish learning app for children in preschool and the first two years of Danish primary school (børnehaveklasse and 1. klasse). Four doors, 25 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
 
-FIVE AREAS
-• The alphabet — find letters, hear their sounds, spell short words
-• Numbers and arithmetic — count, compare, add and subtract with countable things
-• Colours — learn them, mix them, find them in the world
+FOUR DOORS
+• Letters and words — find letters, hear their sounds, spell and read short words
+• Numbers — count, compare, add and subtract, and load a fishing boat with tens and ones
 • English — first English words, read by an English voice
-• Word play — spell and read short words
+• Colours and Krea — learn colours and mix them, draw freely or step by step, colour in and make bead pictures
 
 A BOOK FULL OF REWARDS
 Children collect stickers in their own book. One path, one reward at a time, so it is always clear what
@@ -315,6 +356,7 @@ MADE FOR CHILDREN
 • No tracking and no third-party analytics
 • No account needed to play
 • All speech is Danish, synthetic and generated in advance, so the games work without internet
+• Drawings and bead boards stay on the device and are never shared
 
 FOR GROWN-UPS
 In the grown-ups' area you can set the difficulty, add child profiles and read what the app sends where.
