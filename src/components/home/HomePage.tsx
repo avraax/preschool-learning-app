@@ -8,9 +8,12 @@ import { useTransitionNav } from '../../hooks/useTransitionNav'
 import { useTransitionContext } from '../common/transition/TransitionProvider'
 import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { sectionIconImages } from '../../assets/themes/icons'
+import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
 import { homeAnchorsFor } from '../../theme/tokens/helpers'
 import { kreaShown } from '../../utils/kreaShown'
+import { fourDoorsShown } from '../../utils/fourDoors'
+import { DOORS } from '../../config/doors'
+import { balancedRows } from '../../config/menuRows'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import RewardRing from '../common/RewardRing'
 import ProfileChip from '../common/ProfileChip'
@@ -58,6 +61,26 @@ const allHomeCards: Array<{
 const SHOW_KREA = kreaShown()
 const homeCards = allHomeCards.filter((c) => c.id !== 'krea' || SHOW_KREA)
 
+// FOUR DOORS (Category restructure PRD-01): with the gate on — it rides the Krea gate, so on staging
+// and in dev — home shows the four doors (Bogstaver og Ord · Tal · Engelsk · Farver og Krea) instead of
+// the sections. Each door is keyed by its PRIMARY section, which is also its anchor's key and its
+// colour. Production (gate off) keeps the five section objects above, byte-identical, until v1.3.
+const FOUR_DOORS = fourDoorsShown()
+interface HomeItem { key: HomeCardId; route: string; label: string; art: string }
+const homeItems: HomeItem[] = FOUR_DOORS
+  ? DOORS.map((d) => ({ key: d.primary as HomeCardId, route: d.route, label: d.label, art: doorIconImages[d.id] }))
+  : homeCards.map((c) => ({ key: c.id, route: c.route, label: categoryThemes[c.id].name, art: sectionIconImages[c.id] }))
+
+// The home mascot's footprint, ONE definition for both the mascot and the room reserved for it (PRD T4).
+// The seated doors' anchors were percentages of the WHOLE viewport, which is exactly the tuned-percentage
+// pattern layout-contract.md bans: at 958×714 the dino sat on the "Alfabetet" label. With four doors the
+// seating field starts where the mascot's column ends, so the left door can never reach it, on any
+// viewport — by construction rather than by a nudged xPct.
+const HOME_MASCOT = { xs: 128, sm: 156, md: 184 } as const
+const MASCOT_INSET_LEFT = 6
+const MASCOT_GAP = 10
+const reserveFor = (px: number) => `calc(env(safe-area-inset-left) + ${MASCOT_INSET_LEFT + px + MASCOT_GAP}px)`
+
 const HomePage: React.FC = () => {
   const theme = useTheme()
   const { navigateWithTransition } = useTransitionNav()
@@ -74,23 +97,29 @@ const HomePage: React.FC = () => {
   // SIX objects do not fit one arc across a PORTRAIT iPad (measured: neighbours overlap at 768 wide), so
   // there the six take the centred flow, braked to 3+3 — never 5+1. Five keep their arc (Krea PRD-01 §4.1).
   const portrait = useMediaQuery('(orientation: portrait)')
-  const seatSix = homeCards.length < 6 || !portrait
+  const isPhone = useMediaQuery(PHONE_ANY)
+  // Four doors seat on the arc in landscape only; in portrait (and on phones, which always flow) they
+  // take the centred flow as a 2×2 — never 3+1 — and a phone in landscape keeps one row of four.
+  const seatSix = FOUR_DOORS ? !portrait : homeCards.length < 6 || !portrait
+  const seated = seatSix && !isPhone
+  const doorRows = FOUR_DOORS ? balancedRows(homeItems.length, portrait ? 2 : 4) : undefined
   const { rewardNumber } = useProgress()
   // THE number — rewards handed over, the same one the ring badge and the book header show.
   const rewardsOwned = rewardNumber()
 
   // The 5 section objects, built FROM the theme's home anchors so item ↔ anchor stay index-aligned
   // regardless of the authored order. Each is a tappable soft-3D object that lives in the world.
-  const anchors = homeAnchorsFor(theme.scene, SHOW_KREA)
+  const anchors = homeAnchorsFor(theme.scene, FOUR_DOORS)
   const sceneItems: SceneFieldItem[] = anchors.map((a) => {
     const cat = getCategoryTheme(a.section)
+    const item = homeItems.find((h) => h.key === a.section)
     return {
       key: a.section,
-      art: sectionIconImages[a.section],
-      label: cat.name,
+      art: item?.art ?? sectionIconImages[a.section],
+      label: item?.label ?? cat.name,
       accent: cat.accentColor,
       rotate: a.rotate,
-      onActivate: () => navigateWithTransition(SECTION_ROUTES[a.section]),
+      onActivate: () => navigateWithTransition(item?.route ?? SECTION_ROUTES[a.section]),
     }
   })
 
@@ -101,7 +130,7 @@ const HomePage: React.FC = () => {
   const attractCounter = useRef(0)
   const attractTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onAttract = useCallback(() => {
-    const i = attractCounter.current % homeCards.length
+    const i = attractCounter.current % homeItems.length
     attractCounter.current += 1
     setAttractIndex(i)
     setAttractOn(true)
@@ -110,7 +139,7 @@ const HomePage: React.FC = () => {
   }, [])
   useIdleAttract({ onAttract })
   useEffect(() => () => { if (attractTimer.current) clearTimeout(attractTimer.current) }, [])
-  const attractKey = attractOn ? (homeCards[attractIndex]?.id ?? null) : null
+  const attractKey = attractOn ? (homeItems[attractIndex]?.key ?? null) : null
 
   return (
     <Box
@@ -157,9 +186,16 @@ const HomePage: React.FC = () => {
           this falls back to a centred tactile flow (never a card grid). */}
       {immersive && (
         <Box
+          data-bl-home-field=""
           sx={{
             position: 'absolute',
             inset: 0,
+            // Four doors, seated: the field begins past the mascot's column (T4), so an anchor's xPct
+            // is a share of the room the doors actually have. Flow mode needs no reserve — it centres
+            // the doors in the band above the mascot.
+            ...(FOUR_DOORS && seated
+              ? { left: { xs: reserveFor(HOME_MASCOT.xs), sm: reserveFor(HOME_MASCOT.sm), md: reserveFor(HOME_MASCOT.md) } }
+              : {}),
             zIndex: 1,
             display: 'flex',
             alignItems: 'center',
@@ -170,7 +206,7 @@ const HomePage: React.FC = () => {
           }}
         >
           <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <Box sx={{ width: '100%', ...(homeCards.length === 6 ? { '@media (orientation: portrait)': { maxWidth: 520 } } : {}) }}>
+          <Box sx={{ width: '100%', ...(!FOUR_DOORS && homeCards.length === 6 ? { '@media (orientation: portrait)': { maxWidth: 520 } } : {}) }}>
           <SceneObjectField
             items={sceneItems}
             anchors={seatSix ? anchors : undefined}
@@ -178,6 +214,7 @@ const HomePage: React.FC = () => {
             burstMotion={burstMotion}
             attractKey={attractKey}
             float={darkScene}
+            rows={doorRows}
           />
           </Box>
           </Box>
@@ -299,18 +336,18 @@ const HomePage: React.FC = () => {
                 alignItems: 'center',
                 '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(3, minmax(0, 270px))' },
                 // 6 objects wrap 3+3 on a phone in landscape, never 5+1 (Krea PRD-01 §4.1).
-                [PHONE_LANDSCAPE]: { gap: '10px', gridTemplateColumns: `repeat(${homeCards.length === 6 ? 3 : 5}, minmax(0, 150px))`, mb: 1 },
+                [PHONE_LANDSCAPE]: { gap: '10px', gridTemplateColumns: `repeat(${homeItems.length === 6 ? 3 : homeItems.length}, minmax(0, 150px))`, mb: 1 },
               }}
             >
-              {homeCards.map((card, index) => {
-                const cat = theme.categories[card.id]
-                const content = categoryThemes[card.id]
+              {homeItems.map((item, index) => {
+                const cat = theme.categories[item.key]
+                const card = allHomeCards.find((c) => c.id === item.key)
                 return (
                   <motion.div
-                    key={card.id}
-                    initial={card.initial}
+                    key={item.key}
+                    initial={card?.initial ?? { opacity: 0, y: 30 }}
                     animate={{ opacity: 1, x: 0, y: 0 }}
-                    transition={{ duration: 0.6, delay: card.delay }}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
                     whileHover={{ scale: 1.02 }}
                     style={{ width: '100%' }}
                   >
@@ -319,7 +356,7 @@ const HomePage: React.FC = () => {
                       frozen={frozen}
                       attract={attractOn && attractIndex === index}
                       burstMotion={burstMotion}
-                      onActivate={() => navigateWithTransition(card.route)}
+                      onActivate={() => navigateWithTransition(item.route)}
                       sx={{ width: '100%' }}
                     >
                       <Card
@@ -355,7 +392,7 @@ const HomePage: React.FC = () => {
                         >
                           <Box
                             component="img"
-                            src={sectionIconImages[card.id]}
+                            src={item.art}
                             alt=""
                             draggable={false}
                             sx={{
@@ -368,7 +405,7 @@ const HomePage: React.FC = () => {
                             }}
                           />
                           <Typography sx={{ fontWeight: 700, fontSize: 'clamp(0.85rem, 2.4vh, 1.2rem)', lineHeight: 1.1, color: cat.onCard }}>
-                            {content.name}
+                            {item.label}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -389,10 +426,10 @@ const HomePage: React.FC = () => {
       <ThemeMascot
         attract={attractOn}
         sx={{
-          left: 'calc(env(safe-area-inset-left) + 6px)',
+          left: `calc(env(safe-area-inset-left) + ${MASCOT_INSET_LEFT}px)`,
           bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
-          width: { xs: 128, sm: 156, md: 184 },
-          height: { xs: 128, sm: 156, md: 184 },
+          width: HOME_MASCOT,
+          height: HOME_MASCOT,
           [PHONE_ANY]: { width: 64, height: 64 },
         }}
       />

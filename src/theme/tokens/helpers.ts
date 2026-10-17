@@ -199,26 +199,26 @@ export const defaultHomeAnchors = (): HomeAnchor[] => [
   { section: 'english', xPct: 84, yPct: 54, scale: 1, depth: 0.3 },
 ]
 
-// The same arc with Krea seated LAST, on the right (Krea PRD-01 §4.1) — the five keep their order.
-export const defaultHomeAnchorsKrea = (): HomeAnchor[] => [
-  { section: 'alphabet', xPct: 13, yPct: 54, scale: 0.92, depth: 0.3 },
-  { section: 'math', xPct: 28, yPct: 48, scale: 0.92, depth: 0.32 },
-  { section: 'colors', xPct: 43, yPct: 45, scale: 0.96, depth: 0.34 },
-  { section: 'ordleg', xPct: 57, yPct: 45, scale: 0.96, depth: 0.34 },
-  { section: 'english', xPct: 72, yPct: 48, scale: 0.92, depth: 0.32 },
-  { section: 'krea', xPct: 87, yPct: 54, scale: 0.92, depth: 0.3 },
+// The FOUR-DOOR arc (Category restructure PRD-01): Bogstaver og Ord · Tal · Engelsk · Farver og Krea,
+// keyed by each door's primary section. Same smile, same object sizes as the five (D11) — the space
+// two fewer objects free becomes air. xPct is a share of the mascot-reserved field (T4).
+export const defaultHomeAnchorsDoors = (): HomeAnchor[] => [
+  { section: 'alphabet', xPct: 13, yPct: 54, scale: 1, depth: 0.3 },
+  { section: 'math', xPct: 38, yPct: 47, scale: 1, depth: 0.32 },
+  { section: 'english', xPct: 62, yPct: 47, scale: 1, depth: 0.32 },
+  { section: 'colors', xPct: 87, yPct: 54, scale: 1, depth: 0.3 },
 ]
 
 /**
- * The home arc to seat: the authored 5-object one while Krea is gated off (production, until the
- * owner releases it — that arc must stay exactly as it was), the 6-object one once it is shown.
+ * The home arc to seat: the authored 5-object one while four doors are gated off (production, until
+ * the v1.3 release — that arc must stay exactly as it was), the 4-door one once they are shown.
  */
 export const homeAnchorsFor = (
-  scene: { homeAnchors?: HomeAnchor[]; homeAnchorsKrea?: HomeAnchor[] },
-  kreaShown: boolean,
+  scene: { homeAnchors?: HomeAnchor[]; homeAnchorsDoors?: HomeAnchor[] },
+  fourDoors: boolean,
 ): HomeAnchor[] =>
-  kreaShown
-    ? (scene.homeAnchorsKrea ?? defaultHomeAnchorsKrea())
+  fourDoors
+    ? (scene.homeAnchorsDoors ?? defaultHomeAnchorsDoors())
     : (scene.homeAnchors ?? defaultHomeAnchors())
 
 // A neutral centred focus per section (no zoom-in) — themes override to frame their own locale.

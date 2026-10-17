@@ -26,7 +26,11 @@ test('the gate guards the home object AND every Krea route', () => {
   assert.deepEqual(routesInApp.sort(), [...KREA_ROUTES].sort(), 'a Krea route exists that the gate list does not name')
   const home = src('components/home/HomePage.tsx')
   assert.match(home, /c\.id !== 'krea' \|\| SHOW_KREA/, 'the home card list does not filter Krea through the gate')
-  assert.match(home, /homeAnchorsFor\(theme\.scene, SHOW_KREA\)/, 'the home arc does not follow the gate')
+  // The arc follows the four-door gate, which RIDES the Krea gate (Category restructure PRD-01 D8):
+  // one gate to delete at release, so the four doors can never appear without Krea or vice versa.
+  assert.match(home, /homeAnchorsFor\(theme\.scene, FOUR_DOORS\)/, 'the home arc does not follow the gate')
+  assert.match(home, /const FOUR_DOORS = fourDoorsShown\(\)/)
+  assert.match(src('utils/fourDoors.ts'), /export const fourDoorsShown = \(\): boolean => kreaShown\(\)/, 'four doors no longer ride the Krea gate')
   assert.match(home, /const SHOW_KREA = kreaShown\(\)/)
   assert.match(src('utils/kreaShown.ts'), /showsKrea\(BL_TIER, DEV, false\)/, 'the binding does not ask the pure gate')
 })

@@ -2,24 +2,37 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { themes } from '../themes.ts'
 import { homeAnchorsFor } from './helpers.ts'
+import { DOORS } from '../../config/doors.ts'
 
-// Krea PRD-01 §4.1: production shows FIVE home objects until Krea is released, staging SIX. The
-// 6-object arc is a separate list so the 5-object one cannot move — and it must be the same arc shape
-// (scene-and-world.md): the five keep their left-to-right order, Krea seats LAST on the right, outer
-// pair lowest, the middle highest, so the labels still read as one band.
-test('every registered skin seats 5 objects without Krea and 6 with it, Krea last, same order and shape', () => {
+// Production shows the FIVE section objects until v1.3; with four doors on (Category restructure
+// PRD-01, riding the Krea gate) home seats the FOUR doors. The two arcs are separate lists so the five
+// cannot move. Both are the same arc SHAPE (scene-and-world.md): outer pair lowest, the middle highest,
+// so the labels read as one band — and the four sit in door order, keyed by each door's primary.
+const smile = (ys: number[], id: string) => {
+  const mid = Math.floor((ys.length - 1) / 2)
+  for (let i = 1; i <= mid; i++) assert.ok(ys[i] <= ys[i - 1], `${id}: left half must climb`)
+  for (let i = ys.length - mid; i < ys.length; i++) assert.ok(ys[i] >= ys[i - 1], `${id}: right half must fall`)
+}
+
+test('every registered skin seats the 5 sections without four doors, and the 4 doors with them', () => {
   for (const t of themes) {
     const five = homeAnchorsFor(t.scene ?? {}, false)
-    const six = homeAnchorsFor(t.scene ?? {}, true)
+    const four = homeAnchorsFor(t.scene ?? {}, true)
     assert.equal(five.length, 5, `${t.id}: 5-object arc`)
     assert.ok(!five.some((a) => a.section === 'krea'), `${t.id}: Krea leaked into the production arc`)
-    assert.equal(six.length, 6, `${t.id}: 6-object arc`)
-    const byX = (l: typeof six) => [...l].sort((a, b) => a.xPct - b.xPct).map((a) => a.section)
-    assert.deepEqual(byX(six), [...byX(five), 'krea'], `${t.id}: the five must keep their order with Krea last`)
-    const ys = [...six].sort((a, b) => a.xPct - b.xPct).map((a) => a.yPct)
-    // A smile: y falls toward the middle and rises again (screen y grows downward), never re-ordered.
-    for (let i = 1; i < 3; i++) assert.ok(ys[i] <= ys[i - 1], `${t.id}: left half must climb`)
-    for (let i = 4; i < 6; i++) assert.ok(ys[i] >= ys[i - 1], `${t.id}: right half must fall`)
-    if (t.scene?.homeAnchors?.length) assert.ok(t.scene.homeAnchorsKrea?.length === 6, `${t.id}: authored a 5-arc but no 6-arc`)
+    assert.equal(four.length, 4, `${t.id}: 4-door arc`)
+    const byX = <T extends { xPct: number }>(l: T[]) => [...l].sort((a, b) => a.xPct - b.xPct)
+    assert.deepEqual(byX(four).map((a) => a.section), DOORS.map((d) => d.primary), `${t.id}: doors out of order`)
+    smile(byX(five).map((a) => a.yPct), `${t.id} five`)
+    smile(byX(four).map((a) => a.yPct), `${t.id} four`)
+    if (t.scene?.homeAnchors?.length) assert.ok(t.scene.homeAnchorsDoors?.length === 4, `${t.id}: authored a 5-arc but no 4-door arc`)
+  }
+})
+
+// D11: same object size as the five — the freed space is air, not bigger, more toy-like objects.
+test('the four doors are no bigger than the five sections were', () => {
+  for (const t of themes) {
+    const maxFive = Math.max(...homeAnchorsFor(t.scene ?? {}, false).map((a) => a.scale))
+    for (const a of homeAnchorsFor(t.scene ?? {}, true)) assert.ok(a.scale <= maxFive, `${t.id}: ${a.section} grew`)
   }
 })

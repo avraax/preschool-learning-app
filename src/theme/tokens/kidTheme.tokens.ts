@@ -157,14 +157,13 @@ export const kidThemeTokens: ThemeTokens = {
       { section: 'ordleg', xPct: 67, yPct: 61, scale: 1.02, rotate: -2, depth: 0.32 },
       { section: 'english', xPct: 85, yPct: 65, scale: 0.94, rotate: 3, depth: 0.3 },
     ],
-    // The same smile with Krea seated last (Krea PRD-01 §4.1); the 5-object arc above is untouched.
-    homeAnchorsKrea: [
-      { section: 'alphabet', xPct: 15, yPct: 65, scale: 0.9, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 29, yPct: 61, scale: 0.96, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 43, yPct: 59, scale: 1, rotate: 0, depth: 0.34 },
-      { section: 'ordleg', xPct: 57, yPct: 59, scale: 1, rotate: -2, depth: 0.34 },
-      { section: 'english', xPct: 71, yPct: 61, scale: 0.96, rotate: 2, depth: 0.32 },
-      { section: 'krea', xPct: 85, yPct: 65, scale: 0.9, rotate: 3, depth: 0.3 },
+    // The four doors (Category restructure PRD-01), same smile and sizes as the five above; xPct is a
+    // share of the mascot-reserved field. The 5-object arc above is untouched (production until v1.3).
+    homeAnchorsDoors: [
+      { section: 'alphabet', xPct: 13, yPct: 65, scale: 0.94, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 38, yPct: 61, scale: 1.02, rotate: 2, depth: 0.32 },
+      { section: 'english', xPct: 62, yPct: 61, scale: 1.02, rotate: -2, depth: 0.32 },
+      { section: 'colors', xPct: 87, yPct: 65, scale: 0.94, rotate: 3, depth: 0.3 },
     ],
     // Section framing (PRD-05 W4/W5): each section pushes into the region where its object sat,
     // so /alphabet feels like a different corner of the sky than /math (continuity with the push-in).

@@ -23,7 +23,7 @@
 //   --device <name>       ipad-pro | ipad-pro-portrait | ipad-pro-split  <- THE TARGET DEVICE, the
 //                         child's iPad Pro 12.9" 2nd gen on iPadOS 17.7.11 (default: ipad-pro)
 //                         ipad | ipad-portrait | iphone | iphone-landscape
-//                         iphone-69 | iphone-69-landscape (the App Store slot) | wide
+//                         iphone-69 | iphone-69-landscape (the App Store slot) | wide | owner-window
 //                         iPad/iPhone presets set an iOS UA + touch + meta-viewport handling.
 //                         Sizes mirror src/config/referenceViewports.ts.
 //   --w <px> --h <px>     Override the preset's viewport.
@@ -99,6 +99,9 @@ const DEVICES = {
   'iphone-69': { w: 440, h: 956, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
   'iphone-69-landscape': { w: 956, h: 440, dsf: 3, ua: IPHONE_17, touch: true, mobile: true },
   wide: { w: 1254, h: 872, dsf: 1, ua: undefined, touch: false, mobile: false },
+  // The owner's own browser window from the 2026-10-17 screenshot that showed the dino over a home label
+  // (Category restructure PRD-01 T4) — short enough that the mascot reaches the door row.
+  'owner-window': { w: 958, h: 714, dsf: 1, ua: undefined, touch: false, mobile: false },
 }
 // Default to an iPad Pro, not the generic 1024x768 — that size is no current iPad Pro at all.
 const devName = opt('--device', 'ipad-pro')

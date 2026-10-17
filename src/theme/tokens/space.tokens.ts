@@ -84,13 +84,12 @@ export const spaceThemeTokens: ThemeTokens = {
       { section: 'ordleg', xPct: 65, yPct: 38, scale: 1, rotate: -2, depth: 0.32 },
       { section: 'english', xPct: 82, yPct: 45, scale: 1, rotate: 3, depth: 0.3 },
     ],
-    homeAnchorsKrea: [
-      { section: 'alphabet', xPct: 18, yPct: 45, scale: 0.92, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 31, yPct: 38, scale: 0.94, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 44, yPct: 35, scale: 0.98, rotate: 0, depth: 0.34 },
-      { section: 'ordleg', xPct: 56, yPct: 35, scale: 0.98, rotate: -2, depth: 0.34 },
-      { section: 'english', xPct: 69, yPct: 38, scale: 0.94, rotate: 2, depth: 0.32 },
-      { section: 'krea', xPct: 82, yPct: 45, scale: 0.92, rotate: 3, depth: 0.3 },
+    // The four doors (Category restructure PRD-01): same smile and sizes as the five above.
+    homeAnchorsDoors: [
+      { section: 'alphabet', xPct: 14, yPct: 45, scale: 1, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 38, yPct: 38, scale: 1, rotate: 2, depth: 0.32 },
+      { section: 'english', xPct: 62, yPct: 38, scale: 1, rotate: -2, depth: 0.32 },
+      { section: 'colors', xPct: 86, yPct: 45, scale: 1, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 24, yPct: 46, zoom: 1.32 },

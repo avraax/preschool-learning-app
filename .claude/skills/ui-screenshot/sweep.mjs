@@ -56,9 +56,18 @@ function inventory() {
   const re = /title:\s*'([^']+)',\s*\n\s*route:\s*'([^']+)'/g
   let m
   while ((m = re.exec(src))) games.push({ route: m[2], expect: m[1], kind: 'game' })
-  const sectionNames = [...src.matchAll(/^\s{4}name:\s*'([^']+)'/gm)].map((x) => x[1])
-  const sectionRoutes = ['/alphabet', '/math', '/farver', '/english', '/ordleg', '/krea']
-  const menus = sectionRoutes.map((r, i) => ({ route: r, expect: sectionNames[i], kind: 'menu' }))
+  // The sweep drives the DEV server, where the four-door gate is ON (it rides the Krea gate), so the
+  // menus are the DOORS: titles and routes read from src/config/doors.ts. The two retired menus must
+  // REDIRECT to their door, so they are expected to show the door's title — a stale menu or a dead
+  // route cannot produce it.
+  const doorsSrc = readFileSync(join(repo, 'src', 'config', 'doors.ts'), 'utf8')
+  const doors = [...doorsSrc.matchAll(/label:\s*'([^']+)',\s*\n\s*route:\s*'([^']+)'/g)].map((x) => ({ label: x[1], route: x[2] }))
+  const doorAt = (r) => doors.find((d) => d.route === r)?.label
+  const menus = [
+    ...doors.map((d) => ({ route: d.route, expect: d.label, kind: 'menu' })),
+    { route: '/ordleg', expect: doorAt('/alphabet'), kind: 'menu' },
+    { route: '/krea', expect: doorAt('/farver'), kind: 'menu' },
+  ]
   return [
     { route: '/', expect: 'Børnelæring', kind: 'menu' },
     ...menus,
@@ -151,7 +160,19 @@ const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=(doc
    bad.push({t:(e.getAttribute('aria-label')||e.textContent||e.tagName).replace(/\\s+/g,' ').slice(0,32),
              l:Math.round(r.left),r:Math.round(r.right),tp:Math.round(r.top),b:Math.round(r.bottom)});
  });
- return JSON.stringify({W:W,H:H,off:bad.slice(0,8),offCount:bad.length,
+ // MASCOT CLEARANCE (Category restructure PRD-01 T4): no home door and no menu tile — object OR label,
+ // the role=button box holds both — may intersect the corner mascot's box. The owner's 958x714
+ // screenshot had the dino over a label; a screenshot only shows it at the viewport someone looked at.
+ // The mascot's BOX, not its ink: the layout reserves the box, so the box is what must stay clear.
+ const mascotEl=document.querySelector('[aria-label="Snak med figuren"]');
+ const mascotHits=[]; let doorsMeasured=0;
+ if(mascotEl){const m=mascotEl.getBoundingClientRect();
+  document.querySelectorAll('[data-bl-home-field] [role=button],[data-bl-tileflow] [role=button]').forEach(e=>{
+   const r=e.getBoundingClientRect(); if(r.width<2||r.height<2) return; doorsMeasured++;
+   const ox=Math.min(r.right,m.right)-Math.max(r.left,m.left), oy=Math.min(r.bottom,m.bottom)-Math.max(r.top,m.top);
+   if(ox>0&&oy>0) mascotHits.push({t:(e.getAttribute('aria-label')||'').slice(0,24),ox:Math.round(ox),oy:Math.round(oy)});
+  });}
+ return JSON.stringify({W:W,H:H,off:bad.slice(0,8),offCount:bad.length,mascotHits:mascotHits,doorsMeasured:doorsMeasured,
   crashed:/Noget gik galt|Ups!/.test(t), notFound:/Denne side findes ikke/.test(t),
   rootKids:(document.querySelector('#root')||{children:[]}).children.length,
   // 800, not 160: the runner regexes the route's expected Danish title against this, and a denser board
@@ -193,6 +214,7 @@ const VIEWPORTS = [
   { name: 'ipad-land', w: 1024, h: 768, device: 'ipad' },
   { name: 'ipad-port', w: 768, h: 1024, device: 'ipad-portrait' },
   { name: 'wide', w: 1254, h: 872, device: 'wide' },
+  { name: 'owner-window', w: 958, h: 714, device: 'owner-window' },
   { name: 'phone-land', w: 844, h: 390, device: 'iphone-landscape' },
   { name: 'phone-port', w: 390, h: 844, device: 'iphone' },
 ]
@@ -314,6 +336,9 @@ function judge(job, r) {
     if (pexc) w.push(`${pexc} page exception(s)`)
     if (cerr) w.push(`${cerr} console error(s)`)
     if (g.offCount) w.push(`${g.offCount} element(s) off-screen: ${JSON.stringify(g.off)}`)
+    if (g.mascotHits && g.mascotHits.length) w.push(`${g.mascotHits.length} door/tile(s) under the mascot: ${JSON.stringify(g.mascotHits)}`)
+    // A menu that measured no doors would make "no collision" vacuous — so a menu route must have some.
+    if (job.route.kind === 'menu' && job.route.route !== '/album' && !g.doorsMeasured) w.push('no doors/tiles measured for mascot clearance')
     return { status: w.length ? 'FAIL' : 'PASS', why: w.join(' | '), guard: g }
   }
   // Each of these phases returns its OWN payload shape, so each is judged on its own fields (the trap

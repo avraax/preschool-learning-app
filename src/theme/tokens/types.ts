@@ -148,9 +148,11 @@ export interface SceneTokens {
   progressionCompanion?: { stages: string[]; ringColor: string }
   // ---- Structured World (Liveliness PRD-05) — all optional, defaulted in buildTheme ----
   homeAnchors?: HomeAnchor[]                          // per-theme seating of the 5 section objects (W3)
-  // The 6-object arc once Krea is shown (Krea PRD-01 §4.1). A SEPARATE list so the 5-object arc that
-  // production shows until release stays byte-identical; pick between them with `homeAnchorsFor`.
-  homeAnchorsKrea?: HomeAnchor[]
+  // The FOUR-DOOR arc (Category restructure PRD-01 D1/D11), keyed by each door's PRIMARY section, in
+  // door order. A SEPARATE list so the 5-object arc production shows until v1.3 stays byte-identical;
+  // pick between them with `homeAnchorsFor`. Its xPct is a percentage of the MASCOT-RESERVED seating
+  // field, not of the viewport (PRD T4) — HomePage gives the field a left inset of the mascot's width.
+  homeAnchorsDoors?: HomeAnchor[]
   sectionFocus?: Partial<Record<SceneSectionId, SceneFocus>> // per-section camera focus (W2/W4/W5)
   // NB there is deliberately no `bloomScenery` here any more. Stage-gated sprites seated in the world
   // by hand-authored xPct/yPct were removed 2026-08-03 (owner: they read as misplaced). Progress shows

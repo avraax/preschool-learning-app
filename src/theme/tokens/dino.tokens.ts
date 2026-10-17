@@ -90,13 +90,12 @@ export const dinoThemeTokens: ThemeTokens = {
       { section: 'ordleg', xPct: 68, yPct: 66, scale: 1.04, rotate: -2, depth: 0.32 },
       { section: 'english', xPct: 85, yPct: 70, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
-    homeAnchorsKrea: [
-      { section: 'alphabet', xPct: 15, yPct: 70, scale: 0.92, rotate: -3, depth: 0.3 },
-      { section: 'math', xPct: 29, yPct: 66, scale: 0.98, rotate: 2, depth: 0.32 },
-      { section: 'colors', xPct: 43, yPct: 64, scale: 1, rotate: 0, depth: 0.34 },
-      { section: 'ordleg', xPct: 57, yPct: 64, scale: 1, rotate: -2, depth: 0.34 },
-      { section: 'english', xPct: 71, yPct: 66, scale: 0.98, rotate: 2, depth: 0.32 },
-      { section: 'krea', xPct: 85, yPct: 70, scale: 0.92, rotate: 3, depth: 0.3 },
+    // The four doors (Category restructure PRD-01): same smile and sizes as the five above.
+    homeAnchorsDoors: [
+      { section: 'alphabet', xPct: 13, yPct: 70, scale: 0.96, rotate: -3, depth: 0.3 },
+      { section: 'math', xPct: 38, yPct: 66, scale: 1.04, rotate: 2, depth: 0.32 },
+      { section: 'english', xPct: 62, yPct: 66, scale: 1.04, rotate: -2, depth: 0.32 },
+      { section: 'colors', xPct: 87, yPct: 70, scale: 0.96, rotate: 3, depth: 0.3 },
     ],
     sectionFocus: {
       alphabet: { xPct: 22, yPct: 68, zoom: 1.32 },

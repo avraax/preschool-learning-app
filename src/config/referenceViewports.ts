@@ -47,6 +47,9 @@ export const REFERENCE_VIEWPORTS: Viewport[] = [
   { name: 'iPad landscape 1024x768', w: 1024, h: 768 },
   { name: 'iPad portrait 768x1024', w: 768, h: 1024 },
   { name: 'wide 1254x872', w: 1254, h: 872 },
+  // The owner's browser window from the screenshot that showed the home mascot over a door label
+  // (Category restructure PRD-01 T4, 2026-10-17) — short, so the mascot reaches the door row.
+  { name: 'owner window 958x714', w: 958, h: 714 },
   // A real phone from the reports: 390x844 @dpr 3, PWA, both orientations.
   { name: 'phone landscape 844x390', w: 844, h: 390 },
   { name: 'phone portrait 390x844', w: 390, h: 844 },
