@@ -44,7 +44,8 @@ import { useProgress } from '../../../../hooks/useProgress'
 import { profileStore } from '../../../../services/profileStore'
 import { avatarArt } from '../../../../assets/avatars'
 import { REWARD_SLOTS } from '../../../../config/stickers'
-import { SECTION_LABELS } from '../../../../config/adultSectionLabels'
+import { playedLabels } from '../../../../config/adultSectionLabels'
+import { fourDoorsShown } from '../../../../utils/fourDoors'
 import type { SectionId } from '../../../../services/progressStore'
 import { AppSkin } from '../../../../theme/adultTheme'
 import CreateProfileDialog from '../../../auth/CreateProfileDialog'
@@ -145,7 +146,7 @@ const BoernSection: React.FC<BoernSectionProps> = ({ closeAll }) => {
           <SummaryRow label="Næste belønning" value={next ? next.reward.label : 'Bogen er fuld'} />
           <SummaryRow
             label="Har spillet"
-            value={played.length ? played.map((s) => SECTION_LABELS[s]).join(' · ') : 'Ikke begyndt endnu'}
+            value={played.length ? playedLabels(played, fourDoorsShown()).join(' · ') : 'Ikke begyndt endnu'}
           />
         </PaneSection>
 

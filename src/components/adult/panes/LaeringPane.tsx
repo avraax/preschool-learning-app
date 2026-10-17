@@ -14,11 +14,12 @@ import React, { useState } from 'react'
 import { Box, Button, Collapse, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useProgress } from '../../../hooks/useProgress'
-import { SECTION_LABELS } from '../../../config/adultSectionLabels'
-import type { DifficultyLevel, SectionId } from '../../../services/progressStore'
+import { difficultyRows, rowLevel } from '../../../config/adultSectionLabels'
+import type { DifficultyLevel } from '../../../services/progressStore'
 import { PHONE_ANY } from '../../../theme/phoneMedia'
 import { PaneSection } from './paneParts'
 import { kreaShown } from '../../../utils/kreaShown'
+import { fourDoorsShown } from '../../../utils/fourDoors'
 
 const LEVELS: { v: DifficultyLevel; label: string }[] = [
   { v: 'let', label: 'Let' },
@@ -42,9 +43,9 @@ const LEVEL_HELP: Record<DifficultyLevel, string> = {
     'Næste års niveau. 5 svarmuligheder, kun svar der ligner hinanden — og minus hen over tierne.',
 }
 
-// Krea's row follows the section's release gate (Krea PRD-01 §2.5) — no setting for a hidden section.
-const SECTIONS: SectionId[] = (['alphabet', 'math', 'colors', 'english', 'ordleg', 'krea'] as SectionId[])
-  .filter((s) => s !== 'krea' || kreaShown())
+// One row per front-page DOOR when four doors are on (Category restructure PRD-01 D10) — a row writes
+// every section behind its door. Otherwise one per section, Krea's following its release gate.
+const ROWS = difficultyRows(fourDoorsShown(), kreaShown())
 
 export interface LaeringPaneProps {
   /** The active child's name, so the pane can say WHOSE difficulty this is. */
@@ -98,12 +99,12 @@ const LaeringPane: React.FC<LaeringPaneProps> = ({ childName }) => {
         </Button>
         <Collapse in={showPerSection} unmountOnExit>
           <Stack spacing={1} sx={{ pt: 1 }}>
-            {SECTIONS.map((id) => {
-              const label = SECTION_LABELS[id]
-              const value = per[id] ?? ''
+            {ROWS.map((row) => {
+              const { label } = row
+              const value = rowLevel(row, per) ?? ''
               return (
                 <Box
-                  key={id}
+                  key={row.key}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -111,16 +112,17 @@ const LaeringPane: React.FC<LaeringPaneProps> = ({ childName }) => {
                     [PHONE_ANY]: { flexDirection: 'column', alignItems: 'stretch', gap: 0.5 },
                   }}
                 >
-                  <Typography sx={{ flex: '0 0 auto', width: 82, fontSize: '0.875rem' }}>
+                  <Typography sx={{ flex: '0 0 auto', width: ROWS.length === 4 ? 124 : 82, fontSize: '0.875rem' }}>
                     {label}
                   </Typography>
                   <ToggleButtonGroup
                     exclusive
                     size="small"
                     value={value}
-                    onChange={(_, v: DifficultyLevel | '' | null) =>
-                      setDifficulty({ section: id, level: v === '' || v == null ? null : v })
-                    }
+                    onChange={(_, v: DifficultyLevel | '' | null) => {
+                      const level = v === '' || v == null ? null : v
+                      for (const section of row.members) setDifficulty({ section, level })
+                    }}
                     aria-label={`${label} sværhedsgrad`}
                     sx={{ flex: 1 }}
                   >
