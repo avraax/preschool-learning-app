@@ -10,7 +10,6 @@ import { useIdleAttract } from '../../hooks/useIdleAttract'
 import { PHONE_ANY, PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
 import { homeAnchorsFor } from '../../theme/tokens/helpers'
-import { kreaShown } from '../../utils/kreaShown'
 import { fourDoorsShown } from '../../utils/fourDoors'
 import { DOORS, doorOf } from '../../config/doors'
 import { balancedRows } from '../../config/menuRows'
@@ -59,9 +58,8 @@ const allHomeCards: Array<{
   { id: 'krea', route: '/krea', initial: { opacity: 0, x: 30 }, delay: 0.5 },
 ]
 
-// Krea is gated (Krea PRD-01 §2.5): production keeps exactly the five it had, on both layouts.
-const SHOW_KREA = kreaShown()
-const homeCards = allHomeCards.filter((c) => c.id !== 'krea' || SHOW_KREA)
+// The section layout (five sections + Krea). Unused while four doors are on; kept for that branch.
+const homeCards = allHomeCards
 
 // FOUR DOORS (Category restructure PRD-01): with the gate on — it rides the Krea gate, so on staging
 // and in dev — home shows the four doors (Bogstaver og Ord · Tal · Engelsk · Farver og Krea) instead of

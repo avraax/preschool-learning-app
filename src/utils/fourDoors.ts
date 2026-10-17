@@ -1,9 +1,6 @@
-import { kreaShown } from './kreaShown'
-
 /**
- * The runtime binding of the four-door front page (Category restructure PRD-01 D8). It RIDES the Krea
- * gate on purpose — the four-door shape always contains Krea, and the owner ships both in v1.3 — so
- * there is one gate to delete at release, not two that can disagree. Production (gate off) keeps
- * today's five sections byte-identical.
+ * The runtime binding of the four-door front page (Category restructure PRD-01 D8). It rode the Krea
+ * staging gate until both shipped together in v1.3; the gate is gone, so the doors are always on. The
+ * call sites still take the flag (the five-section branch is dead code awaiting cleanup).
  */
-export const fourDoorsShown = (): boolean => kreaShown()
+export const fourDoorsShown = (): boolean => true

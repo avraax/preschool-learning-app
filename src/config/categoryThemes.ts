@@ -208,7 +208,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
       }
     ]
   },
-  // Krea PRD-01 + PRD-02 (Perleplade) — gated (`kreaGate.ts`).
+  // Krea PRD-01 + PRD-02 (Perleplade) — released in 1.3.
   krea: {
     name: 'Krea',
     description: 'Tegn, farvelæg og skab',

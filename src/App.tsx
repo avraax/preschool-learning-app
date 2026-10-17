@@ -1,7 +1,6 @@
 import React, { useEffect, Suspense } from 'react'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { kreaShown } from './utils/kreaShown'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { fourDoorsShown } from './utils/fourDoors'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
@@ -320,13 +319,12 @@ function App() {
         <Route path="/ordleg/read" element={<LaesOrdetGame />} />
         <Route path="/ordleg/spelling" element={<SpellingGame />} />
 
-        {/* Krea Routes — staging-only until the owner releases it (Krea PRD-01 §2.5): every route is
-            gated, so a deep link on production lands on home, never on a half-built studio. */}
-        <Route path="/krea" element={kreaShown() ? <KreaSelection /> : <Navigate to="/" replace />} />
-        <Route path="/krea/tegn" element={kreaShown() ? <FriTegningGame /> : <Navigate to="/" replace />} />
-        <Route path="/krea/tegnmedmig" element={kreaShown() ? <TegnMedMigGame /> : <Navigate to="/" replace />} />
-        <Route path="/krea/farvelaeg" element={kreaShown() ? <FarvelaegGame /> : <Navigate to="/" replace />} />
-        <Route path="/krea/perler" element={kreaShown() ? <PerlepladeGame /> : <Navigate to="/" replace />} />
+        {/* Krea Routes — released in 1.3 (the staging gate `kreaGate.ts` is gone). */}
+        <Route path="/krea" element={<KreaSelection />} />
+        <Route path="/krea/tegn" element={<FriTegningGame />} />
+        <Route path="/krea/tegnmedmig" element={<TegnMedMigGame />} />
+        <Route path="/krea/farvelaeg" element={<FarvelaegGame />} />
+        <Route path="/krea/perler" element={<PerlepladeGame />} />
 
         {/* Learning Routes */}
         {/* One route per memory TYPE — the board size is the difficulty level now, not the URL

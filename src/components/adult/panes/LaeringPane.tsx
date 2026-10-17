@@ -18,7 +18,6 @@ import { difficultyRows, rowLevel } from '../../../config/adultSectionLabels'
 import type { DifficultyLevel } from '../../../services/progressStore'
 import { PHONE_ANY } from '../../../theme/phoneMedia'
 import { PaneSection } from './paneParts'
-import { kreaShown } from '../../../utils/kreaShown'
 import { fourDoorsShown } from '../../../utils/fourDoors'
 
 const LEVELS: { v: DifficultyLevel; label: string }[] = [
@@ -44,8 +43,8 @@ const LEVEL_HELP: Record<DifficultyLevel, string> = {
 }
 
 // One row per front-page DOOR when four doors are on (Category restructure PRD-01 D10) — a row writes
-// every section behind its door. Otherwise one per section, Krea's following its release gate.
-const ROWS = difficultyRows(fourDoorsShown(), kreaShown())
+// every section behind its door. Otherwise one per section, Krea's included (released in 1.3).
+const ROWS = difficultyRows(fourDoorsShown(), true)
 
 export interface LaeringPaneProps {
   /** The active child's name, so the pane can say WHOSE difficulty this is. */

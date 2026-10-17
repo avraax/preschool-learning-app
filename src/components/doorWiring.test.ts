@@ -58,7 +58,7 @@ test('the Ordleg and Krea menus redirect to their door when four doors are on', 
 // the pane writes only the first.
 test('the difficulty pane renders the door rows and fans a change out to every member', () => {
   const pane = codeOf('components/adult/panes/LaeringPane.tsx')
-  assert.match(pane, /const ROWS = difficultyRows\(fourDoorsShown\(\), kreaShown\(\)\)/)
+  assert.match(pane, /const ROWS = difficultyRows\(fourDoorsShown\(\), true\)/)
   assert.match(pane, /for \(const section of row\.members\) setDifficulty\(\{ section, level \}\)/)
   assert.match(pane, /const value = rowLevel\(row, per\) \?\? ''/)
   assert.match(codeOf('components/adult/panes/konto/BoernSection.tsx'), /playedLabels\(played, fourDoorsShown\(\)\)/)
