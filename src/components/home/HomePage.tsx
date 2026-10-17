@@ -193,8 +193,13 @@ const HomePage: React.FC = () => {
             // Four doors, seated: the field begins past the mascot's column (T4), so an anchor's xPct
             // is a share of the room the doors actually have. Flow mode needs no reserve — it centres
             // the doors in the band above the mascot.
+            // The SAME inset on the right keeps the arc centred on each world's art (the planet, the
+            // volcano) — a left-only reserve shifted it ~100px right, off Rummet's planet.
             ...(FOUR_DOORS && seated
-              ? { left: { xs: reserveFor(HOME_MASCOT.xs), sm: reserveFor(HOME_MASCOT.sm), md: reserveFor(HOME_MASCOT.md) } }
+              ? {
+                  left: { xs: reserveFor(HOME_MASCOT.xs), sm: reserveFor(HOME_MASCOT.sm), md: reserveFor(HOME_MASCOT.md) },
+                  right: { xs: reserveFor(HOME_MASCOT.xs), sm: reserveFor(HOME_MASCOT.sm), md: reserveFor(HOME_MASCOT.md) },
+                }
               : {}),
             zIndex: 1,
             display: 'flex',
