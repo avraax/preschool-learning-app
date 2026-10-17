@@ -217,7 +217,8 @@ const FriTegningGame: React.FC = () => {
         display: 'flex',
         flexDirection: landscape ? 'column' : 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        // "Nyt papir" sits at the BOTTOM right, where the other Krea games keep their way on (owner, 2026-10-17).
+        justifyContent: 'flex-end',
         gap: 'clamp(8px, 2vmin, 16px)',
         minHeight: 0,
         minWidth: `calc(${BTN} * 1.5)`,

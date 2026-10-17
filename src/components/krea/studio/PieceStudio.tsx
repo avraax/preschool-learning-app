@@ -50,9 +50,10 @@ export const PieceStudio: React.FC<{
         display: 'flex',
         flexDirection: landscape ? 'column' : 'row',
         alignItems: 'center',
-        // The way-on control sits in the SAME spot as Fri Tegning's "Nyt papir" (the top of the column);
-        // the way back to the picture grid sits under it.
-        justifyContent: 'flex-start',
+        // The way back to the picture grid at the top; the way-on control ("Nyt papir" / ✓ / →) at the
+        // BOTTOM right, the same spot as Fri Tegning's "Nyt papir" and Perleplade's "Ny plade" (owner,
+        // 2026-10-17). In portrait the column is a row, so the way on is the rightmost control.
+        justifyContent: 'space-between',
         gap: 'clamp(10px, 2.4vmin, 22px)',
         minHeight: 0,
         minWidth: `calc(${BTN} * 1.7)`,

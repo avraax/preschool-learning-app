@@ -364,8 +364,8 @@ const FarvelaegGame: React.FC = () => {
         }
         side={
           <>
-            <PieceWayOn stage={stage} hasInk={piece.actions.length > 0} disabled={confirmOpen || busy} reduce={reduce} onNewPaper={askNewPaper} onDone={onDone} onNext={onNext} />
             <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
+            <PieceWayOn stage={stage} hasInk={piece.actions.length > 0} disabled={confirmOpen || busy} reduce={reduce} onNewPaper={askNewPaper} onDone={onDone} onNext={onNext} />
           </>
         }
         palette={

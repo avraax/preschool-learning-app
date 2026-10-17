@@ -440,6 +440,7 @@ const TegnMedMigGame: React.FC = () => {
         }
         side={
           <>
+            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
             <PieceWayOn
               stage={stage}
               hasInk={piece.drawing.strokes.length > 0}
@@ -449,7 +450,6 @@ const TegnMedMigGame: React.FC = () => {
               onDone={onDone}
               onNext={onNext}
             />
-            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
           </>
         }
         palette={

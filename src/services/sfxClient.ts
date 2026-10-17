@@ -161,7 +161,7 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'krea-shimmer': 0.45,
   'krea-twinkle': 0.45,
   'krea-stamp': 0.6,
-  'krea-undo': 0.5,
+  'krea-undo': 0.35,
   'krea-paper': 0.5,
   'krea-pick': 0.4,
   'krea-fill': 0.5,

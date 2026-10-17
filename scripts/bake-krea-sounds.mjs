@@ -41,10 +41,12 @@ const CUES = {
     lufs: -22,
     graph: `aevalsrc='${ping(0.9, 120, 0, 22)}+${ping(0.5, 240, 0, 35)}+0.25*exp(-90*t)*sin(2*PI*900*t)':s=${SR}:d=0.35`,
   },
-  // Undo: a short soft whoosh (band-limited noise under a sine-bump envelope).
+  // Undo: a tiny soft "pluck" falling in pitch (620 → ~400 Hz), a faint lower octave under it, a
+  // de-clicked onset. It was a pink-noise whoosh — "way too noisy" for a tap a child repeats fast (owner,
+  // 2026-10-17); a falling tone reads as "taking back" and stays out of the way.
   'krea-undo': {
-    lufs: -28,
-    graph: `anoisesrc=color=pink:sample_rate=${SR}:duration=0.35:seed=3,bandpass=f=1400:w=1600,volume='sin(PI*t/0.35)':eval=frame`,
+    lufs: -30,
+    graph: `aevalsrc='(1-exp(-500*t))*(0.7*exp(-30*t)*sin(2*PI*(620*t-700*t*t))+0.2*exp(-38*t)*sin(2*PI*(310*t-350*t*t)))':s=${SR}:d=0.16`,
   },
   // New paper: a dry rustle — bright noise in quick irregular bursts.
   'krea-paper': {
