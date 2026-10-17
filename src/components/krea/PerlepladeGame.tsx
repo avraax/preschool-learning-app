@@ -627,6 +627,19 @@ const PerlepladeGame: React.FC = () => {
       <PlusBadge />
     </Box>
   )
+  // "No, keep it": THIS board with the child's beads on it, drawn like its picker card.
+  const keepBoardPicture = (
+    <Box sx={{ position: 'absolute', inset: '7%' }}>
+      {board.target ? (
+        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.3 }}>
+          <PlacedBeads board={finishedPattern(board.n, board.target)} size={tuning.bead} />
+        </Box>
+      ) : (
+        <BoardArt n={board.n} mask={board.mask} />
+      )}
+      <PlacedBeads board={board} size={tuning.bead} />
+    </Box>
+  )
   const pulse = idlePulse(reduce, { peak: 1.07, durationS: 1.4 })
   const wayOn =
     stage === 'finished' ? (
@@ -739,7 +752,7 @@ const PerlepladeGame: React.FC = () => {
         </Box>
         <DragGhost ghostRef={ghostRef} colour={grab?.colour ?? null} beadPx={beadPx} />
       </DndContext>
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture={GAME_ID} title={NEW_BOARD_TITLE} freshPicture={newBoardPicture} />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture={GAME_ID} title={NEW_BOARD_TITLE} freshPicture={newBoardPicture} keepContent={keepBoardPicture} />
     </GameShell>
   )
 }

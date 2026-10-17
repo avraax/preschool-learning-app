@@ -74,11 +74,21 @@ const RAINBOW_ID = 'kreaThumbRainbow'
  * A drawing as SVG polylines — the child's ink on a picker card. Cheap and crisp at any size; the crayon
  * grain is not worth reproducing at thumbnail scale. Mirror strokes are drawn reflected too.
  */
-export const InkThumb: React.FC<{ drawing: Drawing | null; viewBox?: string }> = ({ drawing, viewBox = `0 0 ${PAPER_W} ${PAPER_H}` }) => {
+export const InkThumb: React.FC<{
+  drawing: Drawing | null
+  viewBox?: string
+  /** Fri Tegning's pictures: a stamp's image by id. Without it stamps are left out. */
+  stampSrc?: (id: string) => string | undefined
+}> = ({ drawing, viewBox = `0 0 ${PAPER_W} ${PAPER_H}`, stampSrc }) => {
   if (!drawing?.strokes.length) return null
   const lines: React.ReactNode[] = []
   drawing.strokes.forEach((s, i) => {
-    if (s.tool === 'stamp' || s.tool === 'eraser') return
+    if (s.tool === 'stamp') {
+      const href = stampSrc?.(s.stamp)
+      if (href) lines.push(<image key={i} href={href} x={s.x - s.size / 2} y={s.y - s.size / 2} width={s.size} height={s.size} />)
+      return
+    }
+    if (s.tool === 'eraser') return
     const color = s.tool === 'crayon' && s.color ? CRAYON_HEX[s.color] : s.tool === 'rainbow' ? `url(#${RAINBOW_ID})` : '#F6DC8F'
     const pts = s.points.length === 2 ? [...s.points, s.points[0] + 0.5, s.points[1]] : s.points
     const sets = [pts]

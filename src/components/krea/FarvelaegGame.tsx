@@ -374,7 +374,7 @@ const FarvelaegGame: React.FC = () => {
           </Box>
         }
       />
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.color" />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.color" keepContent={<PageCard id={page.id} actions={piece.actions} />} />
     </GameShell>
   )
 }

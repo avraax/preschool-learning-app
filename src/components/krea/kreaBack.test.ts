@@ -17,6 +17,16 @@ for (const file of ['./TegnMedMigGame.tsx', './FarvelaegGame.tsx', './Perleplade
   })
 }
 
+// Owner, 2026-10-17: the "no, keep it" choice shows the piece in hand (this drawing, this board with its
+// beads), so it plainly means "back to this one" — not the game's generic tile picture.
+for (const file of ['./FriTegningGame.tsx', './TegnMedMigGame.tsx', './FarvelaegGame.tsx', './PerlepladeGame.tsx']) {
+  test(`${file}: "Nyt papir?" keeps the piece in hand on its keep button`, () => {
+    const confirm = src(file).match(/<NewPaperConfirm\b[\s\S]*?\/>\r?\n/)
+    assert.ok(confirm, 'no NewPaperConfirm')
+    assert.match(confirm[0], /keepContent=\{/, 'the keep button shows the tile picture, not the piece')
+  })
+}
+
 test('GameShell hands onBackWithin to the back arrow, which prefers it over the menu route', () => {
   assert.match(src('../common/GameShell.tsx'), /<BackButton to=\{backRoute\} variant="game" onBack=\{onBackWithin\} \/>/)
   assert.match(src('../common/BackButton.tsx'), /onClick=\{\(\) => \(onBack \? onBack\(\) : goBack\(to\)\)\}/)

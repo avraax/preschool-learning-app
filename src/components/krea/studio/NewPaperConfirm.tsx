@@ -22,9 +22,14 @@ export interface NewPaperConfirmProps {
   title?: string
   /** The "fresh" button's picture (Perleplade: an empty board); default the new sheet. */
   freshPicture?: React.ReactNode
+  /**
+   * "Keep" shows THE PIECE IN HAND — this drawing, this board with its beads — so "no" plainly means
+   * "back to this one" (owner, 2026-10-17). Drawn on a sheet like a picker card; absent → the tile picture.
+   */
+  keepContent?: React.ReactNode
 }
 
-const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw', title = NEW_PAPER_TITLE, freshPicture }) => {
+const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw', title = NEW_PAPER_TITLE, freshPicture, keepContent }) => {
   const theme = useTheme()
   if (!open) return null
   const big = 'clamp(88px, 18vmin, 150px)'
@@ -56,7 +61,16 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
           {freshPicture ?? <PICTURES.NewPaper />}
         </StudioButton>
         <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} activateOn="click" onPress={onKeep}>
-          <Box component="img" src={gameIconImages[keepPicture]} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
+          {keepContent ? (
+            <Box
+              data-krea-confirm-keep-piece
+              sx={{ position: 'relative', width: '88%', height: '88%', borderRadius: '10px', overflow: 'hidden', background: '#FFFEFB', boxShadow: '0 6px 14px rgba(80,50,20,0.3), 0 1px 3px rgba(80,50,20,0.2)', transform: 'rotate(1.5deg)', pointerEvents: 'none' }}
+            >
+              {keepContent}
+            </Box>
+          ) : (
+            <Box component="img" src={gameIconImages[keepPicture]} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
+          )}
         </StudioButton>
       </Box>
     </Box>
