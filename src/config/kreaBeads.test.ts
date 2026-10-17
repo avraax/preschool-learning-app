@@ -153,4 +153,6 @@ test('board size and bead size step with the level; XP does not live here', () =
   assert.ok(KREA_BEADS.let.board < KREA_BEADS.normal.board && KREA_BEADS.normal.board < KREA_BEADS.svaer.board)
   assert.ok(KREA_BEADS.let.bead > KREA_BEADS.normal.bead, 'Let has the biggest beads')
   assert.equal(KREA_BEADS.svaer.board, 16, 'the owner chose 16×16 at Svær (2026-10-16)')
+  // The on-board guide fades with the level (owner, 2026-10-17): colour → where only → nothing.
+  assert.deepEqual([KREA_BEADS.let.guide, KREA_BEADS.normal.guide, KREA_BEADS.svaer.guide], ['colour', 'shape', 'none'])
 })

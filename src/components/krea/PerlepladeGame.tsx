@@ -666,6 +666,7 @@ const PerlepladeGame: React.FC = () => {
                 boardRef={boardEl}
                 piecesRef={piecesEl}
                 glow={legendGlow}
+                guideMode={tuning.guide}
                 onTapAt={tapAt}
               />
             </Box>

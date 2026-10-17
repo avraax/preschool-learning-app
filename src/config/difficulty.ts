@@ -595,11 +595,18 @@ export interface KreaBeadsTuning {
   /** Bead diameter as a fraction of the peg pitch. */
   bead: number
   palette: 8 | 12
+  /**
+   * How much of a pattern shows on the board itself (owner, 2026-10-17: copying from the card alone was
+   * "a bit hard" — a child probed peg after peg). The help fades with the level: Let shows the picture
+   * faintly in colour, Normal only WHERE the beads go (neutral spots, the colours still come from the
+   * card), Svær nothing — copy from the card. A free board ignores it.
+   */
+  guide: 'colour' | 'shape' | 'none'
 }
 export const KREA_BEADS: Record<DifficultyLevel, KreaBeadsTuning> = {
-  let: { board: 10, bead: 0.88, palette: 12 },
-  normal: { board: 13, bead: 0.84, palette: 12 },
-  svaer: { board: 16, bead: 0.84, palette: 12 },
+  let: { board: 10, bead: 0.88, palette: 12, guide: 'colour' },
+  normal: { board: 13, bead: 0.84, palette: 12, guide: 'shape' },
+  svaer: { board: 16, bead: 0.84, palette: 12, guide: 'none' },
 }
 
 // ================================================================================================

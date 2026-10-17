@@ -3,6 +3,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { useTapActivate } from '../../common/dnd/dragActivation'
 import { BEAD_LAYOUT } from '../../../config/kreaBeads'
 import { Bead, BOARD_PLASTIC } from './Bead'
+import { CRAYON_HEX } from '../canvas/brushes'
 import type { BeadBoard, BeadColor, PegGeometry } from './beadBoard'
 
 // The pegboard (Krea PRD-02 §4.1–4.3).
@@ -42,8 +43,17 @@ export const pegBox = (n: number, peg: number, size: number) => {
 /**
  * The plastic and its pegs: a rounded square per peg, overlapping into one smooth shape that follows
  * the board's mask (a heart board is heart-shaped), and a small raised peg in each. Static.
+ *
+ * `guide` (copy-a-pattern, `KREA_BEADS[level].guide`): a faint spot under every peg the pattern uses — in
+ * the bead's own colour at Let, a neutral tan at Normal (WHERE, never WHICH colour), none at Svær. Without
+ * it a child probed peg after peg until one took the bead (owner, 2026-10-17). Placed beads cover it.
  */
-export const BoardArt: React.FC<{ n: number; mask: readonly boolean[] }> = ({ n, mask }) => {
+export const BoardArt: React.FC<{ n: number; mask: readonly boolean[]; guide?: readonly (BeadColor | null)[] | null; guideMode?: 'colour' | 'shape' | 'none' }> = ({
+  n,
+  mask,
+  guide,
+  guideMode = 'none',
+}) => {
   const S = 100
   const side = (n + RIM) * S
   const o = (RIM / 2) * S
@@ -51,6 +61,7 @@ export const BoardArt: React.FC<{ n: number; mask: readonly boolean[] }> = ({ n,
   const shadows: React.ReactNode[] = []
   const pegs: React.ReactNode[] = []
   const shines: React.ReactNode[] = []
+  const spots: React.ReactNode[] = []
   mask.forEach((on, i) => {
     if (!on) return
     const x = o + (i % n) * S
@@ -62,6 +73,8 @@ export const BoardArt: React.FC<{ n: number; mask: readonly boolean[] }> = ({ n,
     if (i + n < mask.length && mask[i + n]) cells.push(<rect key={`v${i}`} x={x - 22} y={y + S / 2} width={S + 44} height={S} />)
     const cx = x + S / 2
     const cy = y + S / 2
+    const want = guideMode !== 'none' ? guide?.[i] : null
+    if (want) spots.push(<circle key={i} cx={cx} cy={cy} r={37} fill={guideMode === 'colour' ? CRAYON_HEX[want] : '#A88456'} fillOpacity={guideMode === 'colour' ? (want === 'hvid' ? 0.6 : 0.3) : 0.2} stroke={want === 'hvid' && guideMode === 'colour' ? '#B8AC98' : undefined} strokeWidth={2} />)
     shadows.push(<ellipse key={i} cx={cx + 5} cy={cy + 7} rx={16} ry={14} />)
     pegs.push(<circle key={i} cx={cx} cy={cy} r={14} />)
     shines.push(<circle key={i} cx={cx - 4.5} cy={cy - 5} r={4} />)
@@ -82,6 +95,7 @@ export const BoardArt: React.FC<{ n: number; mask: readonly boolean[] }> = ({ n,
         </filter>
       </defs>
       <g fill={BOARD_PLASTIC} filter="url(#kreaBoardShadow)">{cells}</g>
+      <g data-krea-guide={spots.length ? guideMode : undefined}>{spots}</g>
       <g fill="#6B4A26" fillOpacity="0.2">{shadows}</g>
       <g fill="url(#kreaPegTop)" stroke="#BCAE94" strokeWidth={1.5}>{pegs}</g>
       <g fill="#FFFFFF" fillOpacity="0.8">{shines}</g>
@@ -114,6 +128,8 @@ export interface PegboardProps {
   ringRef: React.Ref<HTMLDivElement>
   /** The board container — Ny plade's slide-away runs on it. */
   boardRef?: React.Ref<HTMLDivElement>
+  /** Copy-a-pattern: how much of the pattern shows on the board (see `BoardArt`). */
+  guideMode?: 'colour' | 'shape' | 'none'
   /** A tap on the board at a client point (not a drag). */
   onTapAt: (x: number, y: number) => void
   /** The placed beads as ONE layer — the finished pattern's pop-off animates it (§4.3). */
@@ -125,7 +141,7 @@ export interface PegboardProps {
   glow?: { colour: BeadColor; n: number } | null
 }
 
-export const Pegboard: React.FC<PegboardProps> = ({ board, beadSize, disabled, liftedPeg, lastPlaced, reduce, hitRef, ringRef, boardRef, onTapAt, piecesRef, glow }) => {
+export const Pegboard: React.FC<PegboardProps> = ({ board, beadSize, disabled, liftedPeg, lastPlaced, reduce, hitRef, ringRef, boardRef, onTapAt, piecesRef, glow, guideMode }) => {
   const drop = useDroppable({ id: 'board' })
   const drag = useDraggable({ id: 'board-bead', disabled })
   const downAt = useRef<{ x: number; y: number } | null>(null)
@@ -161,7 +177,7 @@ export const Pegboard: React.FC<PegboardProps> = ({ board, beadSize, disabled, l
 
   return (
     <div ref={boardRef} data-krea-board data-krea-board-n={board.n} data-krea-beads={board.beads.filter(Boolean).length} style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <BoardArt n={board.n} mask={board.mask} />
+      <BoardArt n={board.n} mask={board.mask} guide={board.target} guideMode={guideMode} />
       <div ref={piecesRef} data-krea-pieces style={{ position: 'absolute', inset: 0 }}>
         <div ref={layer} style={{ position: 'absolute', inset: 0 }}>
           <PlacedBeads board={board} size={beadSize} hide={liftedPeg} />
