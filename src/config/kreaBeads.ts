@@ -745,6 +745,12 @@ export const BEAD_LAYOUT = {
   portraitBowlRows: 3,
   /** The side column (landscape): the picker door, the pattern card, the way on. */
   sidePx: 168,
+  /**
+   * The side column on a WIDE landscape screen (≥ 1200 px — the 12.9" iPad), so its two big controls can
+   * be 190 px. Free: there the board is height-limited (808 px of 992), and the row has ~100 px of slack.
+   * Not used by `boardPitch` — the floor stages below are the 1024-wide case, which keeps `sidePx`.
+   */
+  wideSidePx: 210,
   gapPx: 16,
   /** The board's plastic rim, in pitches (half a pitch round the outer pegs). */
   rimPitches: 0.6,

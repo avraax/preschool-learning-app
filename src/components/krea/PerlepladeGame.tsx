@@ -20,6 +20,7 @@ import {
   BEAD_LAYOUT,
   BEAD_PATTERNS,
   beadPalette,
+  boardById,
   boardMask,
   legendCounts,
   patternById,
@@ -114,6 +115,9 @@ const PerlepladeGame: React.FC = () => {
   const reduce = useReducedMotion()
   const landscape = useMediaQuery('(orientation: landscape)')
   const phone = useMediaQuery(PHONE_ANY)
+  // One query, used for both the side column's width (CSS var below) and its buttons' size.
+  const WIDE_LANDSCAPE = '(min-width: 1200px) and (orientation: landscape)'
+  const wideLandscape = useMediaQuery(WIDE_LANDSCAPE)
   const audio = useSimplifiedAudioHook({ componentId: 'PerlepladeGame', autoInitialize: false })
   const level = useDifficulty('krea')
   const tuning = KREA_BEADS[level]
@@ -523,7 +527,7 @@ const PerlepladeGame: React.FC = () => {
     '--bead-bowl': `${landscape ? BEAD_LAYOUT.bowlPx : BEAD_LAYOUT.portraitBowlPx}px`,
     '--bead-bowl-gap': `${BEAD_LAYOUT.bowlGapPx}px`,
     '--bead-bowl-rows': BEAD_LAYOUT.portraitBowlRows,
-    '--bead-side': `${BEAD_LAYOUT.sidePx}px`,
+    '--bead-side': `${wideLandscape ? BEAD_LAYOUT.wideSidePx : BEAD_LAYOUT.sidePx}px`,
     '--bead-card-pic': '120px',
     '--bead-chip': '22px',
     '--bead-chip-font': '1.25rem',
@@ -579,24 +583,39 @@ const PerlepladeGame: React.FC = () => {
 
   const orientation = landscape ? 'landscape' : 'portrait'
   const isPattern = item.kind === 'pattern'
-  // "Choose another board" is a small copy of the grid it opens: four white cards, each a finished
-  // bead picture. A lone tile icon, and then a pile of empty cream boards, read as decoration rather
-  // than a door (owner, 2026-10-16 — the same lesson as Fri Tegning's "Nyt papir").
+  // "Choose another board" is a small copy of the grid it opens: white cards, three finished bead
+  // pictures and ONE EMPTY round board — the grid holds free boards too, and the picture should say so
+  // (owner, 2026-10-17). A lone tile icon, and then a pile of empty cream boards, read as decoration
+  // rather than a door (owner, 2026-10-16 — the same lesson as Fri Tegning's "Nyt papir").
+  const pickerCards: Array<{ key: string; content: React.ReactNode }> = [
+    ...(['hjerte', 'stjerne', 'fisk'] as const).map((id) => ({
+      key: id,
+      content: <PlacedBeads board={finishedPattern(10, patternCells(patternById(id)!, 'let'))} size={0.96} />,
+    })),
+    { key: 'free', content: <BoardArt n={10} mask={boardMask(boardById('cirkel')!, 'let')} /> },
+  ]
   const pickerPicture = (
     <Box sx={{ width: '100%', height: '100%', p: '6%', boxSizing: 'border-box', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8%' }}>
-      {(['hjerte', 'stjerne', 'fisk', 'blomst'] as const).map((id, i) => (
-        <Box key={id} sx={{ position: 'relative', background: '#FFFEFB', borderRadius: '14%', boxShadow: '0 2px 4px rgba(80,50,20,0.3)', transform: `rotate(${[-4, 3, 2, -3][i]}deg)` }}>
-          <Box sx={{ position: 'absolute', inset: '6%' }}>
-            <PlacedBeads board={finishedPattern(10, patternCells(patternById(id)!, 'let'))} size={0.96} />
-          </Box>
+      {pickerCards.map(({ key, content }, i) => (
+        // The empty board is cream: on a white card it vanished, so its card is a warm tan.
+        <Box key={key} sx={{ position: 'relative', background: key === 'free' ? '#E8CFA8' : '#FFFEFB', borderRadius: '14%', boxShadow: '0 2px 4px rgba(80,50,20,0.3)', transform: `rotate(${[-4, 3, 2, -3][i]}deg)` }}>
+          <Box sx={{ position: 'absolute', inset: '6%' }}>{content}</Box>
         </Box>
       ))}
     </Box>
   )
-  // Landscape with the pattern card in the side column: the two controls give it room. Portrait: the two
-  // stand stacked beside the bowls, so together they must not be taller than the bowls' 3 rows (208 px) —
-  // at 120 + 120 they were, and the board lost 40 px (measured, WebKit 768×1024).
-  const big = phone ? '56px' : landscape && !isPattern ? '120px' : '96px'
+  // The side column's two big controls — "Vælg en anden plade" and the way on (Ny plade / Færdig /
+  // Næste) — are ONE size, so they share a centre line (owner, 2026-10-17: "much larger … centrally
+  // aligned with Ny plade, maybe same size"). Each value is the most its layout has room for:
+  //   - a wide landscape screen (the 12.9" iPad): the column widens to 210 px (`--bead-side`) out of slack
+  //     the board never needed — its pitch there is set by the HEIGHT — so 190 px;
+  //   - the 1024-wide iPad: the 168 px column; 120 when the pattern card shares it (it must fit beside a
+  //     584 px board), 150 otherwise;
+  //   - portrait: both stand stacked beside the bowls, within their 3 rows (3×70 + 2×8 = 226 px) → 108;
+  //   - a phone: 64.
+  const sideBtn = phone ? '64px' : !landscape ? '108px' : wideLandscape ? '190px' : isPattern ? '120px' : '150px'
+  const pickerSize = sideBtn
+  const big = sideBtn
   const newBoardPicture = (
     // Board 12–88 % + the corner badge to 102 %: shifted so their union is centred in the column, like "Nyt papir".
     <Box sx={{ position: 'relative', width: '100%', height: '100%', transform: 'translate(-7%, 5%)' }}>
@@ -709,7 +728,7 @@ const PerlepladeGame: React.FC = () => {
               pt: landscape ? SIDE_TOP_CLEARANCE : 0,
             }}
           >
-            <StudioButton dataId="to-picker" label="Vælg en anden plade" size={big} disabled={confirmOpen || swapping || stage === 'alive'} onPress={toPicker}>
+            <StudioButton dataId="to-picker" label="Vælg en anden plade" size={pickerSize} disabled={confirmOpen || swapping || stage === 'alive'} onPress={toPicker}>
               {pickerPicture}
             </StudioButton>
             {landscape ? card : null}
