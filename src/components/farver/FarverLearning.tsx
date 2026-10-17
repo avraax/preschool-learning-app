@@ -5,7 +5,7 @@ import { Sun, Moon } from 'lucide-react'
 import { useTheme } from '@mui/material/styles'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { getCategoryTheme } from '../../config/categoryThemes'
-import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS, spokenColor } from '../../config/colorContent'
+import { SHADES, HUE_ORDER, COLOR_SWATCH, DANISH_OBJECTS, spokenColor } from '../../config/colorContent'
 import { colorObjectFactText } from '../../config/gamePhrases'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -111,7 +111,6 @@ const FarverLearning: React.FC = () => {
     <GameShell
       categoryId="colors"
       title="Lær Farver"
-      backRoute="/farver"
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

@@ -80,7 +80,6 @@ const EnglishLearning: React.FC = () => {
     <GameShell
       categoryId="english"
       title="Lær Engelsk"
-      backRoute="/english"
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

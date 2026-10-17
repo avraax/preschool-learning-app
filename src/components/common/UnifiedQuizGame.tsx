@@ -117,8 +117,7 @@ export interface UnifiedQuizConfig {
   emoji?: string
   teacherCharacter: 'owl' | 'fox'
   theme: CategoryTheme
-  backRoute: string
-  
+
   // Component configuration
   RepeatButtonComponent: React.ComponentType<any>
   // Hide the "Gentag" repeat button (e.g. Læs Ordet, where the word must not be read aloud).
@@ -737,7 +736,6 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     <GameShell
       categoryId={config.theme.id}
       title={config.title}
-      backRoute={config.backRoute}
       guideReaction={guideReaction}
       promptStage={
         <PromptFocus

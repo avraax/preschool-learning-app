@@ -336,7 +336,6 @@ const FarveQuizGame: React.FC = () => {
     <GameShell
       categoryId="colors"
       title="Hvilken Farve?"
-      backRoute="/farver"
       dense
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

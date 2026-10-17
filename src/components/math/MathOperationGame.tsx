@@ -563,7 +563,6 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     <GameShell
       categoryId="math"
       title={title}
-      backRoute="/math"
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       promptStage={

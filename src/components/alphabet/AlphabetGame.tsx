@@ -126,7 +126,6 @@ const AlphabetGame: React.FC = () => {
     title: 'Bogstav Quiz',
     teacherCharacter: 'owl',
     theme: categoryThemes.alphabet,
-    backRoute: '/alphabet',
     
     // Component configuration
     RepeatButtonComponent: AlphabetRepeatButton,

@@ -7,11 +7,12 @@ import {
   doorAtRoute,
   doorOf,
   menuRouteFor,
+  paletteAliasFor,
   primarySectionFor,
   sectionOfGame,
   tileIdOfGame,
 } from './doors.ts'
-import { categoryThemes } from './categoryThemes.ts'
+import { categoryThemes, getCategoryTheme, setCategoryPaletteAlias } from './categoryThemes.ts'
 import { SECTION_IDS } from './progressSchema.ts'
 
 // Every shipped game, from the menu content — the set a door may neither drop nor duplicate.
@@ -78,6 +79,25 @@ test('with four doors ON a game\'s back arrow lands on its door, never on a reti
   const routes = new Set(DOORS.map((d) => d.route))
   for (const s of SECTION_IDS) assert.ok(routes.has(menuRouteFor(s, true)), s)
   assert.ok(!routes.has('/ordleg') && !routes.has('/krea'))
+})
+
+// A3: with four doors Ordleg/Krea wear their door's colours, but keep their own names and games.
+test('the palette alias swaps COLOURS only, and is empty with four doors off', () => {
+  assert.deepEqual(paletteAliasFor(false), {})
+  assert.deepEqual(paletteAliasFor(true), { ordleg: 'alphabet', krea: 'colors' })
+  try {
+    setCategoryPaletteAlias(paletteAliasFor(true))
+    const ordleg = getCategoryTheme('ordleg')
+    const alphabet = getCategoryTheme('alphabet')
+    assert.equal(ordleg.accentColor, alphabet.accentColor)
+    assert.equal(ordleg.gradient, alphabet.gradient)
+    assert.equal(ordleg.name, 'Ordleg')
+    assert.deepEqual(ordleg.games, categoryThemes.ordleg.games)
+    assert.equal(getCategoryTheme('krea').accentColor, getCategoryTheme('colors').accentColor)
+  } finally {
+    setCategoryPaletteAlias({})
+  }
+  assert.notEqual(getCategoryTheme('ordleg').accentColor, getCategoryTheme('alphabet').accentColor)
 })
 
 test('gameId helpers split on the FIRST dot only', () => {

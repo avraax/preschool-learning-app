@@ -493,7 +493,6 @@ const NuancerGame: React.FC = () => {
       <GameShell
         categoryId="colors"
         title="Nuancer"
-        backRoute="/farver"
         dense
         guideReaction={guideReaction}
         promptStage={promptStageContent}

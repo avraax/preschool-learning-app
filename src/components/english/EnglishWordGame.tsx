@@ -64,7 +64,6 @@ const EnglishWordGame: React.FC = () => {
     title: 'Find det Engelske Ord',
     teacherCharacter: 'owl',
     theme: getCategoryTheme('english'),
-    backRoute: '/english',
 
     RepeatButtonComponent: EnglishRepeatButton,
 

@@ -206,7 +206,6 @@ const NumberLearning: React.FC = () => {
     <GameShell
       categoryId="math"
       title="Lær Tal"
-      backRoute="/math"
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

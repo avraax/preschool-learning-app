@@ -572,7 +572,6 @@ const RamFarvenGame: React.FC = () => {
     <GameShell
       categoryId="colors"
       title="Ram Farven"
-      backRoute="/farver"
       dense
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

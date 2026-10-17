@@ -495,7 +495,6 @@ const SpellingGame: React.FC = () => {
     <GameShell
       categoryId="ordleg"
       title="Stav Ordet"
-      backRoute="/ordleg"
       dense
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

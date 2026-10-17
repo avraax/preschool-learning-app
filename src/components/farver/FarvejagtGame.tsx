@@ -590,7 +590,6 @@ const FarvejagtGame: React.FC = () => {
     <GameShell
       categoryId="colors"
       title="Farvejagt"
-      backRoute="/farver"
       dense
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

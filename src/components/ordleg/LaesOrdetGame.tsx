@@ -99,7 +99,6 @@ const LaesOrdetGame: React.FC = () => {
     // Live, skin-aware ordleg theme (§3.6) — the static `categoryThemes.ordleg` is bound to the kid
     // tokens and would show kid-skin colours on Havet/Rummet/Dino.
     theme: getCategoryTheme('ordleg'),
-    backRoute: '/ordleg',
 
     RepeatButtonComponent: OrdlegRepeatButton,
     // No "Gentag" button — there's nothing to repeat; the child reads the word silently.

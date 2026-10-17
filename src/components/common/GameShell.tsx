@@ -8,6 +8,9 @@ import BackButton from './BackButton'
 import CelebrationEffect from './CelebrationEffect'
 import RewardRing from './RewardRing'
 import { getCategoryTheme } from '../../config/categoryThemes'
+import { menuRouteFor } from '../../config/doors'
+import type { SectionId } from '../../config/progressSchema'
+import { fourDoorsShown } from '../../utils/fourDoors'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { mascotBus } from '../../services/mascotBus'
 import { useTransitionNav } from '../../hooks/useTransitionNav'
@@ -23,9 +26,12 @@ import type { GuideReaction } from './ThemeMascot'
 // `promptStage` and keep the centred, grid-filling behaviour.
 
 interface GameShellProps {
-  categoryId: string                 // 'alphabet' | 'math' | 'colors' | 'english' | 'ordleg' | 'krea'
+  categoryId: string                 // the game's OWN SectionId ('alphabet' … 'krea') — never its door
   title: string
-  backRoute: string
+  // There is NO `backRoute` prop (Category restructure PRD-01 T1). The back arrow goes to the menu the
+  // game's section lives in, derived here from `categoryId` through `doors.ts` — with four doors that
+  // is the DOOR (Stav Ordet → Bogstaver og Ord), otherwise the section's own menu. Every game used to
+  // hard-code its own literal, which would have sent ~20 back arrows to a retired menu.
   // Live cross-game XP indicator (Liveliness PRD-04): the reward ring, on EVERY game. Set false for a
   // rare opt-out. Ticks/pops per task — and nothing else: the crossing flash, the bigger pop and the
   // soft chime are all gone (Endless Play PRD-01 D4), because the ceremony now fires in-game at the
@@ -70,7 +76,6 @@ interface GameShellProps {
 const GameShell: React.FC<GameShellProps> = ({
   categoryId,
   title,
-  backRoute,
   levelIndicator = true,
   guideReaction = null,
   celebration,
@@ -84,6 +89,7 @@ const GameShell: React.FC<GameShellProps> = ({
 }) => {
   const theme = useTheme()
   const category = getCategoryTheme(categoryId)
+  const backRoute = menuRouteFor(categoryId as SectionId, fourDoorsShown())
   const dark = theme.scene.dark && !lightScene
   const immersive = theme.scene.layers.length > 0
   // Phone landscape: play-surface first — the title moves INTO the header row (between back

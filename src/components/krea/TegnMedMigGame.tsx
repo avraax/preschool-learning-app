@@ -393,7 +393,7 @@ const TegnMedMigGame: React.FC = () => {
   // ----- render ------------------------------------------------------------------------------------
   if (!subject) {
     return (
-      <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false} lightScene inlineTitle>
+      <GameShell categoryId="krea" title="Tegn med Mig" dense guide={false} lightScene inlineTitle>
         <StudioBackdrop />
         <KreaPicker
           items={KREA_SUBJECTS.map((s) => ({ id: s.id, label: s.name, picture: <SubjectCard subject={s} drawing={loadPiece(s.id)?.drawing ?? null} /> }))}
@@ -405,7 +405,7 @@ const TegnMedMigGame: React.FC = () => {
 
   const crayonInHand = tool === 'crayon' || tool === 'rainbow'
   return (
-    <GameShell categoryId="krea" title="Tegn med Mig" backRoute="/krea" dense guide={false} lightScene inlineTitle>
+    <GameShell categoryId="krea" title="Tegn med Mig" dense guide={false} lightScene inlineTitle>
       <StudioBackdrop />
       <PieceStudio
         landscape={landscape}

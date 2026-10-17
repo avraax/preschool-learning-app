@@ -78,7 +78,6 @@ const MemoryGame: React.FC = () => {
     
     title: 'Hukommelsesspil - Bogstaver',
     instructions: MEMORY_LETTERS_INSTRUCTION,
-    backPath: '/alphabet',
     theme: categoryThemes.alphabet,
 
     RepeatButtonComponent: AlphabetRepeatButton,
@@ -117,7 +116,6 @@ const MemoryGame: React.FC = () => {
     
     title: 'Hukommelsesspil - Tal',
     instructions: MEMORY_NUMBERS_INSTRUCTION,
-    backPath: '/math',
     theme: categoryThemes.math,
 
     RepeatButtonComponent: MathRepeatButton,

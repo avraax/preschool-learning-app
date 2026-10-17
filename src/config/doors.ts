@@ -116,6 +116,14 @@ export const menuRouteFor = (section: SectionId, fourDoors: boolean): string =>
 export const primarySectionFor = (section: SectionId, fourDoors: boolean): SectionId =>
   fourDoors ? doorOf(section).primary : section
 
+/** The colour aliases four doors imply — every non-primary member → its door's primary. Empty when off. */
+export const paletteAliasFor = (fourDoors: boolean): Partial<Record<SectionId, SectionId>> => {
+  const alias: Partial<Record<SectionId, SectionId>> = {}
+  if (!fourDoors) return alias
+  for (const d of DOORS) for (const m of d.members) if (m !== d.primary) alias[m] = d.primary
+  return alias
+}
+
 /** The section a gameId belongs to (`ordleg.read` → `ordleg`). */
 export const sectionOfGame = (gameId: string): SectionId => gameId.slice(0, gameId.indexOf('.')) as SectionId
 

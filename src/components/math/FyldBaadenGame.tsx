@@ -457,7 +457,6 @@ const FyldBaadenGame: React.FC = () => {
       <GameShell
         categoryId="math"
         title="Fyld Båden"
-        backRoute="/math"
         dense
         // The corner companion would stand IN THE SEA here (owner, 2026-10-14) — the same mascot stands on
         // the jetty as harbour master instead. `guideReaction` still reaches it through mascotBus.

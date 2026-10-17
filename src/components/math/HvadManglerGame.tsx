@@ -178,7 +178,6 @@ const HvadManglerGame: React.FC = () => {
     title: 'Hvad Mangler?',
     teacherCharacter: 'fox',
     theme: category,
-    backRoute: '/math',
 
     RepeatButtonComponent: MathRepeatButton,
 

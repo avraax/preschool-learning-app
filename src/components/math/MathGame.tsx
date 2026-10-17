@@ -82,7 +82,6 @@ const MathGame: React.FC = () => {
     title: 'Tal Quiz',
     teacherCharacter: 'fox',
     theme: categoryThemes.math,
-    backRoute: '/math',
     
     // Component configuration
     RepeatButtonComponent: MathRepeatButton,

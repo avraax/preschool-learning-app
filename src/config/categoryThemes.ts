@@ -240,9 +240,20 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
   }
 }
 
+// COLOUR ALIASES for the four-door front page (Category restructure PRD-01 A3): with four doors, a
+// section that shares a door wears its door's PRIMARY section's colours (Ordleg → Alfabetet's, Krea →
+// Farver's), so a door reads as one place from its menu into every one of its games. CONTENT never
+// aliases — names and game lists stay the section's own. Registered once at startup from `doors.ts`
+// (`main.tsx`) rather than read from the gate here, because this module is in the plain-Node test and
+// prebake graph and the gate is not. Empty = today's six palettes, which is production until v1.3.
+let paletteAlias: Partial<Record<CategoryId, CategoryId>> = {}
+export const setCategoryPaletteAlias = (alias: Partial<Record<CategoryId, CategoryId>>): void => {
+  paletteAlias = { ...alias }
+}
+
 // Merge a category's themeable colors (from tokens) with its content/config.
 const toCategoryTheme = (id: CategoryId, tokens: ThemeTokens): CategoryTheme => {
-  const palette = tokens.categories[id]
+  const palette = tokens.categories[paletteAlias[id] ?? id]
   const content = categoryContent[id]
   return {
     id,

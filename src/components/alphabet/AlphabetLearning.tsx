@@ -228,7 +228,6 @@ const AlphabetLearning: React.FC = () => {
     <GameShell
       categoryId="alphabet"
       title="Lær Alfabetet"
-      backRoute="/alphabet"
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

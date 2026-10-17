@@ -108,7 +108,6 @@ export interface UnifiedMemoryConfig {
   // UI configuration
   title: string
   instructions: string
-  backPath: string
   theme: CategoryTheme     // card-back MOTIF is theme/world-driven now (see WORLD_MOTIF), not config
 
   // Component overrides
@@ -609,7 +608,6 @@ const UnifiedMemoryGame: React.FC<UnifiedMemoryGameProps> = ({ config }) => {
     <GameShell
       categoryId={config.theme.id}
       title={config.title}
-      backRoute={config.backPath}
       dense
       guide={false}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}

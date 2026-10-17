@@ -496,7 +496,6 @@ const ComparisonGame: React.FC = () => {
     <GameShell
       categoryId="math"
       title="Sammenlign Tal"
-      backRoute="/math"
       guideReaction={guideReaction}
       celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
     >

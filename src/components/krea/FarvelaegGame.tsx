@@ -334,7 +334,7 @@ const FarvelaegGame: React.FC = () => {
   // ----- render ------------------------------------------------------------------------------------
   if (!page || !info) {
     return (
-      <GameShell categoryId="krea" title="Farvelæg" backRoute="/krea" dense guide={false} lightScene inlineTitle>
+      <GameShell categoryId="krea" title="Farvelæg" dense guide={false} lightScene inlineTitle>
         <StudioBackdrop />
         <KreaPicker items={KREA_PAGES.map((p) => ({ id: p.id, label: p.name, picture: <PageCard id={p.id} actions={loadPiece(p.id)?.actions ?? null} /> }))} onPick={openPage} />
       </GameShell>
@@ -342,7 +342,7 @@ const FarvelaegGame: React.FC = () => {
   }
 
   return (
-    <GameShell categoryId="krea" title="Farvelæg" backRoute="/krea" dense guide={false} lightScene inlineTitle>
+    <GameShell categoryId="krea" title="Farvelæg" dense guide={false} lightScene inlineTitle>
       <StudioBackdrop />
       <PieceStudio
         landscape={landscape}

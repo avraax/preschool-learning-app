@@ -6,6 +6,8 @@ import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { useProgress } from '../../../hooks/useProgress'
 import { sectionForPath } from '../../../config/routeDepth'
 import { getCategoryTheme } from '../../../config/categoryThemes'
+import { doorOf, primarySectionFor } from '../../../config/doors'
+import { fourDoorsShown } from '../../../utils/fourDoors'
 import type { SectionId } from '../../../services/progressStore'
 import { useParallax } from './useParallax'
 import { routeKind, isHomeRoute } from './routeKind'
@@ -51,13 +53,20 @@ const PersistentWorld: React.FC = () => {
   // A section route reflects THAT section's bloom; home reflects the child's best across sections.
   // Bloom multiplies the scene's existing ambient knob (extra drifting objects) — monotonic and
   // persisted, so the child returns to a world they made grow.
-  const section = sectionForPath(pathname)
+  // With four doors (Category restructure PRD-01 A3) a route belongs to its DOOR's world: framing and
+  // tint follow the door's primary section, and a merged door blooms with the best of its members —
+  // the same "best across" rule home uses, so playing Stav Ordet grows Bogstaver og Ord's world.
+  const ownSection = sectionForPath(pathname)
+  const fourDoors = fourDoorsShown()
+  const section = ownSection ? primarySectionFor(ownSection, fourDoors) : null
   let stage = 0
   let fill = 0
-  if (section) {
-    const b = bloomFor(section)
-    stage = b.stage
-    fill = b.fill
+  if (ownSection) {
+    for (const s of fourDoors ? doorOf(ownSection).members : [ownSection]) {
+      const b = bloomFor(s)
+      stage = Math.max(stage, b.stage)
+      fill = Math.max(fill, b.fill)
+    }
   } else {
     for (const s of BLOOM_SECTIONS) {
       const b = bloomFor(s)

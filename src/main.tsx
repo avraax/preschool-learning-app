@@ -44,6 +44,13 @@ installDevOauthFlow()
 // render that already happened just re-renders.
 void installDevRewards()
 
+// Four front-page doors (Category restructure PRD-01 A3): a section that shares a door wears its door's
+// colours. Registered before the first render; empty on production until v1.3 (the Krea gate).
+import { setCategoryPaletteAlias } from './config/categoryThemes'
+import { paletteAliasFor } from './config/doors'
+import { fourDoorsShown } from './utils/fourDoors'
+setCategoryPaletteAlias(paletteAliasFor(fourDoorsShown()))
+
 // Initialize viewport height before React renders
 const setInitialViewportHeight = () => {
   const vh = window.innerHeight * 0.01

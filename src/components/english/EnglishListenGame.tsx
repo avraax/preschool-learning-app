@@ -54,7 +54,6 @@ const EnglishListenGame: React.FC = () => {
     title: 'Lyt og Find',
     teacherCharacter: 'owl',
     theme: getCategoryTheme('english'),
-    backRoute: '/english',
 
     RepeatButtonComponent: EnglishRepeatButton,
 
