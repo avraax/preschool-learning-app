@@ -36,10 +36,10 @@ export type SfxCue =
   // `public/sounds/ui/`; a cue name nothing plays is what this list exists to keep out.
   | 'page-complete'
   | 'level-up'
-  // Navigation cues (Liveliness PRD-02): a subtle pop on tapping a card, a per-skin travel whoosh
-  // fired at cover start, and a softer reverse whoosh on back. The arrive chime on a menu reveal
-  // (`menu-open`) is DELETED (2026-10-04, owner: a gong after every hop).
-  | 'card-pop'
+  // Navigation cues (Liveliness PRD-02): a per-skin travel whoosh fired at cover start, and a softer
+  // reverse on back — ONE sound per hop. The arrive chime on a menu reveal (`menu-open`) is DELETED
+  // (2026-10-04, owner: a gong after every hop), and so is the `card-pop` on tapping a card (2026-10-17,
+  // owner: a pop and then the whoosh is two sounds).
   | 'nav-whoosh'
   | 'nav-wave'
   | 'nav-warp'
@@ -89,14 +89,14 @@ const CUE_FILES: Record<SfxCue, string> = {
   // Level-up fanfare (Liveliness PRD-01). Aliases the page-complete jingle until a dedicated cue
   // ships (missing files degrade to silence anyway); the biggest celebratory moment in the app.
   'level-up': '/sounds/ui/page-complete.mp3',
-  // Navigation cues (Liveliness PRD-02). Reuse existing curated files until dedicated
-  // /sounds/ui/{card-pop,nav-*,back}.mp3 ship; missing files degrade to silence.
-  'card-pop': '/sounds/ui/tap.mp3',
-  'nav-whoosh': '/sounds/ui/flip.mp3',
-  'nav-wave': '/sounds/ui/flip.mp3',
-  'nav-warp': '/sounds/ui/flip.mp3',
-  'nav-stomp': '/sounds/ui/drop-snap.mp3',
-  back: '/sounds/ui/flip.mp3',
+  // Navigation cues (Liveliness PRD-02). One calm travel pair for every skin (owner 2026-10-17 picked a
+  // soft rise and its mirror by ear); the per-skin names stay so a skin can get its own file again.
+  // correct/wrong/tap/nav-forward/nav-back are baked by scripts/bake-ui-sounds.mjs.
+  'nav-whoosh': '/sounds/ui/nav-forward.mp3',
+  'nav-wave': '/sounds/ui/nav-forward.mp3',
+  'nav-warp': '/sounds/ui/nav-forward.mp3',
+  'nav-stomp': '/sounds/ui/nav-forward.mp3',
+  back: '/sounds/ui/nav-back.mp3',
   // Kenney "Impact Sounds" (CC0): impactSoft_medium_002 (a fish lands) / impactWood_heavy_001 (a box).
   'fish-land': '/sounds/ui/fish-land.mp3',
   'box-land': '/sounds/ui/box-land.mp3',
@@ -125,27 +125,28 @@ const CUE_FILES: Record<SfxCue, string> = {
 const LAZY_CUES: ReadonlySet<SfxCue> = new Set<SfxCue>(['harbour-ambience', 'boat-motor'])
 
 // Per-cue base volume — keep cues subtle so they don't fight narration.
+// The answer + travel files (bake-ui-sounds.mjs) measure correct -21.9 / wrong -27.5 / tap -28.3 /
+// nav-forward -28.5 / nav-back -32.2 LUFS, so these land at ≈ -29 / -34.5 / -37.4 / -34.5 / -38.2
+// effective: correct a touch under the old cue, everything else well under narration.
 const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   tap: 0.35,
   'pick-up': 0.4,
-  'spring-back': 0.4,
+  'spring-back': 0.45,
   chomp: 0.55,
-  match: 0.5,
-  correct: 0.5,
+  match: 0.45,
+  correct: 0.45,
   wrong: 0.45,
   'drop-snap': 0.5,
   flip: 0.4,
   'streak-up': 0.5,
   'page-complete': 0.6,
   'level-up': 0.6,
-  'card-pop': 0.35,
-  'nav-whoosh': 0.35,
-  'nav-wave': 0.35,
-  'nav-warp': 0.4,
-  // Forward stomp vs back were ~14 dB apart (drop-snap is a hot -20.5 LUFS file, flip a quiet -31.9),
-  // so on Dinosaurer going back was barely audible. Owner 2026-10-04: forward down, back up →
-  // stomp ≈ -34.5, back ≈ -37.9 LUFS effective; forward stays a touch louder as the bigger move.
-  'nav-stomp': 0.2,
+  // Forward stays a touch louder than back as the bigger move (owner 2026-10-04: stomp ≈ -34.5, back ≈
+  // -37.9 LUFS effective — the new pair keeps that balance).
+  'nav-whoosh': 0.5,
+  'nav-wave': 0.5,
+  'nav-warp': 0.5,
+  'nav-stomp': 0.5,
   back: 0.5,
   'fish-land': 0.5,
   'box-land': 0.55,

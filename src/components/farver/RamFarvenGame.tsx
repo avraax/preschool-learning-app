@@ -460,12 +460,14 @@ const RamFarvenGame: React.FC = () => {
     const choice = choices.find((c) => c.name === name)
     if (!choice) return
     audio.updateUserInteraction()
-    if (viaTap) sfx.play('tap')
     setCommitting(true)
     const isCorrect = choice.name === targetColor.name
     setBlendResult({ hex: choice.hex, name: choice.name, isCorrect })
     if (commitTimer.current) clearTimeout(commitTimer.current)
     if (isCorrect) {
+      // The correct verdict lands half a blend later, so the press ticks now; a wrong one sounds its
+      // spring-back on the press instead (one press, one sound).
+      if (viaTap) sfx.play('tap')
       const pair = recipeFor(targetColor.name)
       commitTimer.current = setTimeout(() => {
         if (pair) handleCorrectMix(pair[0], pair[1], targetColor)

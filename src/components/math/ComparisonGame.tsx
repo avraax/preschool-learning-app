@@ -282,9 +282,8 @@ const ComparisonGame: React.FC = () => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
 
-    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS) —
-    // matching UnifiedQuizGame so the interaction language is consistent app-wide.
-    sfx.play('tap')
+    // No tap tick: both branches below sound their verdict on this press, and one press is one sound
+    // (matching UnifiedQuizGame).
 
     const targetSide = targetSideOf(currentProblem, askSmaller)
     const isCorrect = side === targetSide

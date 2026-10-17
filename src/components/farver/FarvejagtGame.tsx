@@ -447,7 +447,7 @@ const FarvejagtGame: React.FC = () => {
   // the object (DraggableItem's `onActivate` — owner, 2026-08-03; a tap used to do nothing at all).
   // The tap cannot double up with a drop: `useTapActivate` only fires below the same distance that
   // arms the drag sensor.
-  const resolveItem = (itemId: string, viaTap = false) => {
+  const resolveItem = (itemId: string) => {
     // The child is playing → suppress any pending/late welcome from talking over them.
     hasInteractedRef.current = true
     audio.updateUserInteraction()
@@ -455,14 +455,12 @@ const FarvejagtGame: React.FC = () => {
 
     const draggedItem = gameItems.find(item => item.id === itemId)
     if (!draggedItem || draggedItem.collected) return
-    // "Every tap is felt" (see game-development.md): the drag path already ticked on pick-up, so only
-    // the tap path owes the synchronous press sound before the resolution cue.
-    if (viaTap) sfx.play('tap')
+    // One press, one sound (game-development.md): each branch below sounds its verdict, so neither a tap
+    // tick in front of it nor a snap beside the micro tier's `correct`.
 
     if (draggedItem.isTarget) {
-      // Correct: SNAP into the collected ring with a splash burst + sound, keep the spoken
-      // reinforcement. The burst is positioned at this item's stable ring slot.
-      sfx.play('drop-snap')
+      // Correct: SNAP into the collected ring with a splash burst, keep the spoken reinforcement. The
+      // burst is positioned at this item's stable ring slot.
       const targetItemsNow = gameItems.filter(i => i.isTarget)
       const slotIndex = targetItemsNow.findIndex(i => i.id === draggedItem.id)
       const collectedTargetsNow = targetItemsNow.filter(i => i.collected).length
@@ -861,7 +859,7 @@ const FarvejagtGame: React.FC = () => {
                     position={{ x: item.x, y: item.y }}
                     data={item}
                     // Tap = "put this one in the circle", the same resolution a drop gets.
-                    onActivate={() => resolveItem(item.id, true)}
+                    onActivate={() => resolveItem(item.id)}
                   >
                     <motion.div
                       key={`${boardKey}-${item.id}`}

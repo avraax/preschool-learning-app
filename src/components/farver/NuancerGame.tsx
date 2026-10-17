@@ -285,18 +285,17 @@ const NuancerGame: React.FC = () => {
   const tapShade = (shadeId: string) => {
     const firstEmpty = slots.findIndex((s) => !s)
     if (firstEmpty < 0) return
-    resolveShade(shadeId, firstEmpty, true)
+    resolveShade(shadeId, firstEmpty)
   }
 
   // ONE resolution path for both gestures. Keyed by the shade's `id` (Game Depth PRD-01 §4 trap 8).
-  const resolveShade = (shadeId: string, i: number, viaTap = false) => {
+  const resolveShade = (shadeId: string, i: number) => {
     if (!gameReady || isAdvancing.current) return
     if (slots.includes(shadeId)) return // already placed
     hasInteractedRef.current = true
     audio.updateUserInteraction()
     if (slots[i]) return // slot already filled → springs back
-    // "Every tap is felt": the drag path already ticked on pick-up, so only the tap owes the press.
-    if (viaTap) sfx.play('tap')
+    // One press, one sound: the snap or the spring-back below is this press's sound (game-development.md).
 
     if (order[i] && shadeId === order[i].id) {
       // Correct slot → lock it in with a SNAP + a localized burst.

@@ -245,19 +245,18 @@ const FarveQuizGame: React.FC = () => {
   // swatch (DroppableZone's `onActivate` — owner, 2026-08-03; a tap used to do nothing at all).
   // Note the tap lives on the ZONE here, not the draggable: this game has a single draggable (the
   // object being placed), so tapping IT could not name a colour. The child's choice is the swatch.
-  const resolveColor = (droppedColor: string, viaTap = false) => {
+  const resolveColor = (droppedColor: string) => {
     if (!gameReady || isAdvancing.current || !current) return
     hasInteractedRef.current = true
     audio.updateUserInteraction()
-    // "Every tap is felt": the drag path already ticked on pick-up, so only the tap owes the press.
-    if (viaTap) sfx.play('tap')
+    // One press, one sound: each branch below sounds its verdict (game-development.md).
 
     if (droppedColor === current.color) {
-      // Correct — the object "lands" in the color (absorb + splash).
+      // Correct — the object "lands" in the color (absorb + splash). The micro tier's `correct` is its
+      // one sound; a snap beside it stacked two.
       isAdvancing.current = true
       setSolvedColor(droppedColor)
       setHintColor(null)
-      sfx.play('drop-snap')
       celebrateTier('micro')
       reactGuide('cheer')
 
@@ -473,7 +472,7 @@ const FarveQuizGame: React.FC = () => {
                       id={`color-${color}`}
                       overColor={hexToRgba(hex, 0.55)}
                       // Tap the swatch = the same answer as dropping the object on it.
-                      onActivate={() => resolveColor(color, true)}
+                      onActivate={() => resolveColor(color)}
                       style={{
                         width: '100%',
                         height: '100%',

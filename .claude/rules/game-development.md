@@ -53,9 +53,9 @@ Two ways a game guard passes while the feature is broken. Both hit in one sessio
 Hand-rolled task games must match `UnifiedQuizGame`'s feedback language — the engine does all of this
 internally, so only hand-rolled games can drift (this drift has bitten several games at once):
 
-- A synchronous **`sfx.play('tap')` "every tap is felt" tick** at the TOP of the tap handler (right
-  after `audio.cancelCurrentAudio()`, before the correct/wrong branch) so every press is felt even
-  before the resolution sound.
+- **One press, one sound** (owner 2026-10-17). The verdict (`correct` via the micro tier, or `wrong`/
+  `spring-back`) IS the press's sound — no `tap` tick before it, no `drop-snap` beside it. Only a press
+  with no verdict of its own ticks.
 - **`mascotBus.emit('streak')` alongside `celebrateTier('streak')`** on the streak milestone (the
   `r.streak % 3 === 0` line) so the corner mascot does its streak pose.
 - `correct`/`wrong` mascot comes free via GameShell's `guideReaction` bridge (set `guideReaction`

@@ -7,7 +7,6 @@ import { useLivingCard } from '../../../hooks/useLivingCard'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { softShadow, contactShadow, usePointerTilt } from '../../../theme/depth'
 import { hexToRgba } from '../../../theme/tokens/helpers'
-import { sfx } from '../../../services/sfxClient'
 import ThemedBurst, { type ThemedBurstHandle } from '../ThemedBurst'
 
 // SceneObject (Liveliness PRD-05 W1.1) — the tactile soft-3D object that REPLACES the frosted
@@ -74,8 +73,7 @@ const SceneObject: React.FC<SceneObjectProps> = ({
   }, [attract, reduce, wiggle])
 
   const handleClick = () => {
-    // Audio (the tactile "felt" tick) is kept under reduced motion; squash + burst are skipped.
-    sfx.play('card-pop')
+    // No sound here: `onActivate` starts the wipe, whose travel cue is the hop's one sound.
     if (!reduce) {
       bump()
       burstRef.current?.fire()

@@ -319,10 +319,10 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     const landed = !!over && over.id === 'answer-slot'
     if (!landed && !wasWobbledTap(delta)) return
     const value = Number(String(active.id).replace(/^opt-/, ''))
-    if (!Number.isNaN(value)) void handleAnswerClick(value, true)
+    if (!Number.isNaN(value)) void handleAnswerClick(value)
   }
 
-  const handleAnswerClick = async (selectedAnswer: number, viaDrag = false) => {
+  const handleAnswerClick = async (selectedAnswer: number) => {
     if (correctAnswer === null) return
     // Advance-lock (PRD-02 P1/P2): ignore every tap once a correct answer is resolving — blocks the
     // double-tap double-record and the celebration-tap star theft.
@@ -333,10 +333,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
 
-    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS) —
-    // matching UnifiedQuizGame so the interaction language is consistent app-wide. A DROP already
-    // sounded its press on pick-up, so it skips the tick rather than stacking a third cue.
-    if (!viaDrag) sfx.play('tap')
+    // No tap tick: both branches below sound their verdict on this press, and one press is one sound
+    // (matching UnifiedQuizGame).
 
     const isCorrect = selectedAnswer === correctAnswer
 

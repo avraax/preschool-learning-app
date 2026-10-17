@@ -4,14 +4,14 @@ import { motion } from 'framer-motion'
 import type { AmbientMotion } from '../../theme/tokens/types'
 import { useLivingCard } from '../../hooks/useLivingCard'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { sfx } from '../../services/sfxClient'
 import ThemedBurst, { type ThemedBurstHandle } from './ThemedBurst'
 
 // A menu card that's ALIVE (Liveliness PRD-02 §5). Wraps a card's visual (the MUI <Card>) with:
 //   • an idle-breathe wrapper (CSS, phased by index),
 //   • a framer squash layer that pops on tap (and wiggles on an idle-attract nudge),
 //   • a themed particle burst on tap.
-// On tap it fires `card-pop`, pops + bursts, then calls `onActivate` (which triggers the wipe).
+// On tap it pops + bursts, then calls `onActivate` (which triggers the wipe). It plays NO sound of its
+// own: the wipe's travel cue is the one sound of a hop (owner 2026-10-17: a pop then a whoosh was two).
 // Shared by the home cards and the section-menu tiles so both feel identical. The two motion
 // layers are nested so the CSS breathe transform and the framer transforms never conflict.
 
@@ -47,8 +47,6 @@ const LivingCard: React.FC<LivingCardProps> = ({
   }, [attract, reduce, wiggle])
 
   const handleClick = () => {
-    // SFX (audio) is kept under reduced motion; the squash + burst (motion) are skipped.
-    sfx.play('card-pop')
     if (!reduce) {
       bump()
       burstRef.current?.fire()

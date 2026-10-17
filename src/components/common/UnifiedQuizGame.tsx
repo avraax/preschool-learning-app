@@ -487,9 +487,9 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // Always cancel current audio for fast tapping
     audio.cancelCurrentAudio()
 
-    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS). A DROP
-    // already sounded its press on pick-up, so it skips the tick rather than stacking a third cue.
-    if (!viaDrag) sfx.play('tap')
+    // Every tap is felt — but by ONE sound: an answer tap's verdict (`correct` via the micro tier, or
+    // `wrong`) IS its sound, so there is no tick in front of it (owner 2026-10-17: tick + verdict on one
+    // press was two sounds). Only an audition, which commits nothing, ticks.
 
     // Hear-before-commit (PRD-14 W7): when enabled, the FIRST tap on a tile (or on a DIFFERENT tile
     // than the one currently raised) AUDITIONS it — speak its word + raise it — and returns WITHOUT
@@ -497,6 +497,7 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
     // return BEFORE the lock/score/feedback/first-try/hint block: none of those invariants run on an
     // audition. Only a second tap on the SAME already-raised tile falls through to the commit path.
     if (config.previewBeforeCommit && selectedItem.value !== previewValue) {
+      if (!viaDrag) sfx.play('tap')
       setPreviewValue(selectedItem.value)
       setFeedback(null)     // clear any prior correct/wrong mark so only the raised tile is highlighted
       setGuideReaction(null)

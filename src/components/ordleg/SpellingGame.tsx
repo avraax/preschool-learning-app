@@ -340,10 +340,8 @@ const SpellingGame: React.FC = () => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
 
-    // Every tap is felt: a soft tick synced to the press (separate SFX channel, never TTS) —
-    // matching UnifiedQuizGame so the interaction language is consistent app-wide. A DROP already
-    // sounded its press on pick-up, so it skips the tick rather than stacking a third cue.
-    if (!viaDrag) sfx.play('tap')
+    // One press, one sound: a wrong letter sounds `wrong`, so only a CORRECT letter ticks (below) — it
+    // has no verdict cue of its own until the word completes. A DROP already sounded on pick-up.
 
     // Full spelling fills left to right; the missing-letter task (Let) has exactly ONE slot to fill, so
     // its one correct letter completes the word.
@@ -351,6 +349,7 @@ const SpellingGame: React.FC = () => {
 
     if (tile.letter === expectedLetter) {
       // Correct letter: place it in the next slot. The next slot starts fresh (no hint yet).
+      if (!viaDrag) sfx.play('tap')
       const newFilled = blankIndex !== null ? targetLetters.length : filledCount + 1
       setUsedTileIds(prev => new Set(prev).add(tile.id))
       setFilledCount(newFilled)
