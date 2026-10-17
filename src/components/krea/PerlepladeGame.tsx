@@ -54,7 +54,7 @@ import { DragGhost } from './beads/HeldBead'
 import { PatternCard } from './beads/PatternCard'
 import { flyHome, popOff } from './beads/beadMotion'
 import { StudioBackdrop } from './studio/StudioScene'
-import { PICTURES, PlusBadge, StudioButton } from './studio/StudioControls'
+import { PICTURES, PlusBadge, SIDE_TOP_CLEARANCE, StudioButton } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { swapPaper } from './studio/alive'
 import { KreaPicker } from './studio/KreaPicker'
@@ -682,6 +682,8 @@ const PerlepladeGame: React.FC = () => {
               minHeight: 0,
               minWidth: 0,
               height: landscape ? '100%' : 'auto',
+              // Clear of the reward ring above, like the drawing games' right column (owner, 2026-10-17).
+              pt: landscape ? SIDE_TOP_CLEARANCE : 0,
             }}
           >
             <StudioButton dataId="to-picker" label="Vælg en anden plade" size={big} disabled={confirmOpen || swapping || stage === 'alive'} onPress={toPicker}>

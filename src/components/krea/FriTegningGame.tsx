@@ -27,7 +27,7 @@ import {
   type Tool,
 } from './canvas/strokeModel'
 import { StudioBackdrop, Paper } from './studio/StudioScene'
-import { BTN, CrayonPalette, PICTURES, StampTray, StudioButton, ToolRow } from './studio/StudioControls'
+import { BTN, CrayonPalette, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StampTray, StudioButton, ToolRow } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { STAMPS, STAMP_IDS, STAMP_URLS } from './studio/stamps'
 import { swapPaper } from './studio/alive'
@@ -221,11 +221,12 @@ const FriTegningGame: React.FC = () => {
         gap: 'clamp(8px, 2vmin, 16px)',
         minHeight: 0,
         minWidth: `calc(${BTN} * 1.5)`,
+        '@media (orientation: landscape)': { pt: SIDE_TOP_CLEARANCE },
         [PHONE_PORTRAIT]: { minWidth: 0, px: 1 },
       }}
     >
       <Box sx={{ visibility: ink ? 'visible' : 'hidden' }}>
-        <StudioButton dataId="new-paper" label="Nyt papir" size={`calc(${BTN} * 1.4)`} disabled={!drawingEnabled || !ink} onPress={askNewPaper}>
+        <StudioButton dataId="new-paper" label="Nyt papir" size={SIDE_BTN} disabled={!drawingEnabled || !ink} onPress={askNewPaper}>
           <PICTURES.NewPaper />
         </StudioButton>
       </Box>

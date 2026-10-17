@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box } from '@mui/material'
-import { BTN, PICTURES, StudioButton } from './StudioControls'
+import { BTN, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StudioButton } from './StudioControls'
 import { gameIconImages } from '../../../assets/themes/icons/games'
 import { idlePulse } from '../../../theme/idleMotion'
 import { PHONE_PORTRAIT } from '../../../theme/phoneMedia'
@@ -56,6 +56,7 @@ export const PieceStudio: React.FC<{
         gap: 'clamp(10px, 2.4vmin, 22px)',
         minHeight: 0,
         minWidth: `calc(${BTN} * 1.7)`,
+        '@media (orientation: landscape)': { pt: SIDE_TOP_CLEARANCE },
         [PHONE_PORTRAIT]: { minWidth: 0, px: 1 },
       }}
     >
@@ -67,7 +68,7 @@ export const PieceStudio: React.FC<{
 
 /** Back to the picture grid: the game's own tile picture ("the drawings"), so it needs no words. */
 export const PickerButton: React.FC<{ gameId: 'krea.guide' | 'krea.color' | 'krea.beads'; disabled?: boolean; onPress: () => void }> = ({ gameId, disabled, onPress }) => (
-  <StudioButton dataId="to-picker" label="Vælg en anden tegning" disabled={disabled} onPress={onPress}>
+  <StudioButton dataId="to-picker" label="Vælg en anden tegning" size={SIDE_BTN} disabled={disabled} onPress={onPress}>
     <Box component="img" src={gameIconImages[gameId]} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
   </StudioButton>
 )
@@ -104,7 +105,7 @@ export const PieceWayOn: React.FC<{
   }
   return (
     <Box sx={{ visibility: stage === 'drawing' && hasInk ? 'visible' : 'hidden' }}>
-      <StudioButton dataId="new-paper" label="Nyt papir" size={`calc(${BTN} * 1.4)`} disabled={disabled || stage !== 'drawing' || !hasInk} onPress={onNewPaper}>
+      <StudioButton dataId="new-paper" label="Nyt papir" size={SIDE_BTN} disabled={disabled || stage !== 'drawing' || !hasInk} onPress={onNewPaper}>
         <PICTURES.NewPaper />
       </StudioButton>
     </Box>

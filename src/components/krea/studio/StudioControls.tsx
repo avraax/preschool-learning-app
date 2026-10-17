@@ -15,6 +15,16 @@ import { CRAYON_ART, KREA_ART } from '../../../assets/games/krea'
 /** The control size: ≥ 56 px on an iPad (768 short side), the 44 px floor on a phone. */
 export const BTN = 'clamp(44px, 7.6vmin, 68px)'
 
+/** The right-hand column's controls (Nyt papir, done, next, back to the pictures): one size for all. */
+export const SIDE_BTN = `calc(${BTN} * 1.4)`
+
+/**
+ * Room between the reward ring in the header and the first control of the right-hand column, in every
+ * Krea game (owner, 2026-10-17: "Nyt papir is too close to the rewards icon"). Landscape only: in
+ * portrait the column is a row under the paper, far from the ring.
+ */
+export const SIDE_TOP_CLEARANCE = 'clamp(14px, 3.4vmin, 30px)'
+
 const REST_SHADOW = 'drop-shadow(0 3px 3px rgba(70,40,15,0.35))'
 const LIFT_SHADOW = 'drop-shadow(0 0 7px rgba(255,214,90,0.95)) drop-shadow(0 9px 7px rgba(70,40,15,0.35))'
 
