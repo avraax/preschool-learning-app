@@ -25,7 +25,8 @@ The 6th section, behind `kreaGate.ts` until the owner releases it. PRD + progres
 ## Guided drawing (`guideMatch.ts`)
 - A step passes at **≥ 60% of guide samples within the band** of this step's ink, judged on pointer-up;
   the band is CSS px (48/36/28 by level, `KREA_GUIDE`) converted to paper units + half the crayon.
-  **Never-fail: the 3rd stroke that still misses is accepted.** Undo reaches only to the step's start.
+  Only strokes NEAR the guide count (≥40% of points within 2× the band); far ones stay but don't advance.
+  **Never-fail:** 3 near misses pass; 3 far strokes → help (demo again); 6 strokes pass. Undo: step start.
 - Guides are SHAPES (`kreaShapes.ts`), not SVG paths: one source draws the dots and feeds the rule.
 - Mirror steps: the axis is stored PER STROKE (`BrushStroke.mirror`), so a replay mirrors exactly the
   strokes that were; matching uses the ink AND its reflection (drawing the "wrong" side still counts).
