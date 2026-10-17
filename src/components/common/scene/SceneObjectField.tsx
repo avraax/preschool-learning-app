@@ -3,6 +3,7 @@ import { Box, useMediaQuery } from '@mui/material'
 import type { AmbientMotion, HomeAnchor } from '../../../theme/tokens/types'
 import { PHONE_ANY } from '../../../theme/phoneMedia'
 import SceneObject from './SceneObject'
+import type { NewSparklesSize } from './NewSparkles'
 
 // Shared "objects living in the world" layout (Liveliness PRD-05 W3/W4). Renders a set of
 // tactile <SceneObject>s in one of two arrangements, and owns the single RESPONSIVE FALLBACK
@@ -43,6 +44,7 @@ interface SceneObjectFieldProps {
   // row renders as its own centred, non-wrapping line, so a 9-tile door reads 5+4 rather than whatever a
   // greedy wrap leaves on its last line. Absent → today's single wrapping band.
   rows?: number[]
+  newSize?: NewSparklesSize     // size of the "new" star cluster: 'door' on home, 'tile' (default) in menus
 }
 
 const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
@@ -55,6 +57,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
   flowSize = 'clamp(72px, 12vh, 116px)',
   flowGapX = 'clamp(14px, 3vw, 40px)',
   rows,
+  newSize = 'tile',
 }) => {
   const isPhone = useMediaQuery(PHONE_ANY)
   const seated = !!anchors && anchors.length === items.length && !isPhone
@@ -79,6 +82,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
               rotate={item.rotate ?? a.rotate ?? 0}
               onActivate={item.onActivate}
               isNew={item.isNew}
+              newSize={newSize}
               size={`clamp(${Math.round(98 * a.scale)}px, ${(15 * a.scale).toFixed(1)}vh, ${Math.round(158 * a.scale)}px)`}
               sx={{
                 position: 'absolute',
@@ -108,6 +112,7 @@ const SceneObjectField: React.FC<SceneObjectFieldProps> = ({
       rotate={item.rotate ?? 0}
       onActivate={item.onActivate}
       isNew={item.isNew}
+      newSize={newSize}
       size={flowSize}
     />
   )

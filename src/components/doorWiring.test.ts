@@ -82,11 +82,13 @@ test('new games and their doors carry the release glow through to SceneObject', 
   assert.match(codeOf('components/home/HomePage.tsx'), /isNew: isNewDoor\(d\.id\)/)
   const field = codeOf('components/common/scene/SceneObjectField.tsx')
   assert.equal((field.match(/isNew=\{item\.isNew\}/g) ?? []).length, 2, 'both seated and flow objects must pass isNew')
-  assert.match(codeOf('components/common/scene/SceneObject.tsx'), /\{isNew && <NewSparkles \/>\}/)
-  // The owner's pick: three WHITE stars, twinkling through the shared CSS vocabulary (never a JS loop).
+  assert.match(codeOf('components/common/scene/SceneObject.tsx'), /\{isNew && <NewSparkles size=\{newSize\} \/>\}/)
+  assert.match(codeOf('components/home/HomePage.tsx'), /newSize="door"/)
+  // The owner's pick: one cluster of three WHITE, gold-rimmed stars per size, twinkling through the
+  // shared CSS vocabulary (never a JS loop).
   const sparkles = codeOf('components/common/scene/NewSparkles.tsx')
-  assert.equal((sparkles.match(/delayS: [\d.]+ \}/g) ?? []).length, 3, 'three stars')
-  assert.match(sparkles, /fill="#FFFFFF"/)
+  assert.equal((sparkles.match(/delayS: [\d.]+ \}/g) ?? []).length, 6, 'three stars for door + three for tile')
+  assert.match(sparkles, /fill="#FFFFFF" stroke="#F2B600"/)
   assert.match(sparkles, /const twinkle = idleTwinkle\(reduce, \{ delayS \}\)/)
 })
 

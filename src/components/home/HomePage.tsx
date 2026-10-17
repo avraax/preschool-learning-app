@@ -224,6 +224,7 @@ const HomePage: React.FC = () => {
             attractKey={attractKey}
             float={darkScene}
             rows={doorRows}
+            newSize="door"
           />
           </Box>
           </Box>

@@ -7,7 +7,7 @@ import { useLivingCard } from '../../../hooks/useLivingCard'
 import { useReducedMotion } from '../../../hooks/useReducedMotion'
 import { softShadow, contactShadow, usePointerTilt } from '../../../theme/depth'
 import { hexToRgba } from '../../../theme/tokens/helpers'
-import NewSparkles from './NewSparkles'
+import NewSparkles, { type NewSparklesSize } from './NewSparkles'
 import ThemedBurst, { type ThemedBurstHandle } from '../ThemedBurst'
 
 // SceneObject (Liveliness PRD-05 W1.1) — the tactile soft-3D object that REPLACES the frosted
@@ -44,6 +44,7 @@ interface SceneObjectProps {
   // "New in this release" (`src/config/newThisRelease.ts`): three small white stars twinkle at the
   // object's corners for the whole release (`NewSparkles`). Reduced motion → the same stars, static.
   isNew?: boolean
+  newSize?: NewSparklesSize    // 'door' on the front page (a size up), 'tile' in the submenus
 }
 
 const SceneObject: React.FC<SceneObjectProps> = ({
@@ -60,6 +61,7 @@ const SceneObject: React.FC<SceneObjectProps> = ({
   onActivate,
   sx,
   isNew = false,
+  newSize = 'tile',
 }) => {
   const theme = useTheme()
   const dark = theme.scene.dark
@@ -120,7 +122,7 @@ const SceneObject: React.FC<SceneObjectProps> = ({
               touch on press (the object lifts toward the camera). */}
           <Box sx={{ position: 'relative', width: size, aspectRatio: '1 / 1' }}>
             {/* NEW IN THIS RELEASE — three twinkling white stars (`NewSparkles`, owner's pick). */}
-            {isNew && <NewSparkles />}
+            {isNew && <NewSparkles size={newSize} />}
             {/* Grounding light-pool: a soft glow behind the object that SEATS it (a pool of light
                 it rests in) and lifts it off busy or empty backdrops so it reads as the hero, not
                 a pasted icon. Warm-white core → accent-tinted edge; brighter on dark worlds. */}
