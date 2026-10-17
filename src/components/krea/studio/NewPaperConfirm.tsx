@@ -27,9 +27,11 @@ export interface NewPaperConfirmProps {
    * "back to this one" (owner, 2026-10-17). Drawn on a sheet like a picker card; absent → the tile picture.
    */
   keepContent?: React.ReactNode
+  /** A drawing needs its paper under it; a bead board is its own object, so Perleplade passes false. */
+  keepOnSheet?: boolean
 }
 
-const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw', title = NEW_PAPER_TITLE, freshPicture, keepContent }) => {
+const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw', title = NEW_PAPER_TITLE, freshPicture, keepContent, keepOnSheet = true }) => {
   const theme = useTheme()
   if (!open) return null
   const big = 'clamp(88px, 18vmin, 150px)'
@@ -61,7 +63,11 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
           {freshPicture ?? <PICTURES.NewPaper />}
         </StudioButton>
         <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} activateOn="click" onPress={onKeep}>
-          {keepContent ? (
+          {keepContent && !keepOnSheet ? (
+            <Box data-krea-confirm-keep-piece sx={{ position: 'relative', width: '100%', height: '100%', pointerEvents: 'none' }}>
+              {keepContent}
+            </Box>
+          ) : keepContent ? (
             <Box
               data-krea-confirm-keep-piece
               sx={{ position: 'relative', width: '88%', height: '88%', borderRadius: '10px', overflow: 'hidden', background: '#FFFEFB', boxShadow: '0 6px 14px rgba(80,50,20,0.3), 0 1px 3px rgba(80,50,20,0.2)', pointerEvents: 'none' }}

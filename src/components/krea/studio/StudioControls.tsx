@@ -39,7 +39,9 @@ const LIFT_SHADOW = 'drop-shadow(0 0 7px rgba(255,214,90,0.95)) drop-shadow(0 9p
 const Shadowed: React.FC<{ on: boolean; children: React.ReactNode }> = ({ on, children }) => (
   <Box
     aria-hidden
-    sx={{ position: 'absolute', inset: '-16px', p: '16px', pointerEvents: 'none', filter: on ? LIFT_SHADOW : REST_SHADOW, display: 'flex' }}
+    // At least 16 px, and 22 % on a big button: the + badge hangs 14 % past the corner and must stay inside
+    // this filtered box too (owner, 2026-10-17: the badge EXTENDS the icon, it does not shrink it).
+    sx={{ position: 'absolute', inset: 'calc(-1 * max(16px, 22%))', p: 'max(16px, 22%)', pointerEvents: 'none', filter: on ? LIFT_SHADOW : REST_SHADOW, display: 'flex' }}
   >
     {children}
   </Box>
@@ -71,16 +73,20 @@ const Art: React.FC<{ src: string }> = ({ src }) => (
  * nothing in particular — small, white, and silent about what it does (owner, 2026-10-16). The badge is
  * drawn in code (two rounded bars on a disc), not a glyph.
  */
-/** The green + badge on a "new" control's corner — shared with Perleplade's "Ny plade". */
+/**
+ * The green + badge on a "new" control's corner — shared with Perleplade's "Ny plade". It hangs OUTSIDE
+ * the corner: the sheet/board keeps the same size as every other icon and the badge extends it (owner,
+ * 2026-10-17 — "don't make the icon smaller to fit the +").
+ */
 export const PlusBadge: React.FC = () => (
     <Box
       aria-hidden
       sx={{
         position: 'absolute',
-        right: '-2%',
-        top: '-2%',
-        width: '46%',
-        height: '46%',
+        right: '-14%',
+        top: '-14%',
+        width: '44%',
+        height: '44%',
         borderRadius: '50%',
         background: 'radial-gradient(circle at 35% 30%, #6CCB5A 0%, #2E9D44 70%)',
         boxShadow: '0 0 0 3px #FFFDF6, 0 3px 6px rgba(40,70,20,0.45)',
@@ -100,11 +106,10 @@ export const PlusBadge: React.FC = () => (
     />
 )
 
-// The badge hangs off the top-right corner, so the sheet + badge together sit up and to the right of the
-// button's centre; this shift puts their union on the column's centre line, under/over the picker
-// (owner, 2026-10-17: "center align the nyt papir and change picture"). Sheet ink 6–94 %, badge to 102 %.
+// The sheet fills the button like every other icon (centred on the column's line, under/over the picker);
+// the badge hangs off its corner. No shift to centre sheet + badge together — that moved the sheet.
 const NewPaper: React.FC = () => (
-  <Box sx={{ position: 'relative', width: '100%', height: '100%', transform: 'translate(-4%, 6%)' }}>
+  <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
     <Art src={KREA_ART.paper} />
     <PlusBadge />
   </Box>

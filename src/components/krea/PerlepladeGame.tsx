@@ -617,19 +617,20 @@ const PerlepladeGame: React.FC = () => {
   const pickerSize = sideBtn
   const big = sideBtn
   const newBoardPicture = (
-    // Board 12–88 % + the corner badge to 102 %: shifted so their union is centred in the column, like "Nyt papir".
-    <Box sx={{ position: 'relative', width: '100%', height: '100%', transform: 'translate(-7%, 5%)' }}>
+    // The board fills the button like every other icon (6 %, the picker's own margin); the + hangs off its
+    // corner and extends it, never shrinks it (owner, 2026-10-17).
+    <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* A fresh copy of THE BOARD IN USE — its shape, and a pattern's guide as this level shows it —
           so "Ny plade" says "this board, empty again", not a generic one (owner, 2026-10-17). */}
-      <Box sx={{ position: 'absolute', inset: '12%' }}>
+      <Box sx={{ position: 'absolute', inset: '6%' }}>
         <BoardArt n={board.n} mask={board.mask} guide={board.target ?? null} guideMode={tuning.guide} />
       </Box>
       <PlusBadge />
     </Box>
   )
-  // "No, keep it": THIS board with the child's beads on it, drawn like its picker card.
+  // "No, keep it": THIS board with the child's beads on it, the same size as "Ny plade"'s board beside it.
   const keepBoardPicture = (
-    <Box sx={{ position: 'absolute', inset: '7%' }}>
+    <Box sx={{ position: 'absolute', inset: '6%' }}>
       {board.target ? (
         <Box sx={{ position: 'absolute', inset: 0, opacity: 0.3 }}>
           <PlacedBeads board={finishedPattern(board.n, board.target)} size={tuning.bead} />
@@ -752,7 +753,7 @@ const PerlepladeGame: React.FC = () => {
         </Box>
         <DragGhost ghostRef={ghostRef} colour={grab?.colour ?? null} beadPx={beadPx} />
       </DndContext>
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture={GAME_ID} title={NEW_BOARD_TITLE} freshPicture={newBoardPicture} keepContent={keepBoardPicture} />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture={GAME_ID} title={NEW_BOARD_TITLE} freshPicture={newBoardPicture} keepContent={keepBoardPicture} keepOnSheet={false} />
     </GameShell>
   )
 }
