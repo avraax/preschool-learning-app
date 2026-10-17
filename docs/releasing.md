@@ -90,7 +90,7 @@ npm run desc:check       # the same question about the DESCRIPTION text
 npm run desc:sync        # write listing.md's canonical block to ASC
 ```
 
-**The description drifts the same way the screenshots do, and it did.** On 2026-09-05 the adult area was
+**The description drifts the same way the screenshots do, and it did.** On 2026-09-05 the settings area was
 renamed "Til de voksne" → "Indstillinger" throughout the app, `listing.md` was updated in the same
 commit, and the live listing was not — so ASC spent a day showing a complete, valid, green description
 of a screen the app no longer had. That is a Guideline 2.3.1 accuracy problem, and nothing could see it

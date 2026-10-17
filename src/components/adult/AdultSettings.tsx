@@ -26,7 +26,7 @@
 // The dialog stays at MUI's default modal z-index (1300), so `AUTH_Z.pin` (10003) still stacks a PIN
 // pad above it — verified with `elementFromPoint`, not a screenshot.
 
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Box,
   Button,
@@ -57,7 +57,7 @@ import { reminders } from '../../services/reminders'
 import { FEEDBACK_ENTRY_LABEL } from '../../config/feedbackForm'
 import { RATE_ENTRY_LABEL } from '../../config/storeReview'
 import { openStoreReview, storeReviewAvailable } from '../../services/storeReview'
-import { reportAdultStep } from '../../services/usagePing'
+import { reportAdultStep, reportSettingsPane } from '../../services/usagePing'
 import { BUILD_INFO } from '../../config/version'
 import { backendHost } from '../../config/backendTarget'
 import { PHONE_ANY } from '../../theme/phoneMedia'
@@ -174,6 +174,22 @@ const AdultSettings: React.FC<AdultSettingsProps> = ({
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
+
+  /**
+   * WHICH PANE THE PARENT IS LOOKING AT — one anonymous count, no per-control counting (the two danger
+   * blocks are uncounted by construction; `SETTINGS_PANE_EVENTS` has the reasoning).
+   *
+   * On the STATE rather than in the handlers, deliberately. `pane` is set from three places — the rail,
+   * the footer's feedback row, and the restore-on-open above — and a fourth will be added one day by
+   * someone who does not know a counter was supposed to be wired into it. The failure mode of a missed
+   * handler is silent: the number simply stops moving, which reads exactly like "no parent opened it".
+   *
+   * Gated on `open` so the pane the surface LANDS on is counted once per visit and a closed, still
+   * mounted dialog counts nothing.
+   */
+  useEffect(() => {
+    if (open) reportSettingsPane(pane)
+  }, [open, pane])
 
   const select = useCallback(
     (id: AdultGroupId) => {

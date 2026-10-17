@@ -637,3 +637,53 @@ mid-dance, and the piece was finished either way.
 — an expected award made preschoolers draw *less*; `.claude/rules/games-krea.md`). A counter is the
 cheapest way for a future session to start treating it as if it did, so `usagePing.test.ts` fails if the
 key appears and `lib/usageEndpoint.test.ts` fails if the call does.
+
+---
+
+### 9.4 v1.3 — `settings:<pane>`, seven keys
+
+**The question it answers.** The funnel used to stop at the door: `adult:chip` → `adult:door` →
+`adult:gate_ok` said a parent found the pill, found the row and got in, and then the data went dark.
+We could not see which rail group they open, whether anyone ever reaches Læring to set a difficulty,
+or whether the "Send feedback" door is ever found. `adult:rate` was the single exception, and only
+because it had been added for one specific question.
+
+One key per pane — the six `AdultGroupId` groups plus the rail footer's `feedback` destination, which
+is deliberately not a group. Seven rows a day.
+
+**Three decisions inside it, each a standing cost:**
+
+- **ONE PER PANE, NEVER ONE PER CONTROL.** Per-control counting is dozens of keys, forever, for a
+  surface a handful of adults open — at these volumes almost all of those rows would read 0 or 1,
+  which is noise dressed as data. `usageEvents.test.ts` fails if any key names an IA *item*.
+- **SOME TAPS ARE SENSITIVE BY SHAPE, and pane-level counting avoids them by construction.** That
+  someone opened Læring is uninteresting; that someone pressed "Slet kontoen helt" is a different
+  thing, and at single-digit volumes a destructive-action counter plus a date is closer to identifying
+  than anything else in this table. **Nothing in the two danger blocks is counted**, and nothing in
+  them should be without a question that specifically needs it.
+- **THE SURFACE IS NOT ROUTED,** so none of this can ride `reportRoute`: it is a MUI `Dialog` and
+  `location.pathname` never moves. The count is therefore taken from the `pane` STATE in
+  `AdultSettings.tsx`, in one effect on `[open, pane]` — **not** from the handlers. `pane` is already
+  set from three places (the rail, the footer's feedback row, the restore-on-open), a fourth will be
+  added one day by someone who does not know a counter rides on it, and a missed handler fails
+  silently: the number stops moving, which reads exactly like "no parent opened it". Pinned by
+  `lib/usageEndpoint.test.ts`.
+
+The keys are hand-written in `usageEvents.ts` rather than derived, because that module must stay
+import-free for `api/usage.ts` — so a test joins them to `ADULT_IA` and fails if the rail gains or
+loses a group. They BATCH, unlike the other funnels: a parent moves between panes within seconds, and
+no pane marks the end of a sitting the way `adult:gate_fail` does.
+
+---
+
+## 10. Naming: it is the SETTINGS AREA
+
+Owner, 2026-10-17: **do not call it "the adult area" or "adult tools" in writing.** It is the
+**settings area**, and child-facing it is `Indstillinger`. The old phrasing describes who it is for
+rather than what it is, and the app's own label has said `Indstillinger` since 2026-09-05.
+
+Existing CODE identifiers are deliberately NOT renamed: `AdultSurface`, `AdultSettings`,
+`ADULT_EVENTS`, `adultSurfaceBus`, the `barn.` / `konto.` item ids. And the shipped event keys
+`adult:chip` · `adult:door` · `adult:gate_ok` · `adult:gate_fail` · `adult:rate` **must keep their
+names**: renaming an event splits its time series for nothing a reader gains (§9.1 is the full argument
+for when that price IS worth paying — this is not one of those times). The rule is about prose.

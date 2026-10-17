@@ -13,10 +13,16 @@ paths:
   - "api/log-error.ts"
 ---
 
-# The adult surface, feedback & bug reports
+# The settings area, feedback & bug reports
 
 Settings PRD-01. **IT IS CALLED `Indstillinger`** (owner, 2026-09-05 — it was "Til de voksne"; only the
 name changed, and `[aria-label="Indstillinger"]` is now THE selector the harness clicks).
+
+**AND IN WRITING IT IS "THE SETTINGS AREA", never "the adult area" or "adult tools"** (owner,
+2026-10-17) — the old phrasing names who it is for instead of what it is. Code identifiers
+(`AdultSurface`, `AdultSettings`, `ADULT_EVENTS`, `adultSurfaceBus`) and the shipped `adult:*` usage
+events deliberately keep their names: renaming an event splits its time series for nothing a reader
+gains. This file's own name is unchanged for the same reason — path-scoped rules are wired by it.
 
 **THE DOOR IS A LABELLED ROW, not the child's face and not a gear.** The gear went 2026-08-09 and the
 avatar took its place; Corner identity PRD-01 §2.6 moved it again, because one control was doing two

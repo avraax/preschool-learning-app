@@ -4,6 +4,7 @@ import {
   ADULT_EVENTS,
   KREA_EVENTS,
   MAX_EVENTS_PER_REQUEST,
+  SETTINGS_PANE_EVENTS,
   SIGNIN_EVENTS,
   isUsageEvent,
 } from '../config/usageEvents.ts'
@@ -16,6 +17,7 @@ import {
   isNewSession,
   reportAdultStep,
   reportKreaFinished,
+  reportSettingsPane,
   reportSignInStep,
   reportStickersEarned,
   reportAppOpen,
@@ -705,6 +707,49 @@ test('the flag touches the four menu routes and NOTHING else', async () => {
     const events = bodyOf(f.calls[0]).events
     // Pairwise identical: a game is the same game behind either front page.
     for (let i = 0; i < events.length; i += 2) assert.equal(events[i], events[i + 1])
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+// ---- which settings pane a parent opened ---------------------------------------------------------
+
+test('settings panes BATCH — a parent moving between them is one request', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportSettingsPane('konto')
+    reportSettingsPane('laering')
+    reportSettingsPane('feedback')
+    await settle()
+    assert.equal(f.calls.length, 0, 'a pane event went out on its own — these are meant to batch')
+    __flushUsagePingForTests()
+    await settle()
+    assert.deepEqual(bodyOf(f.calls[0]).events, [
+      'settings:konto',
+      'settings:laering',
+      'settings:feedback',
+    ])
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('every settings pane is in the closed allow-list', () => {
+  for (const event of Object.values(SETTINGS_PANE_EVENTS)) {
+    assert.ok(isUsageEvent(event), `${event} would be dropped by the endpoint`)
+  }
+})
+
+test('reporting a settings pane never throws into the surface', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(() => { throw new Error('offline') })
+  try {
+    reportSettingsPane('privatliv')   // must not throw
+    __flushUsagePingForTests()
+    await settle()
   } finally {
     f.restore()
     __resetUsagePingForTests()

@@ -77,6 +77,37 @@ export const ADULT_EVENTS = {
 export type AdultStep = keyof typeof ADULT_EVENTS
 
 /**
+ * WHICH PANE OF THE SETTINGS AREA A PARENT ACTUALLY OPENED.
+ *
+ * `adult:gate_ok` says someone got in and then the data went dark: we could not see whether anyone
+ * reaches Læring to set a difficulty, whether the "Send feedback" door is ever found, or what parents
+ * come in here for at all. One key per pane closes that for seven rows a day.
+ *
+ * ONE PER PANE, NEVER ONE PER CONTROL. Dozens of per-control keys would be a permanent row family for
+ * a surface a handful of adults open — at these volumes almost all of them would read 0 or 1, which is
+ * noise dressed as data. It also keeps the two DANGER blocks uncounted by construction: at single-digit
+ * volumes "someone pressed Slet kontoen helt" plus a date is the most identifying thing this table
+ * could hold, and there is no question today that needs it.
+ *
+ * The keys mirror `AdultGroupId` in `src/config/adultSettingsIa.ts` plus the footer's `feedback`
+ * destination, which is deliberately not a group there. They are spelled out rather than derived
+ * because this module must stay import-free for `api/usage.ts` (see the header) — so
+ * `usageEvents.test.ts` asserts the two sets match exactly and fails if the IA gains or loses a group.
+ */
+export const SETTINGS_PANE_EVENTS = {
+  konto: 'settings:konto',
+  laering: 'settings:laering',
+  lyd: 'settings:lyd',
+  paamindelser: 'settings:paamindelser',
+  udseende: 'settings:udseende',
+  privatliv: 'settings:privatliv',
+  /** The rail FOOTER's message form — not a settings group, and the one door we most want counted. */
+  feedback: 'settings:feedback',
+} as const
+
+export type SettingsPane = keyof typeof SETTINGS_PANE_EVENTS
+
+/**
  * THE WEEKLY-REMINDER FUNNEL (Re-engagement PRD-01 §2.12). Aggregate daily counts like everything else
  * here — no install id, so it answers "how many said yes" and "how many sittings did a reminder start",
  * never "did THIS family come back". That is the price of staying anonymous, and it was paid on purpose.
@@ -263,6 +294,7 @@ export const USAGE_EVENTS: readonly string[] = [
   APP_OPEN_EVENT,
   REWARD_STICKER_EVENT,
   ...Object.values(ADULT_EVENTS),
+  ...Object.values(SETTINGS_PANE_EVENTS),
   ...Object.values(NOTIFY_EVENTS),
   ...Object.values(SIGNIN_EVENTS),
   ...Object.values(KREA_EVENTS),

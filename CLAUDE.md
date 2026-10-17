@@ -113,8 +113,9 @@ points to, loaded when you touch matching files.
   **The compatibility floor is the child's iPad Pro 2nd gen on iPadOS 17.7.11.** Check any new
   web/media API against **Safari 17**, not "latest Safari".
   → `pwa-and-device.md`, `docs/device-testing.md`.
-- **Adult tools / bug reports**: the adult area is **`Indstillinger`** — name pill → "Hvem spiller?" →
-  a labelled row. Child-facing gates pass **`{ force: true }`**, its IA is **data**,
+- **Settings area / bug reports** — **`Indstillinger`** (never "adult area");
+  name pill → "Hvem spiller?" → a labelled row.
+  Child-facing gates pass **`{ force: true }`**, its IA is **data**,
   **each irreversible action is type-to-confirm**, and **`resetAll` needs a reason**. → `adult-surface.md`.
 - **Accounts / auth**: one adult account (Google or Apple OIDC — **no biometrics, by decision**) with N child profiles and local-first
   progress sync. **Guest play needs no account** — `AuthGate` gates sync, not play. `/api/tts-azure`

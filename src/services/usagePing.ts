@@ -45,11 +45,13 @@ import {
   NOTIFY_EVENTS,
   REWARD_STICKER_EVENT,
   SESSION_MARKS,
+  SETTINGS_PANE_EVENTS,
   SIGNIN_EVENTS,
   eventForPath,
   type AdultStep,
   type KreaPiece,
   type NotifyStep,
+  type SettingsPane,
   type SignInStep,
 } from '../config/usageEvents.ts'
 import { devSessionGapMs } from '../utils/devHarness.ts'
@@ -434,6 +436,28 @@ export function reportNotifyStep(step: NotifyStep): void {
     post([event], false)
   } catch {
     /* a counter may never break a reminder flow */
+  }
+}
+
+/**
+ * One pane of the settings area becoming visible — see `SETTINGS_PANE_EVENTS`.
+ *
+ * BATCHED, unlike the funnels above, and that is the one difference worth knowing. A parent moves
+ * between panes in a single sitting, so these arrive in bursts of two or three within seconds; the
+ * batch collapses that into one request, and the surface's own hide handler flushes it. Nothing here
+ * marks the end of a sitting the way `adult:gate_fail` does, so there is no moment a pending batch is
+ * uniquely likely to be lost.
+ */
+export function reportSettingsPane(pane: SettingsPane): void {
+  try {
+    const event = SETTINGS_PANE_EVENTS[pane]
+    if (!event) return
+    installHideListeners()
+    buffer.push(event)
+    if (buffer.length >= MAX_EVENTS_PER_REQUEST) flush()
+    else arm()
+  } catch {
+    /* a counter may never break the settings area */
   }
 }
 

@@ -218,7 +218,7 @@ Install the production build from TestFlight, then work through this. Each line 
 - Turn WiFi **off**: every game still plays and still speaks
 - The reward ring fills and the sticker ceremony fires in-game at the crossing
 - Min Bog shows earned stickers and a silhouette for the next one
-- Name pill → "Hvem spiller?" → **Indstillinger** → arithmetic gate → adult area opens; a wrong answer
+- Name pill → "Hvem spiller?" → **Indstillinger** → arithmetic gate → the settings area opens; a wrong answer
   refuses, and the gate asks again on every open (`{ force: true }`)
 
 **Adult settings that change the games**

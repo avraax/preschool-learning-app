@@ -239,6 +239,27 @@ test('the route reporter is handed the LIVE front-page flag, not a literal', () 
   )
 })
 
+test('the settings pane is counted off the STATE, not from each handler', () => {
+  // `pane` is set from the rail, the footer's feedback row and the restore-on-open, and a fourth
+  // setter will be added one day by someone who does not know a counter rides on it. Reporting from
+  // the handlers would then go quiet silently — a number that stops moving reads exactly like "no
+  // parent opened it". One effect on the state cannot be missed that way.
+  const settings = code(readFileSync(new URL('../src/components/adult/AdultSettings.tsx', import.meta.url), 'utf8'))
+
+  assert.match(
+    settings,
+    /useEffect\(\s*\(\)\s*=>\s*\{\s*if \(open\) reportSettingsPane\(pane\)\s*\}\s*,\s*\[open, pane\]\s*\)/,
+    'the settings pane is no longer reported from an effect on [open, pane]',
+  )
+  // Exactly one call site: a second would double-count a visit.
+  assert.equal((settings.match(/reportSettingsPane\(/g) ?? []).length, 1,
+    'AdultSettings reports a pane from more than one place')
+  // The `open` gate is what makes it once per VISIT rather than once per mount — a lazily mounted
+  // dialog that is closed must count nothing.
+  assert.ok(!/reportSettingsPane\(pane\)\s*\}\s*,\s*\[pane\]/.test(settings),
+    'the pane is reported without the open gate — a closed dialog would count')
+})
+
 test('the sign-in offer counts being SEEN as well as being tapped', () => {
   // The pair only answers anything together: `offer` alone cannot say whether adults decline, `tap`
   // alone cannot say whether they ever got the chance. Losing either silently turns the other into a

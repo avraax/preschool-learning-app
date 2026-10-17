@@ -121,7 +121,7 @@ PRD-07. **`rewrites` and `headers` obey OPPOSITE rules, and the rewrite one is l
   deploys are picked up. Verify prod with `curl -I`, never local dev — Vercel headers don't apply in dev.
 - First-paint JS is split in `vite.config.ts` `manualChunks`: `media-vendor` = **howler only** (eager via
   `sfxClient`) — don't co-bundle lazy-only libs with it (react-confetti rides the lazy
-  `CelebrationEffect`/`StickerReveal` chunk). The whole adult area is ONE `React.lazy` chunk
+  `CelebrationEffect`/`StickerReveal` chunk). The whole settings area is ONE `React.lazy` chunk
   (`AdultSettings`); `AdultSurface` now renders nothing eagerly at all — the gear is gone and the
   trigger is the header avatar.
 - **`manualChunks` is NOT what decides the eager set — the preload walk is.** Vite 8 / Rolldown emits a

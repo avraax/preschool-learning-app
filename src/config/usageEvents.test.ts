@@ -11,6 +11,8 @@ import {
   isUsageEvent,
 } from './usageEvents.ts'
 import { DOORS } from './doors.ts'
+import { ADULT_IA } from './adultSettingsIa.ts'
+import { SETTINGS_PANE_EVENTS } from './usageEvents.ts'
 
 // The allow-list is the ONLY thing bounding the size of `usage_counter`, because `/api/usage` is
 // unauthenticated (it has to be — a gated endpoint would count signed-in adults and miss every guest).
@@ -147,6 +149,39 @@ test('both eras are ACCEPTED by the endpoint, and no name serves two of them', (
   // The non-door routes are era-independent: a game is the same game behind either front page.
   assert.equal(eventForPath('/alphabet/quiz', true), eventForPath('/alphabet/quiz', false))
   assert.equal(eventForPath('/album', true), ROUTE_EVENTS['/album'])
+})
+
+// ---- the settings panes --------------------------------------------------------------------------
+
+test('there is exactly one key per settings group, plus feedback — and it cannot drift from the IA', () => {
+  // The keys are spelled out in `usageEvents.ts` because that module must stay import-free for
+  // `api/usage.ts`. This is the join that keeps the hand-written copy honest: add a rail group and
+  // this fails until it gets a key; delete one and it fails until the key goes.
+  const groups = ADULT_IA.map((g) => g.id).sort()
+  const keys = Object.keys(SETTINGS_PANE_EVENTS).filter((k) => k !== 'feedback').sort()
+  assert.deepEqual(keys, groups, 'SETTINGS_PANE_EVENTS no longer mirrors the settings IA')
+  // `feedback` is the rail FOOTER, deliberately not an AdultGroupId — so it must be present here and
+  // absent there, or one of the two has quietly changed shape.
+  assert.ok(SETTINGS_PANE_EVENTS.feedback, 'the feedback door is no longer counted')
+  assert.ok(!groups.includes('feedback' as never), 'feedback became a settings GROUP — check the IA guard')
+})
+
+test('the settings counter is ONE PER PANE, never one per control', () => {
+  for (const event of Object.values(SETTINGS_PANE_EVENTS)) {
+    assert.ok(isUsageEvent(event), `${event} would be dropped by the endpoint`)
+    assert.match(event, /^settings:[a-z]+$/, `${event} is not a bare pane key`)
+  }
+  // No key may name an ITEM. The danger blocks in particular stay uncounted by construction: at
+  // single-digit volumes "someone pressed Slet kontoen helt" plus a date is the most identifying
+  // thing this table could hold. `.` is how every item id in the IA is spelled (`barn.delete`).
+  const items = ADULT_IA.flatMap((g) => g.items.map((i) => i.id))
+  for (const id of items) {
+    assert.ok(
+      !isUsageEvent(`settings:${id}`),
+      `the item ${id} has its own event — this counter counts panes, not controls`,
+    )
+  }
+  assert.equal(Object.keys(SETTINGS_PANE_EVENTS).length, 7, 'the pane set changed size')
 })
 
 test('app_open is in the list and is not a route', () => {
