@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { Box } from '@mui/material'
-import { createPainter, drawStroke, makeCrayonTile, type BrushEnv, type StrokePainter } from './brushes'
+import { CRAYON_HEX, createPainter, drawStroke, type BrushEnv, type StrokePainter } from './brushes'
 import {
   PAPER_H,
   PAPER_W,
@@ -79,8 +79,6 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
   const checkpointCount = useRef(0)
   const rendered = useRef<Stroke[]>([])
   const scaleRef = useRef(1)
-  const patterns = useRef(new WeakMap<CanvasRenderingContext2D, Map<CrayonColor, CanvasPattern>>())
-  const tiles = useRef(new Map<CrayonColor, HTMLCanvasElement>())
   const images = useRef(new Map<string, HTMLImageElement>())
   const drawingRef = useRef(drawing)
   drawingRef.current = drawing
@@ -92,28 +90,11 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
   const raf = useRef<number | null>(null)
 
   const envFor = useCallback((ctx: CanvasRenderingContext2D): BrushEnv => {
-    let cache = patterns.current.get(ctx)
-    if (!cache) {
-      cache = new Map()
-      patterns.current.set(ctx, cache)
-    }
-    const c = cache
     return {
       ctx,
       scale: scaleRef.current,
-      crayonPaint: (col) => {
-        let p = c.get(col)
-        if (!p) {
-          let tile = tiles.current.get(col)
-          if (!tile) {
-            tile = makeCrayonTile(col)
-            tiles.current.set(col, tile)
-          }
-          p = ctx.createPattern(tile, 'repeat') ?? undefined
-          if (p) c.set(col, p)
-        }
-        return p ?? '#000'
-      },
+      // FULLY SOLID colour (owner, 2026-10-16: the crayon grain read as small white dots in the stroke).
+      crayonPaint: (col: CrayonColor) => CRAYON_HEX[col],
       stampImage: (id) => {
         const img = images.current.get(id)
         return img && img.complete && img.naturalWidth > 0 ? img : null
@@ -202,7 +183,6 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
         }
       }
       scaleRef.current = w / PAPER_W
-      patterns.current = new WeakMap()
       fullRedraw(true)
     }
     fit()
@@ -228,14 +208,11 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
   useEffect(() => {
     const ink = inkRef.current
     const live = liveRef.current
-    const tileCache = tiles.current
     return () => {
       if (raf.current) cancelAnimationFrame(raf.current)
       releaseCanvas(ink)
       releaseCanvas(live)
       releaseCanvas(checkpointRef.current)
-      for (const t of tileCache.values()) releaseCanvas(t)
-      tileCache.clear()
     }
   }, [])
 

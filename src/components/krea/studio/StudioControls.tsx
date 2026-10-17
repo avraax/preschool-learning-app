@@ -19,6 +19,23 @@ const REST_SHADOW = 'drop-shadow(0 3px 3px rgba(70,40,15,0.35))'
 const LIFT_SHADOW = 'drop-shadow(0 0 7px rgba(255,214,90,0.95)) drop-shadow(0 9px 7px rgba(70,40,15,0.35))'
 
 /**
+ * The glow and contact shadow live on THIS inner layer, never on the button itself. On the iPad the
+ * button is a composited layer (it moves: `transform` + a transition), and WebKit clipped a
+ * `drop-shadow` on that same element to its square box — the glow and the shadow came out cut off in a
+ * square (owner's photos, 2026-10-16; headless WebKit renders it fine, so this is rung 3 only). The
+ * inner layer reaches 16 px past the button on every side with the art padded back to the button's size,
+ * so the filtered pixels are inside its own box and nothing is left to clip.
+ */
+const Shadowed: React.FC<{ on: boolean; children: React.ReactNode }> = ({ on, children }) => (
+  <Box
+    aria-hidden
+    sx={{ position: 'absolute', inset: '-16px', p: '16px', pointerEvents: 'none', filter: on ? LIFT_SHADOW : REST_SHADOW, display: 'flex' }}
+  >
+    {children}
+  </Box>
+)
+
+/**
  * Act on the PRESS, not on `click`. A child hammering Undo produces taps closer together than the
  * browser's double-tap window, and `click` then fires for only some of them — measured with real touch
  * input: 20 fast taps undid ONE stroke. `pointerdown` fires for every tap. A keyboard (Enter/Space)
@@ -119,13 +136,13 @@ export const StudioButton: React.FC<StudioButtonProps> = ({ label, onPress, sele
       touchAction: 'manipulation',
       WebkitTapHighlightColor: 'transparent',
       opacity: disabled ? 0.4 : 1,
-      filter: selected ? LIFT_SHADOW : REST_SHADOW,
+      overflow: 'visible',
       transform: selected ? 'translateY(-6px) scale(1.08)' : 'translateY(0px) scale(1)',
-      transition: 'transform 140ms cubic-bezier(0.3,0.7,0.4,1), filter 140ms ease',
+      transition: 'transform 140ms cubic-bezier(0.3,0.7,0.4,1)',
       '&:active': { transform: selected ? 'translateY(-4px) scale(1.02)' : 'translateY(1px) scale(0.95)' },
     }}
   >
-    {children}
+    <Shadowed on={!!selected}>{children}</Shadowed>
   </ButtonBase>
 )
 
@@ -236,12 +253,14 @@ export const CrayonPalette: React.FC<CrayonPaletteProps> = ({ colors, color, inH
             borderRadius: '50%',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
-            filter: it.on ? LIFT_SHADOW : REST_SHADOW,
+            overflow: 'visible',
             transform: it.on ? 'translateY(-10px) scale(1.12)' : 'translateY(0px) scale(1)',
-            transition: 'transform 140ms cubic-bezier(0.3,0.7,0.4,1), filter 140ms ease',
+            transition: 'transform 140ms cubic-bezier(0.3,0.7,0.4,1)',
           }}
         >
-          <Art src={it.src} />
+          <Shadowed on={it.on}>
+            <Art src={it.src} />
+          </Shadowed>
         </ButtonBase>
       ))}
     </Box>
@@ -256,10 +275,38 @@ export interface StampTrayProps {
 }
 
 /** The stamp tray — in the crayons' place, only while the stamp tool is picked (§2.2.5). */
+/**
+ * ONE swipeable row (24 pictures would cost the paper two or three rows of height). The row is wider
+ * than the screen and scrolls sideways under a finger, with the edge item cut in half so the child sees
+ * there is more. Its pictures act on the CLICK, not the press: a swipe that starts on a picture must
+ * scroll, not pick it (the browser drops the click when the finger travelled). Room above and below for
+ * the lifted, glowing one — a scroll box clips vertically too.
+ */
 export const StampTray: React.FC<StampTrayProps> = ({ stamps, stamp, onPick, disabled }) => (
-  <Box data-krea-stamps sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'clamp(4px, 1vmin, 10px)', maxWidth: `calc(${BTN} * 9)`, '@media (orientation: portrait) and (max-width: 480px)': { maxWidth: `calc(${BTN} * 5)` } }}>
+  <Box
+    data-krea-stamps
+    sx={{
+      display: 'flex',
+      flexWrap: 'nowrap',
+      gap: 'clamp(4px, 1vmin, 10px)',
+      overflowX: 'auto',
+      overflowY: 'hidden',
+      touchAction: 'pan-x',
+      overscrollBehaviorX: 'contain',
+      WebkitOverflowScrolling: 'touch',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
+      width: '100%',
+      maxWidth: 'calc(100vw - 32px)',
+      px: '18px',
+      pt: '22px',
+      pb: '14px',
+      mt: '-22px',
+      mb: '-14px',
+    }}
+  >
     {stamps.map((s) => (
-      <StudioButton key={s.id} dataId={`stamp-${s.id}`} label={s.id} selected={stamp === s.id} disabled={disabled} onPress={() => onPick(s.id)}>
+      <StudioButton key={s.id} dataId={`stamp-${s.id}`} label={s.id} selected={stamp === s.id} disabled={disabled} activateOn="click" onPress={() => onPick(s.id)}>
         <Art src={s.src} />
       </StudioButton>
     ))}

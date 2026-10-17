@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-17T07:17:54.668Z",
+  "updatedAt": "2026-10-17T07:41:13.666Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -13382,7 +13382,7 @@
       "note": "Bulk-approved (PRD-11 owner listen pass)",
       "candidateIpa": "",
       "text": "bjørn",
-      "group": "english-da",
+      "group": "krea",
       "updatedAt": 1785654833982
     },
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|løve": {
@@ -25496,6 +25496,54 @@
       "text": "sommerfugl",
       "group": "krea",
       "updatedAt": 1792221474668
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ballon": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "ballon",
+      "group": "krea",
+      "updatedAt": 1792222873666
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|jordbær": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "jordbær",
+      "group": "krea",
+      "updatedAt": 1792222873666
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|frø": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "frø",
+      "group": "krea",
+      "updatedAt": 1792222873666
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mariehøne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mariehøne",
+      "group": "krea",
+      "updatedAt": 1792222873666
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|skildpadde": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "skildpadde",
+      "group": "krea",
+      "updatedAt": 1792222873666
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hval": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hval",
+      "group": "krea",
+      "updatedAt": 1792222873666
     }
   }
 }

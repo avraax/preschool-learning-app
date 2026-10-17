@@ -3,8 +3,7 @@
 // a PRNG seeded by the stroke's own seed, so replaying a list (undo, resume) paints the identical
 // picture. `brushes.test.ts` proves it by recording the canvas calls twice.
 //
-// Performance on the A10X: the crayon grain is ONE small tile tinted per colour and used as a pattern
-// (cached by the caller), never a per-point random scatter.
+// The crayon is a SOLID colour (owner, 2026-10-16) — the earlier wax grain read as white dots in the line.
 
 import { BRUSH_WIDTH, type CrayonColor, type Stroke } from './strokeModel.ts'
 
@@ -26,7 +25,7 @@ export const CRAYON_HEX: Record<CrayonColor, string> = {
   hvid: '#FFFFFF',
 }
 
-/** mulberry32 — tiny, fast, good enough for grain and sparkle placement. */
+/** mulberry32 — tiny, fast, good enough for stamp tilt and sparkle placement. */
 export function rng(seed: number): () => number {
   let a = seed >>> 0
   return () => {
@@ -42,7 +41,7 @@ export interface BrushEnv {
   ctx: CanvasRenderingContext2D
   /** Device pixels per paper unit. */
   scale: number
-  /** The crayon paint for a colour — a cached grain pattern in the browser, a plain colour in tests. */
+  /** The crayon paint for a colour — its solid `CRAYON_HEX`. */
   crayonPaint: (color: CrayonColor) => CanvasPattern | string
   /** A loaded stamp image, or null while it is still loading (the surface redraws on load). */
   stampImage: (id: string) => CanvasImageSource | null
@@ -62,7 +61,7 @@ const GLITTER_COLORS = ['#FFD54F', '#FFF59D', '#FFFFFF', '#F8BBD0', '#B3E5FC', '
 // frame — never the whole stroke again, which made every frame cost O(stroke length): measured at 4×
 // CPU throttle, a long scribble's last second ran at 330–550 ms a frame. The committed stroke is
 // painted by a fresh painter through the SAME segment loop, so live and committed are the same marks.
-// That only holds because every brush paints OPAQUE (the crayon grain is opaque flecks, not holes):
+// That only holds because every brush paints OPAQUE (solid colours, no transparency):
 // where two segments' round caps overlap, an opaque mark painted twice is still the same pixel.
 
 interface PainterState {
@@ -209,30 +208,4 @@ export function createPainter(s: Stroke): StrokePainter {
 /** Draw one whole stroke (and its mirror image, when the env has a mirror axis). */
 export function drawStroke(env: BrushEnv, s: Stroke): void {
   createPainter(s).paint(env, true)
-}
-
-/**
- * The crayon grain tile for one colour: the colour with a seeded scatter of paper-coloured flecks and a few
- * waxy streaks, so a stroke reads as wax on paper rather than a flat marker line. BROWSER ONLY — the
- * caller caches one per colour (`DrawingSurface`).
- */
-export function makeCrayonTile(color: CrayonColor, px = 64): HTMLCanvasElement {
-  const c = document.createElement('canvas')
-  c.width = px
-  c.height = px
-  const g = c.getContext('2d')!
-  g.fillStyle = CRAYON_HEX[color]
-  g.fillRect(0, 0, px, px)
-  const r = rng(0x5eed)
-  // OPAQUE grain: flecks of paper-white mixed INTO the colour, not holes punched out of it, so the tile
-  // has no transparency and overlapping segments repaint the same pixel (see the painter). On white
-  // paper it looks like the pinholes did. White crayon darkens instead, or it is invisible on paper.
-  const fleck = color === 'hvid' ? '170,160,150' : '255,253,248'
-  for (let i = 0; i < px * 5; i++) {
-    g.fillStyle = `rgba(${fleck},${(0.12 + r() * 0.5).toFixed(3)})`
-    g.fillRect(Math.floor(r() * px), Math.floor(r() * px), 1 + Math.floor(r() * 2), 1)
-  }
-  g.fillStyle = `rgba(${fleck},0.18)`
-  for (let i = 0; i < 6; i++) g.fillRect(0, r() * px, px, 1)
-  return c
 }

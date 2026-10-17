@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-10-17T07:17:54.668Z
+Last updated: 2026-10-17T07:41:13.666Z
 
-**3186 OK · 1 wrong · 0 unaudited** (of 3187 clips)
+**3192 OK · 1 wrong · 0 unaudited** (of 3193 clips)
 
 ## Bogstaver
 

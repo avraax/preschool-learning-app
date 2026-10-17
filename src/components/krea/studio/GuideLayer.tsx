@@ -113,7 +113,8 @@ export const DemoPencil: React.FC<{ step: GuideStep | null; runKey: string | nul
           marginLeft: 'calc(clamp(56px, 16cqw, 140px) * -0.04)',
           marginTop: 'calc(clamp(56px, 16cqw, 140px) * -0.95)',
           opacity: 0,
-          filter: 'drop-shadow(0 4px 4px rgba(70,40,15,0.35))',
+          // No drop-shadow: a filter on an element that is animated with `transform` is clipped to its
+          // box on the iPad (see StudioControls' `Shadowed`).
         }}
       />
     </Box>
