@@ -50,14 +50,14 @@ export const DOORS: readonly Door[] = [
     route: '/math',
     primary: 'math',
     members: ['math'],
-    // The owner's order (2026-10-17): Lær Tal, Tal Quiz, Plus, Minus, Fyld Båden, Sammenlign, Hvad
-    // Mangler?, Vendespil. (Fyld Båden had been first since 2026-10-16.)
+    // The owner's order (2026-10-17, revised the same day): Lær Tal, Plus, Minus, Fyld Båden, Tal Quiz,
+    // Sammenlign, Hvad Mangler?, Vendespil.
     games: [
       'math.numbers',
-      'math.counting',
       'math.addition',
       'math.subtraction',
       'math.boat',
+      'math.counting',
       'math.comparison',
       'math.patterns',
       'math.memory',
