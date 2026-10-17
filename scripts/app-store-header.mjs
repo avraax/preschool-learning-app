@@ -7,15 +7,16 @@
 // `--crops` also writes both crops next to the output so they can be eyeballed before uploading.
 //
 // It is built from shipped art, never new art: the store must show the app the child gets. The world is
-// the default skin's (Dinosaurer, `defaultThemeId`), the mascot waves, and the five section icons float
-// in an arc — one per section, in menu order. If the default skin or a section changes, re-run this and
+// the default skin's (Dinosaurer, `defaultThemeId`), the mascot waves, and five icons float
+// in an arc — the four front-page doors plus the Krea easel. If the default skin or a section changes, re-run this and
 // `npm run header:upload`. See docs/app-store/listing.md §2.4.
 import sharp from 'sharp'
 
 const OUT = 'docs/app-store/header/header-universal.png'
 const W = 5244, H = 2950
 const WORLD = 'src/assets/themes/dino/'
-const ICONS = ['alphabet', 'math', 'colors', 'english', 'ordleg'].map((n) => `src/assets/themes/icons/${n}.webp`)
+// 1.3: the four front-page doors in home order, with Krea's easel — the new section — at the top of the arc.
+const ICONS = ['letters', 'math', 'krea', 'english', 'colors'].map((n) => `src/assets/themes/icons/${n}.webp`)
 
 // Icon centres on an arc above the mascot, all inside both crops (x 410..4834, y 352..2598).
 const ICON = 660

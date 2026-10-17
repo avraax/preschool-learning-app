@@ -584,6 +584,14 @@ because that is what a new install sees (Dinosaurer since 1.2).
 - **There is no ffmpeg on this machine.** `webkit.mjs` writes RGBA (colour type 6); `sharp` is already in
   `node_modules`, and `sharp(f).removeAlpha().png()` gives colour type 2. Check byte 25 afterwards.
 
+**The 1.3 re-shoot (2026-10-17) changed two subjects; the filenames stayed** (asc-shots.mjs pins them).
+Shot 1 is the four-door home (the "new" stars on Tal and Farver og Krea, as a fresh profile sees them),
+**shot 3 `*-3-tal` is now Fyld Båden** (`/math/boat`, with `--tap '[data-boat-source="box"]'` ×2 and
+`"fish"` ×3 so the deck carries cargo — the sail number only appears after a correct send, so don't wait
+for it), and **shot 4 `*-4-farver` is now the Perleplade picker** (`/krea/perler`). Shot 6 shows the
+Læring pane's four door rows. Before shot 6, **check `src/config/version.ts`** — it was reset to the stale
+`1.0.45` again and the chip said so; `npx vite build` regenerates it (don't commit it).
+
 Two harness cautions that matter here. `?nogate=1` only exists in a **dev or `build:harness`** tree, never
 in a deploy build — so screenshots come from the dev server, not from the shipped bundle. And this driver
 **cannot play audio at all**, so ignore any "Tryk for lyd" state in a capture; it is the harness, not the
