@@ -146,6 +146,9 @@ const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=(doc
    return seen? {left:l,top:tp,right:rt,bottom:b,width:rt-l,height:b-tp} : e.getBoundingClientRect()};
  document.querySelectorAll('button,[data-answer-tile],[aria-roledescription="draggable"],[data-prompt-focus]').forEach(e=>{
   const r=visualRect(e); if(r.width<2||r.height<2) return;
+  // A closed tray (Fri Tegning's stamps) is laid out but visibility:hidden — not reachable BY DESIGN,
+  // so not a finding. Measured 2026-10-17: all 12 stamp "off-screen" rows were exactly this.
+  if(getComputedStyle(e).visibility==='hidden') return;
   if(!(r.left<-1||r.right>W+1||r.top<-1||r.bottom>H+1)) return;
   // A rect that leaves the viewport is only a DEFECT if the child cannot reach the thing. Neither the
   // element's own rect nor its descendants' union is the ink: Farvejagt's wrapper sits 40px below its

@@ -44,10 +44,7 @@ export const difficultyRows = (fourDoors: boolean, kreaShown: boolean): Difficul
 export const rowLevel = <L extends string>(
   row: DifficultyRow,
   perSection: Partial<Record<SectionId, L>>,
-): L | null => {
-  const primary = row.members[0]
-  return perSection[primary] ?? row.members.map((m) => perSection[m]).find((v) => v != null) ?? null
-}
+): L | null => row.members.map((m) => perSection[m]).find((v) => v != null) ?? null // members[0] = primary
 
 /** What the child has played, as the adult reads it: door names with four doors, deduped, in door order. */
 export const playedLabels = (played: readonly SectionId[], fourDoors: boolean): string[] =>
