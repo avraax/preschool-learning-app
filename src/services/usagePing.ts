@@ -40,13 +40,17 @@ import { apiUrl } from '../config/apiBase.ts'
 import {
   ADULT_EVENTS,
   APP_OPEN_EVENT,
+  KREA_EVENTS,
   MAX_EVENTS_PER_REQUEST,
   NOTIFY_EVENTS,
   REWARD_STICKER_EVENT,
   SESSION_MARKS,
+  SIGNIN_EVENTS,
   eventForPath,
   type AdultStep,
+  type KreaPiece,
   type NotifyStep,
+  type SignInStep,
 } from '../config/usageEvents.ts'
 import { devSessionGapMs } from '../utils/devHarness.ts'
 
@@ -315,10 +319,14 @@ export function reportAppOpen(): void {
 /**
  * One entry per screen entered, buffered. `pathname` is mapped through the closed allow-list; anything
  * unmapped (a 404, a DEV route, an unanticipated deep link) buffers nothing at all.
+ *
+ * `fourDoors` comes from `fourDoorsShown()` at the call site, NOT from a constant here: one build
+ * renders both front pages (the doors ride the Krea gate), so only the caller knows which one the
+ * child is on. See `PRE_DOOR_ROUTE_EVENTS`.
  */
-export function reportRoute(pathname: string): void {
+export function reportRoute(pathname: string, fourDoors = false): void {
   try {
-    const event = eventForPath(pathname)
+    const event = eventForPath(pathname, fourDoors)
     if (!event) return
     installHideListeners()
     // BEFORE buffering: a screen entered after a long quiet gap is the start of a new sitting, and
@@ -426,5 +434,40 @@ export function reportNotifyStep(step: NotifyStep): void {
     post([event], false)
   } catch {
     /* a counter may never break a reminder flow */
+  }
+}
+
+/**
+ * The sign-in offer being seen, and being acted on — see `SIGNIN_EVENTS`.
+ *
+ * Unbatched like the other funnels. `tap` in particular is followed by a full-page navigation to the
+ * provider on the web (`location.assign`), so a buffered event would leave with the page it was
+ * waiting on: the ONE event in this pair that implies the adult was persuaded is also the one a batch
+ * is least likely to deliver.
+ */
+export function reportSignInStep(step: SignInStep): void {
+  try {
+    const event = SIGNIN_EVENTS[step]
+    if (!event) return
+    post([event], false)
+  } catch {
+    /* a counter may never break the sign-in path */
+  }
+}
+
+/**
+ * One finished Krea piece, at the press that grants its XP — see `KREA_EVENTS`.
+ *
+ * Sent on the press rather than after `playAlive`, for the same reason the XP is: the child may walk
+ * away mid-dance, and the piece was finished either way. Unbatched, because a finish is immediately
+ * followed by a ceremony and quite often by the end of the sitting.
+ */
+export function reportKreaFinished(piece: KreaPiece): void {
+  try {
+    const event = KREA_EVENTS[piece]
+    if (!event) return
+    post([event], false)
+  } catch {
+    /* a counter may never break a finish */
   }
 }

@@ -9,6 +9,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useTaskRun } from '../../hooks/useTaskRun'
 import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
+import { reportKreaFinished } from '../../services/usagePing'
 import { KREA_GUIDE } from '../../config/difficulty'
 import { paletteFor } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, KREA_RAINBOW_NAME, NEW_PAPER_LINE } from '../../config/kreaPhrases'
@@ -374,6 +375,7 @@ const TegnMedMigGame: React.FC = () => {
     // XP on the press, not after the dance: leaving mid-dance must not lose the piece's reward. The
     // CEREMONY still waits for the seam after the alive moment.
     run.completeTask(true)
+    reportKreaFinished('guide')
     setPiece((p) => ({ ...p, done: true }))
     setShown(false)
     speak(subject.doneLine)

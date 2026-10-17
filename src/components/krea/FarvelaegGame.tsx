@@ -9,6 +9,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useTaskRun } from '../../hooks/useTaskRun'
 import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
+import { reportKreaFinished } from '../../services/usagePing'
 import { KREA_PALETTE } from '../../config/difficulty'
 import { paletteFor } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, NEW_PAPER_LINE } from '../../config/kreaPhrases'
@@ -315,6 +316,7 @@ const FarvelaegGame: React.FC = () => {
     setPulse(null)
     // XP on the press (leaving mid-dance must not lose it); the CEREMONY waits for the seam after it.
     run.completeTask(true)
+    reportKreaFinished('color')
     setPiece((p) => ({ ...p, done: true }))
     setShown(false)
     speak(page.doneLine)

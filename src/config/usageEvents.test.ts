@@ -3,12 +3,14 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import {
   APP_OPEN_EVENT,
+  PRE_DOOR_ROUTE_EVENTS,
   ROUTE_EVENTS,
   USAGE_EVENTS,
   eventForPath,
   isAppVersion,
   isUsageEvent,
 } from './usageEvents.ts'
+import { DOORS } from './doors.ts'
 
 // The allow-list is the ONLY thing bounding the size of `usage_counter`, because `/api/usage` is
 // unauthenticated (it has to be — a gated endpoint would count signed-in adults and miss every guest).
@@ -92,6 +94,59 @@ test('an unknown or attacker-shaped path reports NOTHING', () => {
 test('a trailing slash is the same screen, and "/" survives', () => {
   assert.equal(eventForPath('/math/'), eventForPath('/math'))
   assert.equal(eventForPath('/'), 'route:home')
+})
+
+// ---- the 1.3 door rename -------------------------------------------------------------------------
+//
+// Four doors replaced six home cards and a merged door lives at its primary section's OLD menu route,
+// so `/alphabet` and `/farver` changed what they mean and the other two changed their denominator.
+// Nothing in a row shows that, so the names carry it. These tests exist so a later tidy-up cannot
+// quietly re-merge the two eras.
+
+test('with the doors up, every door menu reports a door event', () => {
+  for (const door of DOORS) {
+    const event = eventForPath(door.route, true)
+    assert.ok(event, `door ${door.id} at ${door.route} reports nothing`)
+    assert.ok(
+      event!.startsWith('route:door_'),
+      `the ${door.id} door still reports ${event} — a pre-door name on a post-door screen`,
+    )
+  }
+  // All four, and distinct: a door that shared a key with another would be worse than the old names.
+  const doorEvents = DOORS.map((d) => eventForPath(d.route, true))
+  assert.equal(new Set(doorEvents).size, DOORS.length, 'two doors report the same event')
+})
+
+test('with the doors still gated, the SAME paths report the six-card names', () => {
+  // This is the half that matters before release: `master` deploys the web on every push, so this
+  // build serves a six-card home for days. A door name from that page would contaminate the split.
+  for (const [path, event] of Object.entries(PRE_DOOR_ROUTE_EVENTS)) {
+    assert.equal(eventForPath(path, false), event, `${path} reports the wrong era`)
+    // And the default is the gated world, so a caller that forgets the flag errs the harmless way.
+    assert.equal(eventForPath(path), event, `${path} defaults to the post-door name`)
+  }
+  assert.equal(Object.keys(PRE_DOOR_ROUTE_EVENTS).length, 4, 'four menus were renamed, no more, no less')
+  // Every door route must be in both maps, or one era reports a screen the other does not.
+  for (const door of DOORS) {
+    assert.ok(PRE_DOOR_ROUTE_EVENTS[door.route], `${door.route} has no pre-door name`)
+  }
+})
+
+test('both eras are ACCEPTED by the endpoint, and no name serves two of them', () => {
+  // A 1.0–1.2 iPad that never takes the update goes on posting the old names for years; dropping one
+  // would discard that family's counts while the endpoint kept answering 204.
+  for (const event of Object.values(PRE_DOOR_ROUTE_EVENTS)) {
+    assert.ok(isUsageEvent(event), `the endpoint would now DROP ${event} from an older build`)
+  }
+  // Disjoint by construction — the whole point. A shared name and a row could no longer say which
+  // front page it came from.
+  const post = new Set(DOORS.map((d) => eventForPath(d.route, true)))
+  for (const event of Object.values(PRE_DOOR_ROUTE_EVENTS)) {
+    assert.ok(!post.has(event), `${event} is emitted by BOTH eras`)
+  }
+  // The non-door routes are era-independent: a game is the same game behind either front page.
+  assert.equal(eventForPath('/alphabet/quiz', true), eventForPath('/alphabet/quiz', false))
+  assert.equal(eventForPath('/album', true), ROUTE_EVENTS['/album'])
 })
 
 test('app_open is in the list and is not a route', () => {

@@ -100,6 +100,52 @@ export const NOTIFY_EVENTS = {
 export type NotifyStep = keyof typeof NOTIFY_EVENTS
 
 /**
+ * THE SIGN-IN OFFER. Twenty-three days of production had 3,996 events, 8 adults inside Indstillinger
+ * and ZERO accounts created — and nothing in the data could say why, because the offer itself was
+ * invisible to it. `adult:gate_ok` says an adult got in; it does not say they ever saw the ask.
+ *
+ * Two counters, and the RATIO is the whole point, because the two readings need opposite fixes:
+ *   • few `offer` against `gate_ok` → they never reach the Konto pane. A DISCOVERY problem.
+ *   • many `offer`, few `tap`       → they read the ask and decline it. A PERSUASION problem.
+ *
+ * `offer` fires once per time the pane is opened by a guest, not per render — "how many adults saw
+ * it", not "how many times React drew it". `tap` is the button press, before the round trip: whether
+ * sign-in then SUCCEEDED is already visible as a row in the accounts table, and counting it here
+ * would pay cardinality for something we can already see.
+ */
+export const SIGNIN_EVENTS = {
+  /** A guest opened Konto and the offer rendered. */
+  offer: 'signin:offer',
+  /** "Log ind med Google"/"…Apple" pressed. Not proof an account exists. */
+  tap: 'signin:tap',
+} as const
+
+export type SignInStep = keyof typeof SIGNIN_EVENTS
+
+/**
+ * A FINISHED KREA PIECE — one per piece completed, at the ✓ press that grants its XP.
+ *
+ * `route:krea_*` already says a child OPENED an activity. This says they carried one to the end, so
+ * `finished / opened` is a completion rate per activity, which is the only thing that separates "Krea
+ * works" from "Krea gets opened and abandoned". Split three ways because the three are different
+ * activities with different costs, and three keys are free.
+ *
+ * Fri Tegning is absent BY DESIGN and must stay absent: it has no finish and earns nothing (Lepper
+ * 1973 — an expected award made preschoolers draw less; `.claude/rules/games-krea.md`). Counting a
+ * "finish" there would mean inventing one.
+ */
+export const KREA_EVENTS = {
+  /** Tegn med Mig — a guided piece completed. */
+  guide: 'krea:finished_guide',
+  /** Farvelæg — every region coloured. */
+  color: 'krea:finished_color',
+  /** Perleplade — a PATTERN finished. The free board has no finish and earns nothing. */
+  beads: 'krea:finished_beads',
+} as const
+
+export type KreaPiece = keyof typeof KREA_EVENTS
+
+/**
  * Pathname → event key. EXACT matches only.
  *
  * `/learning/memory/:type` is listed by its two real types rather than by its pattern: `:type` is a URL
@@ -108,15 +154,28 @@ export type NotifyStep = keyof typeof NOTIFY_EVENTS
  *
  * DEV-only routes (`/dev/*`, `/audit`) are deliberately absent: they do not exist in a production
  * build, and counting them would mean counting ourselves.
+ *
+ * THE FOUR MENU ROUTES WERE RENAMED IN 1.3, and the rename IS the point (`docs/usage-analytics.md`
+ * §9.1). Four doors replace six home cards, and a merged door lives at its primary section's old menu
+ * route (`doors.ts` A2): `/alphabet` stopped being "the Alfabetet menu" and became "Bogstaver og Ord",
+ * which also holds Ordleg; `/farver` likewise swallowed Krea. The other two kept their contents but
+ * not their denominator — a door is one of FOUR cards where a menu was one of six, so every
+ * menu→game conversion rate changes meaning on the same day.
+ *
+ * None of that is visible in a row. `day` cannot show it and `app_version` only could if someone
+ * remembered, for the life of the table, to split on it — so the old names would quietly average a
+ * six-card world with a four-door one and the number would look comparable while being wrong. New
+ * names make the two eras disjoint BY CONSTRUCTION; a query that wants the whole history unions them
+ * deliberately, which is the correct amount of work for a question that genuinely spans the change.
  */
 export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
   '/': 'route:home',
 
-  '/alphabet': 'route:alphabet_menu',
+  '/alphabet': 'route:door_letters',
   '/alphabet/learn': 'route:alphabet_learn',
   '/alphabet/quiz': 'route:alphabet_quiz',
 
-  '/math': 'route:math_menu',
+  '/math': 'route:door_math',
   '/math/counting': 'route:math_counting',
   '/math/boat': 'route:math_boat',
   '/math/numbers': 'route:math_numbers',
@@ -125,18 +184,22 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
   '/math/comparison': 'route:math_comparison',
   '/math/patterns': 'route:math_patterns',
 
-  '/farver': 'route:farver_menu',
+  '/farver': 'route:door_colors',
   '/farver/laer': 'route:farver_laer',
   '/farver/jagt': 'route:farver_jagt',
   '/farver/quiz': 'route:farver_quiz',
   '/farver/ram-farven': 'route:farver_ram_farven',
   '/farver/nuancer': 'route:farver_nuancer',
 
-  '/english': 'route:english_menu',
+  '/english': 'route:door_english',
   '/english/listen': 'route:english_listen',
   '/english/word': 'route:english_word',
   '/english/learn': 'route:english_learn',
 
+  // `/ordleg` and `/krea` are still real routes, but under four doors nothing LINKS to them — their
+  // games stand behind Bogstaver og Ord and Farver og Krea, and every back arrow goes there
+  // (`menuRouteFor`). They are kept mapped because a bookmark or a deep link still reaches them; the
+  // count collapsing to near zero in 1.3 is the expected reading, not a regression.
   '/ordleg': 'route:ordleg_menu',
   '/ordleg/read': 'route:ordleg_read',
   '/ordleg/spelling': 'route:ordleg_spelling',
@@ -163,6 +226,29 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
 // deliberately rather than by accident, because each one is a new row family forever.
 
 /**
+ * THE SAME FOUR ROUTES UNDER THE SIX-CARD HOME — what 1.0–1.2 reported, and what THIS build still
+ * reports while the doors are gated off.
+ *
+ * WHY THE NAME IS CHOSEN AT RUNTIME RATHER THAN AT THE RENAME. The doors ride `fourDoorsShown()`
+ * (→ the Krea gate), so one build renders both worlds: production shows six cards until the gate is
+ * deleted, staging and dev already show four — and `master` deploys the WEB on every push, days
+ * before the 1.3 binary clears review. A name baked in at build time would therefore have emitted
+ * `route:door_letters` from a six-card page for that whole window, contaminating the split by exactly
+ * the mechanism the split exists to prevent. The event follows what is ON SCREEN; that is the only
+ * version of this that cannot drift.
+ *
+ * These names also have to stay in the allow-list for good: an iPad that never takes the 1.3 update
+ * goes on posting them for years, and dropping one would silently discard that family's counts while
+ * the endpoint kept answering 204.
+ */
+export const PRE_DOOR_ROUTE_EVENTS: Readonly<Record<string, string>> = {
+  '/alphabet': 'route:alphabet_menu',
+  '/math': 'route:math_menu',
+  '/english': 'route:english_menu',
+  '/farver': 'route:farver_menu',
+}
+
+/**
  * How many events one request may carry.
  *
  * Shared by the client (which flushes early rather than exceed it) and the endpoint (which discards
@@ -178,8 +264,11 @@ export const USAGE_EVENTS: readonly string[] = [
   REWARD_STICKER_EVENT,
   ...Object.values(ADULT_EVENTS),
   ...Object.values(NOTIFY_EVENTS),
+  ...Object.values(SIGNIN_EVENTS),
+  ...Object.values(KREA_EVENTS),
   ...SESSION_MARKS.map((m) => m.event),
   ...Object.values(ROUTE_EVENTS),
+  ...Object.values(PRE_DOOR_ROUTE_EVENTS),
 ]
 
 const EVENT_SET = new Set<string>(USAGE_EVENTS)
@@ -194,12 +283,18 @@ export function isUsageEvent(value: unknown): value is string {
  *
  * Returns null for anything unmapped — a 404, a DEV route, a deep link nobody anticipated. A null is
  * not an error and is never reported; an uncounted screen is strictly better than an unbounded table.
+ *
+ * `fourDoors` is what the child is actually looking at (`fourDoorsShown()` at the call site), and it
+ * only ever changes the four menu routes — see `PRE_DOOR_ROUTE_EVENTS` for why the name is chosen
+ * here rather than baked in. It DEFAULTS TO THE SIX-CARD WORLD because that is what production
+ * renders today, so a caller that forgets it under-reports the new names rather than attributing a
+ * six-card screen to a door; the call site itself is pinned by `lib/usageEndpoint.test.ts`.
  */
-export function eventForPath(pathname: string): string | null {
+export function eventForPath(pathname: string, fourDoors = false): string | null {
   if (typeof pathname !== 'string' || !pathname) return null
   // Tolerate a trailing slash so `/math/` and `/math` are the same screen, but never strip `/` itself.
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname
-  const direct = ROUTE_EVENTS[clean]
+  const direct = fourDoors ? ROUTE_EVENTS[clean] : (PRE_DOOR_ROUTE_EVENTS[clean] ?? ROUTE_EVENTS[clean])
   if (direct) return direct
   // `/learning/memory/<type>/<size>` — the size segment is ignored, the type is not.
   const memory = /^(\/learning\/memory\/[^/]+)\/[^/]+$/.exec(clean)

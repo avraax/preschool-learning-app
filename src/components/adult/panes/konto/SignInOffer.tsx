@@ -9,10 +9,11 @@
 // the progress-aware sticker count (`promoHint`), which lived on the deleted rail row: it is the
 // endowed-progress lever, it is the only concrete number in the offer, and it belongs at the CTA.
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Box, Button, Stack, Typography } from '@mui/material'
 import { ShieldCheck, TabletSmartphone, Users } from 'lucide-react'
 import { startSocialSignIn, type SignInProvider } from '../../../../services/authSignIn'
+import { reportSignInStep } from '../../../../services/usagePing'
 import { useSignUpProviders } from '../../../../services/signUpProviders'
 import { useProgress } from '../../../../hooks/useProgress'
 import { PaneSection } from '../paneParts'
@@ -50,6 +51,14 @@ const SignInOffer: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // THE OFFER WAS SEEN. This component mounts only for a guest inside the Konto pane (`KontoPane`
+  // branches on it), so the mount IS the impression — and `[]` means once per open, not once per
+  // render. Without it the zero-accounts number has no denominator: `adult:gate_ok` counts adults who
+  // got into Indstillinger, which is not the same as adults who ever reached this ask.
+  useEffect(() => {
+    reportSignInStep('offer')
+  }, [])
+
   /**
    * From the UNAUTHENTICATED providers endpoint, not `auth.info.methods` — a guest has no session,
    * so `info` is null here and the Apple button would never render on the one pane that offers it.
@@ -86,6 +95,11 @@ const SignInOffer: React.FC = () => {
   // timeout can — on the web the call deliberately never resolves, because `location.assign` has
   // navigated away by then. A promise that never settles has to be fixed where it hangs.
   const onGuestSignIn = useCallback(async (provider: SignInProvider) => {
+    // BEFORE the call, not after it. On the web `startSocialSignIn` ends in `location.assign`, so the
+    // promise deliberately never settles and anything reported afterwards is never sent; and the
+    // question this answers is "did the adult decide to", which the press already settles. Whether an
+    // account then came into existence is a row in the accounts table, not a counter.
+    reportSignInStep('tap')
     setMessage(null)
     setBusy(true)
     try {

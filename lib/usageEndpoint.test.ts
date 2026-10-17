@@ -218,6 +218,77 @@ test('the adult-door funnel is actually wired to its three surfaces', () => {
   )
 })
 
+test('the route reporter is handed the LIVE front-page flag, not a literal', () => {
+  // One build renders both front pages — the doors ride the Krea gate, and `master` deploys the web
+  // days before the 1.3 binary clears review. Pass `true` here and every six-card page on
+  // production starts filing door rows; pass nothing and the doors are invisible once they open.
+  // Only `fourDoorsShown()` tracks what the child is actually looking at.
+  const app = code(readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8'))
+  assert.match(
+    app,
+    /reportRoute\(location\.pathname,\s*fourDoorsShown\(\)\)/,
+    'App.tsx no longer reports the route against the live four-door flag',
+  )
+  assert.match(app, /import \{ fourDoorsShown \}/, 'App.tsx defines the flag locally instead of importing it')
+  // The default must stay the GATED world: a forgotten argument may under-report a door, never
+  // attribute a six-card screen to one.
+  assert.match(
+    code(readFileSync(new URL('../src/config/usageEvents.ts', import.meta.url), 'utf8')),
+    /function eventForPath\(pathname: string, fourDoors = false\)/,
+    'eventForPath no longer defaults to the pre-door names',
+  )
+})
+
+test('the sign-in offer counts being SEEN as well as being tapped', () => {
+  // The pair only answers anything together: `offer` alone cannot say whether adults decline, `tap`
+  // alone cannot say whether they ever got the chance. Losing either silently turns the other into a
+  // number with no denominator — which is exactly the state that made this worth building.
+  const read = (rel: string) => code(readFileSync(new URL(rel, import.meta.url), 'utf8'))
+  const offer = read('../src/components/adult/panes/konto/SignInOffer.tsx')
+
+  assert.match(offer, /reportSignInStep\('offer'\)/, 'the offer no longer counts being seen')
+  assert.match(offer, /reportSignInStep\('tap'\)/, 'the sign-in buttons no longer count a press')
+  // Once per open, not once per render: the effect must have an EMPTY dep array, or a re-render from
+  // the reward count or a busy flag inflates the impression count without anyone seeing anything.
+  assert.match(
+    offer,
+    /useEffect\(\s*\(\)\s*=>\s*\{\s*reportSignInStep\('offer'\)\s*\}\s*,\s*\[\]\s*\)/,
+    'the offer impression is not a once-per-mount effect with an empty dep array',
+  )
+  // The press is counted BEFORE the provider call: on the web that call ends in `location.assign`
+  // and deliberately never settles, so anything reported after it is never sent.
+  assert.ok(
+    offer.indexOf("reportSignInStep('tap')") < offer.indexOf('await startSocialSignIn'),
+    'the tap is counted after the call that navigates away',
+  )
+})
+
+test('a finished Krea piece is counted in each activity that HAS a finish, and nowhere else', () => {
+  // `route:krea_*` counts openings; without these there is no completion rate, and "opened and
+  // abandoned" looks identical to "played happily".
+  const read = (rel: string) => code(readFileSync(new URL(rel, import.meta.url), 'utf8'))
+
+  for (const [file, piece] of [
+    ['TegnMedMigGame', 'guide'],
+    ['FarvelaegGame', 'color'],
+    ['PerlepladeGame', 'beads'],
+  ] as const) {
+    const game = read(`../src/components/krea/${file}.tsx`)
+    assert.match(game, new RegExp(`reportKreaFinished\\('${piece}'\\)`), `${file} no longer counts a finish`)
+    // Exactly one, beside the one `completeTask` — a second would double-count a piece.
+    assert.equal((game.match(/reportKreaFinished\(/g) ?? []).length, 1,
+      `${file} reports a finish from more than one place`)
+    assert.equal((game.match(/completeTask\(/g) ?? []).length, 1,
+      `${file} grants XP from more than one place — the finish count would drift from the XP`)
+  }
+
+  // FRI TEGNING HAS NO FINISH AND MUST NOT GET ONE. It earns nothing by design (Lepper 1973), and a
+  // counter is the cheapest way for a future session to start treating it as if it did.
+  const fri = read('../src/components/krea/FriTegningGame.tsx')
+  assert.ok(!fri.includes('reportKreaFinished'), 'Fri Tegning now reports a finish it does not have')
+  assert.ok(!fri.includes('completeTask('), 'Fri Tegning now grants a task reward')
+})
+
 test('the weekly-reminder funnel is wired to every step it counts', () => {
   // Re-engagement PRD-01 W4. Same failure shape as the adult funnel above: drop a call and the number
   // simply stops moving, which reads exactly like "nobody opted in". Every NOTIFY_EVENTS key must be

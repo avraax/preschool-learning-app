@@ -3,6 +3,7 @@ import { lazyWithReload as lazy } from './utils/lazyWithReload'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { boatGameShown } from './utils/boatGame'
 import { kreaShown } from './utils/kreaShown'
+import { fourDoorsShown } from './utils/fourDoors'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
 import { reportAppOpen, reportRoute } from './services/usagePing'
@@ -182,7 +183,9 @@ function App() {
     void reminders.start()
   }, [])
   useEffect(() => {
-    reportRoute(location.pathname)
+    // The flag picks the four menu routes' event NAMES, because one build renders both front pages
+    // and a row has to say which one the child was on (`PRE_DOOR_ROUTE_EVENTS`).
+    reportRoute(location.pathname, fourDoorsShown())
   }, [location.pathname])
 
   useEffect(() => {

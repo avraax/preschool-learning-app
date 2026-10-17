@@ -565,3 +565,75 @@ verifiable parental consent. The amendments add a **notice duty** — the privac
 specific internal operations the identifier is collected for, and how it is kept from being used to contact
 or profile the child. Option B collects no identifier at all, so this is moot for it; it is the escape hatch
 if we ever go to C.
+
+---
+
+## 9. The event set over time
+
+Every addition is a new row family forever, and every RENAME splits a time series. Both are cheap to do
+and expensive to undo, so each one is recorded here with the question it was added to answer. The closed
+list itself is `src/config/usageEvents.ts`; this section is why, not what.
+
+### 9.1 v1.3 — the four doors renamed four menu events
+
+**What changed.** The front page went from six section cards to **four doors**, and a merged door lives at
+its primary section's old menu route (`src/config/doors.ts`, A2). So `/alphabet` stopped meaning "the
+Alfabetet menu" and started meaning **Bogstaver og Ord**, which also holds Ordleg; `/farver` likewise
+swallowed Krea. `/math` and `/english` kept their contents but not their **denominator** — a door is one of
+four cards where a menu was one of six, so every menu-to-game conversion rate changed meaning on one day.
+
+`route:alphabet_menu` · `route:math_menu` · `route:english_menu` · `route:farver_menu`
+→ `route:door_letters` · `route:door_math` · `route:door_english` · `route:door_colors`
+
+**Why rename rather than annotate.** Nothing in a row shows the change. `day` cannot, and `app_version`
+only could if every future query remembered to split on it — so the old names would quietly average a
+six-card world with a four-door one, and the number would look comparable while being wrong. Separate
+names make the two eras disjoint **by construction**; a question that genuinely spans the change unions
+them on purpose, which is the right amount of work for that question.
+
+**The name is chosen AT RUNTIME, which is the part worth remembering.** The doors ride `fourDoorsShown()`
+(→ the Krea gate), so **one build renders both front pages**, and `master` deploys the *web* on every push
+— days before the 1.3 binary clears review. A name baked in at the rename would have emitted
+`route:door_letters` from a six-card page for that whole window, contaminating the split by exactly the
+mechanism the split exists to prevent. So `eventForPath(pathname, fourDoors)` takes the live flag from the
+call site in `App.tsx`, and **defaults to the pre-door names**: a caller who forgets it under-reports a
+door rather than attributing a six-card screen to one. Pinned by `lib/usageEndpoint.test.ts`.
+
+**The old names stay in the allow-list forever.** An iPad that never takes the 1.3 update goes on posting
+them for years; dropping one would silently discard that family's counts while the endpoint kept answering
+`204`. They are accepted, and emitted only while the gate is shut.
+
+**`route:ordleg_menu` and `route:krea_menu` were left alone.** Both routes still exist, but under four
+doors nothing links to them — their games stand behind the merged doors and every back arrow goes there.
+Their counts collapsing to near zero in 1.3 is the expected reading, not a regression.
+
+### 9.2 v1.3 — `signin:offer` / `signin:tap`
+
+Twenty-three days of production: 3,996 events, 8 adults inside Indstillinger, and **zero accounts created**
+— with nothing in the data able to say why, because the offer itself was invisible to it. `adult:gate_ok`
+says an adult got in; it does not say they ever reached the ask.
+
+The pair is a denominator and a numerator, and the two readings need **opposite** fixes: few `offer`
+against `gate_ok` is a discovery problem (the offer is buried in the Konto pane), while many `offer` and
+few `tap` is a persuasion problem (they read it and declined). Guessing between those two was the actual
+state before this.
+
+`offer` fires once per **pane open** by a guest, not per render. `tap` fires on the press, **before** the
+provider call — on the web that call ends in `location.assign` and deliberately never settles, so anything
+reported after it is never sent. Whether sign-in then succeeded is already a row in the accounts table, so
+counting it here would pay cardinality for something we can already see.
+
+### 9.3 v1.3 — `krea:finished_guide` / `_color` / `_beads`
+
+`route:krea_*` says a child **opened** an activity. These say they carried one to the end, so
+`finished / opened` is a completion rate per activity — the only thing that separates "Krea works" from
+"Krea gets opened and abandoned". Split three ways because they are three different activities with three
+different costs, and three keys are free.
+
+Counted at the ✓ press that grants the XP, not after the "comes alive" animation: the child may walk away
+mid-dance, and the piece was finished either way.
+
+**Fri Tegning has no key and must not get one.** It has no finish and earns nothing by design (Lepper 1973
+— an expected award made preschoolers draw *less*; `.claude/rules/games-krea.md`). A counter is the
+cheapest way for a future session to start treating it as if it did, so `usagePing.test.ts` fails if the
+key appears and `lib/usageEndpoint.test.ts` fails if the call does.

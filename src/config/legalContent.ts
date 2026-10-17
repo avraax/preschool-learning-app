@@ -144,7 +144,7 @@ export const PRIVACY_DA: { title: string; intro: string[]; sections: LegalSectio
         'Appen er lavet så næsten ingenting behøver sendes nogen steder. Al tale er indtalt på forhånd og ligger færdig i appen, så spillene kan læses højt uden internet.',
       ],
       bullets: [
-        'Uden konto: intet om barnet. Appen sender ét anonymt tælleslag, når den åbnes, og når et spil åbnes. Vi gemmer kun et tal pr. dag pr. spil — aldrig noget om hvem, hvilken enhed eller hvornår på dagen. Alt andet spilles helt lokalt.',
+        'Uden konto: intet om barnet. Appen sender ét anonymt tælleslag, når den åbnes, når et spil åbnes, når barnet gør en tegning eller en perleplade færdig, og når en voksen får vist eller trykker på "Log ind". Vi gemmer kun et tal pr. dag — aldrig noget om hvem, hvilken enhed eller hvornår på dagen. Alt andet spilles helt lokalt.',
         'Med konto: din e-mailadresse og dit navn fra Google-login, børneprofilernes navne og figurer, og barnets fremgang. Det gemmes for at kunne synkronisere mellem enheder.',
         'Hvis du selv skriver til os fra "Indstillinger" → "' + FEEDBACK_ENTRY_LABEL + '": din besked, teknisk information om appen og enheden, og — hvis du lader fluebenet stå — et skærmbillede. Det sker kun, når du trykker på Send. Der følger hverken navn eller e-mailadresse med.',
         'Hvis appen går ned: en teknisk fejlbeskrivelse uden skærmbillede, så fejlen kan rettes.',

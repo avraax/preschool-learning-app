@@ -1,6 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { ADULT_EVENTS, MAX_EVENTS_PER_REQUEST, isUsageEvent } from '../config/usageEvents.ts'
+import {
+  ADULT_EVENTS,
+  KREA_EVENTS,
+  MAX_EVENTS_PER_REQUEST,
+  SIGNIN_EVENTS,
+  isUsageEvent,
+} from '../config/usageEvents.ts'
 import {
   __flushUsagePingForTests,
   __resetUsagePingForTests,
@@ -9,6 +15,8 @@ import {
   __tickSessionForTests,
   isNewSession,
   reportAdultStep,
+  reportKreaFinished,
+  reportSignInStep,
   reportStickersEarned,
   reportAppOpen,
   reportRoute,
@@ -655,6 +663,141 @@ test('reporting an adult step never throws into the surface', async () => {
   try {
     reportAdultStep('chip')      // must not throw
     reportAdultStep('gateOk')
+    await settle()
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+// ---- which front page a menu row came from -------------------------------------------------------
+
+test('a menu route reports the era the CHILD is on, not the one the build was written in', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportRoute('/alphabet', true)
+    reportRoute('/alphabet', false)
+    reportRoute('/alphabet')          // the default is the gated, six-card world
+    __flushUsagePingForTests()
+    await settle()
+    assert.deepEqual(bodyOf(f.calls[0]).events, [
+      'route:door_letters',
+      'route:alphabet_menu',
+      'route:alphabet_menu',
+    ])
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('the flag touches the four menu routes and NOTHING else', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    for (const p of ['/alphabet/quiz', '/album', '/krea/perler', '/learning/memory/letters']) {
+      reportRoute(p, true)
+      reportRoute(p, false)
+    }
+    __flushUsagePingForTests()
+    await settle()
+    const events = bodyOf(f.calls[0]).events
+    // Pairwise identical: a game is the same game behind either front page.
+    for (let i = 0; i < events.length; i += 2) assert.equal(events[i], events[i + 1])
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+// ---- the sign-in offer --------------------------------------------------------------------------
+//
+// Twenty-three days of production, zero accounts, and no way to tell "nobody saw the ask" from
+// "everybody declined it". These two are the denominator and the numerator of that question.
+
+const eventsOf = (calls: FetchCall[], prefix: string) =>
+  calls.flatMap((c) => (JSON.parse(String(c.init.body)) as { events: string[] }).events)
+    .filter((e) => e.startsWith(prefix))
+
+test('the offer being seen and being acted on are separate, unbatched events', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportSignInStep('offer')
+    reportSignInStep('tap')
+    await settle()
+    assert.deepEqual(eventsOf(f.calls, 'signin:'), ['signin:offer', 'signin:tap'])
+    // `tap` is followed by a full-page navigation to the provider, so a batch would leave with the
+    // page it was waiting on — the one event of the pair that implies persuasion.
+    assert.equal(f.calls.length, 2, 'the sign-in steps were batched together')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('every sign-in step is in the closed allow-list', () => {
+  for (const event of Object.values(SIGNIN_EVENTS)) {
+    assert.ok(isUsageEvent(event), `${event} would be dropped by the endpoint`)
+  }
+})
+
+test('reporting a sign-in step never throws into the sign-in path', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(() => { throw new Error('offline') })
+  try {
+    reportSignInStep('offer')    // must not throw
+    reportSignInStep('tap')
+    await settle()
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+// ---- finished Krea pieces -----------------------------------------------------------------------
+//
+// `route:krea_*` says a child opened an activity; this says they carried one to the end. The two
+// together are a completion rate, which is the only thing that separates a section that works from
+// one that gets opened and abandoned.
+
+test('each finished piece reports its own activity, unbatched', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(ok)
+  try {
+    reportKreaFinished('guide')
+    reportKreaFinished('color')
+    reportKreaFinished('beads')
+    await settle()
+    assert.deepEqual(eventsOf(f.calls, 'krea:'), [
+      'krea:finished_guide',
+      'krea:finished_color',
+      'krea:finished_beads',
+    ])
+    // A finish is followed by a ceremony and often by the end of the sitting.
+    assert.equal(f.calls.length, 3, 'the finishes were batched together')
+  } finally {
+    f.restore()
+    __resetUsagePingForTests()
+  }
+})
+
+test('every Krea finish is in the closed allow-list, and Fri Tegning has no key at all', () => {
+  for (const event of Object.values(KREA_EVENTS)) {
+    assert.ok(isUsageEvent(event), `${event} would be dropped by the endpoint`)
+  }
+  // Fri Tegning has no finish and earns nothing BY DESIGN (Lepper 1973 — an expected award made
+  // preschoolers draw less). A key here would be the first half of inventing one.
+  assert.ok(!('draw' in KREA_EVENTS), 'Fri Tegning has been given a finish event')
+  assert.ok(!isUsageEvent('krea:finished_draw'), 'the endpoint would accept a Fri Tegning finish')
+})
+
+test('reporting a finish never throws into the ceremony it precedes', async () => {
+  __resetUsagePingForTests()
+  const f = installFetch(() => { throw new Error('offline') })
+  try {
+    reportKreaFinished('guide')  // must not throw
     await settle()
   } finally {
     f.restore()

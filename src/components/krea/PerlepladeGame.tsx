@@ -13,6 +13,7 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { useTaskRun } from '../../hooks/useTaskRun'
 import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
+import { reportKreaFinished } from '../../services/usagePing'
 import { KREA_BEADS } from '../../config/difficulty'
 import {
   BEAD_BOARDS,
@@ -478,6 +479,7 @@ const PerlepladeGame: React.FC = () => {
     audio.updateUserInteraction()
     sfx.play('bead-popoff')
     run.completeTask(true)
+    reportKreaFinished('beads')
     setDone(true)
     setShown(false)
     setHeld(null)
