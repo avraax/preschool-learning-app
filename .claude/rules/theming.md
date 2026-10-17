@@ -48,7 +48,9 @@ more token files — `jungle.tokens.ts` (Junglen) + `candy.tokens.ts` (Slikland)
    `tokens/helpers.ts` so the structure matches other skins. The picker shows the skin's baked
    `selectorThumb`, never a glyph — so **a skin can only be REGISTERED once its world art exists**
    (`themes.test.ts` enforces that; art pipeline in `.claude/rules/scene-assets.md`).
-2. Give the 6 sections (alphabet/math/colors/english/ordleg/krea) **distinct, readable accents**. Keep `success`
+2. Give the 6 sections (alphabet/math/colors/english/ordleg/krea) **distinct, readable accents** — even
+   though with four front-page doors Ordleg/Krea WEAR their door's palette (`setCategoryPaletteAlias`,
+   registered in `main.tsx` from `doors.ts`; colours only, never names). Keep `success`
    green-ish and `error` red-ish (kids read green=correct / red=wrong). A section's GLYPH is not a token at
    all — it's theme-constant baked art in `src/assets/themes/icons/`, identical on every skin, so a new
    theme supplies colours only. Accents only need to read on the SCENE — tile/card text auto-darkens to AA

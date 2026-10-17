@@ -30,8 +30,10 @@ Most task-based quizzes are a thin **config** over `src/components/common/Unifie
   items. The grid's columns + width envelope follow the count via the shared
   `src/components/common/answerGrid.ts` (also used by the hand-rolled `MathOperationGame`) — never
   hardcode `repeat(2)`/`repeat(4)` in a game again, and never leave a row holding a single tile.
-- **Chrome**: `title`, `emoji`, `theme` (a `CategoryTheme`), `RepeatButtonComponent`, `backRoute`,
-  `showRepeat` (default true). There is **no score/progress chip** — `ScoreChip` and GameShell's
+- **Chrome**: `title`, `emoji`, `theme` (a `CategoryTheme`), `RepeatButtonComponent`,
+  `showRepeat` (default true). **No `backRoute`** — GameShell derives the back arrow from the game's
+  section via `doors.ts` (`menuRouteFor`), so a merged door's games all return to it;
+  `doorWiring.test.ts` fails on a hard-coded one. There is **no score/progress chip** — `ScoreChip` and GameShell's
   `score` slot were deleted (owner, 2026-08-02): a per-question pip row was a second progress meter
   inches from the reward ring, and 8 pips is past the subitizing limit. The ring is the only meter.
 - **Audio**: `gameWelcomeType` (add the string to `GAME_WELCOME_MESSAGES` in

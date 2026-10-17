@@ -54,6 +54,28 @@ test('the Ordleg and Krea menus redirect to their door when four doors are on', 
   }
 })
 
+// D10: a door row in Indstillinger must WRITE every member section — the pure rows can be perfect while
+// the pane writes only the first.
+test('the difficulty pane renders the door rows and fans a change out to every member', () => {
+  const pane = codeOf('components/adult/panes/LaeringPane.tsx')
+  assert.match(pane, /const ROWS = difficultyRows\(fourDoorsShown\(\), kreaShown\(\)\)/)
+  assert.match(pane, /for \(const section of row\.members\) setDifficulty\(\{ section, level \}\)/)
+  assert.match(pane, /const value = rowLevel\(row, per\) \?\? ''/)
+  assert.match(codeOf('components/adult/panes/konto/BoernSection.tsx'), /playedLabels\(played, fourDoorsShown\(\)\)/)
+})
+
+// D9/T7: the door name is spoken from the COMPLETED hop, only when it came from home.
+test('a door speaks its name only on arrival from home, from the transition\'s completed hop', () => {
+  const menu = codeOf('components/common/GameSelectionLayout.tsx')
+  assert.match(menu, /if \(routeDepth\(lastArrival\.from\) !== 0 \|\| spokenArrival\.current === lastArrival\.id\) return/)
+  assert.match(menu, /audio\.speak\(doorName\)/)
+  assert.match(menu, /const doorName = door \? doorNameLine\(door\) : null/)
+  const provider = codeOf('components/common/transition/TransitionProvider.tsx')
+  const reveal = provider.slice(provider.indexOf('const onRevealComplete'), provider.indexOf('const value:'))
+  assert.match(reveal, /setLastArrival\(\{ from: fromRef\.current, to: pathnameRef\.current, id: \+\+arrivalSeq\.current \}\)/)
+  assert.match(provider, /fromRef\.current = pathnameRef\.current/)
+})
+
 // A3: the colour alias is registered once, before the first render, from the same gate as the doors.
 test('the door colour alias is registered at startup from the four-door gate', () => {
   const main = codeOf('main.tsx')

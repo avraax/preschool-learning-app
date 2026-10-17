@@ -7,7 +7,8 @@ paths:
 
 # Krea — `krea.draw` (Fri Tegning) · `krea.guide` (Tegn med Mig) · `krea.color` (Farvelæg) · `krea.beads` (Perleplade)
 
-The 6th section, behind `kreaGate.ts` until the owner releases it. PRD + progress log:
+The 6th section, behind `kreaGate.ts` until the owner releases it — and with it the four front-page
+doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redirects; `doors.ts`). PRD + progress log:
 `plans/krea/tmp-prd-krea-01-section-and-drawing.md` §10; Perleplade `tmp-prd-krea-02-perleplade.md` §10. Task-game rules
 (seam, timers, never-await) are in `game-development.md`; they apply here though its globs don't load.
 

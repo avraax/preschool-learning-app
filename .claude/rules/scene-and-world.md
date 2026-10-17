@@ -32,6 +32,12 @@ Per-skin worlds are **multi-layer parallax** (far/mid/near `ParallaxLayer`s, ind
   re-order it**, or that object's label drops out of the row — ocean sank Farver below its neighbours to
   seat the palette on the reef, dino lifted it above to clear the volcano: opposite art reasons, same
   broken row.
+- **FOUR DOORS** (Category restructure PRD-01, gated with Krea until v1.3): home seats the doors of
+  `src/config/doors.ts` on `homeAnchorsDoors` (keyed by each door's primary section, same smile, sizes
+  no bigger than the five — `homeArc.test.ts`). **Their `xPct` is a share of a field that starts past
+  the mascot's column** (`HOME_MASCOT` in `HomePage`, one constant for mascot and reserve) — the
+  viewport-percentage arc put the dino on a label at 958×714. Portrait/phones flow in `balancedRows`.
+  `sweep.mjs --phase layout` fails any door or menu tile that intersects the mascot's box.
 - **A layer's overscan is DERIVED from its own max travel** (`PARALLAX_MAX_* × depth`, pure in
   `src/config/parallax.ts`), never a fixed percentage, and the nearest/**ground layer is
   `anchor:'bottom'`**. A constant `scale(1.12)` is 52px of margin on an iPad but 23px on a phone in
@@ -74,7 +80,7 @@ exported as `MASCOT_CORNER_SIZE` so a layout reserves it rather than re-measurin
 ## The music bed
 
 `musicClient` (`src/services/musicClient.ts`, **HTML5 Audio** — moved off WebAudio for iOS-PWA stability)
-plays a per-world bed on **menu surfaces only** (home + the 6 section menus + `/album`) **and only once the
+plays a per-world bed on **menu surfaces only** (home + the section/door menus + `/album`) **and only once the
 auth/profile gate has opened**; entering a game/browse screen fades it out so narration + SFX own the mix.
 It is a **separate channel** from TTS and SFX — never routed through `SimplifiedAudioController` — and it
 honours the Musik switch in "Indstillinger" → Lyd (`progressStore.settings.musicEnabled`).

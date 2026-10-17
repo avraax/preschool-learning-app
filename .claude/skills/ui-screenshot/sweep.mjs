@@ -110,7 +110,9 @@ const BOARD_SIZE_IS_THE_AXIS = new Set([
 
 // Two memory routes share one title; dedupe by route, not title.
 const ROUTES = inventory().filter((r, i, a) => a.findIndex((x) => x.route === r.route) === i)
-  .filter((r) => !ONLY || r.route.includes(ONLY))
+  // `--only =/` matches ONE route exactly (home's '/' is a substring of every route). Under Git Bash,
+  // prefix the command with MSYS_NO_PATHCONV=1 or the shell rewrites a leading '/' into a Windows path.
+  .filter((r) => !ONLY || (ONLY.startsWith('=') ? r.route === ONLY.slice(1) : r.route.includes(ONLY)))
 
 // ---- the page-side guard. Returns the facts; the runner decides pass/fail.
 const GUARD = `(()=>{const t=(document.body.innerText||'');
