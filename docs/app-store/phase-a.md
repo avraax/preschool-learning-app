@@ -69,7 +69,7 @@ was removed in full on 2026-09-18** — component, hook, `/api/stt`, the consent
 string and every privacy disclosure that described it — so the gate has no subject and is gone with it.
 The app now requests no device permissions at all, which is what the listing and the privacy policy say.
 
-### The adult IA is still SIX groups, not five
+### The settings IA is still SIX groups, not five
 
 Settings PRD-01's five-group shape was a contract, and A3 broke it on the owner's decision (2026-08-06)
 so a Kids Category reviewer would find the parental gate and the privacy policy together. **Privatliv
@@ -113,7 +113,7 @@ and Memory: `overflowY: 0` and `overflowX: 0` everywhere. No content clipping, n
 console errors, no page exceptions.** The boxes that escape the viewport are the parallax scene's
 deliberate overscan layers and the corner mascot.
 
-**One finding worth recording, from the group A3 added.** On a 440px-tall landscape phone the adult
+**One finding worth recording, from the group A3 added.** On a 440px-tall landscape phone the settings
 root list is six rows plus a header and a pinned footer, which does not fit: the list scrolls (327px of
 content in a 284px box) and **Privatliv, the last row, is below the fold at rest.** It is NOT a dead
 control — measured with `elementFromPoint` after scrolling (`hittable: true`) and confirmed by a real

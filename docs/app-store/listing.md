@@ -456,7 +456,7 @@ so the pair stays one capture session. Two traps that cost a run each:
 
 Taken after Phase A, as this section required: guest mode means shot 1 is the section menu rather than a
 sign-in screen, and shot 6 is captured in **real guest mode through the arithmetic parental gate** (not
-`?nogate=1`), so the adult surface shows what a reviewer actually gets — including "Barn / Gæst".
+`?nogate=1`), so the settings area shows what a reviewer actually gets — including "Barn / Gæst".
 
 **Three deviations from the plan below, each deliberate:**
 
@@ -501,7 +501,7 @@ seconds: what it is, the breadth, the reward, the adult control.
 3. **A math game mid-round** — the ten-frame or the counting objects, showing something countable.
 4. **A colour game** — carries the most visual appeal of any screen in the app.
 5. **The Reward Book** — collected stickers. This is the shot that explains the progression model.
-6. **"Indstillinger"** — the adult pane, showing difficulty and the Privatliv group. Signals to a parent
+6. **"Indstillinger"** — the settings area, showing difficulty and the Privatliv group. Signals to a parent
    that they are in control, and pre-empts a reviewer wondering where the parental gate is.
 
 **Capture commands.** Use the existing harness rather than anything new
