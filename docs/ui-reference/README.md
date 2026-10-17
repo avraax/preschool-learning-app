@@ -9,7 +9,12 @@ folder always reflects the shipped UI.
 - **Krea** (`krea*.jpg`, added 2026-10-16) is gated by `kreaGate.ts` — visible on dev/staging only, so
   production users can't see what these show yet. `-guide-step`/`-color-page` deep-link with `?motiv=`.
   Perleplade (`krea-beads*.jpg`, 2026-10-17, at Normal = 13×13): the grid, `-pattern` (`?motiv=hjerte`)
-  and `-free` (`?motiv=fri-hjerte`); `krea.jpg` re-shot with its 4th tile.
+  and `-free` (`?motiv=fri-hjerte`). Krea's tiles now live in `farver.jpg` (see Four doors below).
+- **Four doors** (Category restructure PRD-01, 2026-10-17): `home`, `alphabet` (= Bogstaver og Ord),
+  `farver` (= Farver og Krea), `math` (= Tal) and `english` were re-shot with the four-door front page,
+  which rides the Krea gate — dev/staging only until v1.3. `ordleg.jpg` shows the menu only production
+  still has (it goes at the 1.3 release). The Krea menu shot was deleted: with four doors `/krea`
+  redirects to Farver og Krea and production never shows it, so it can no longer appear anywhere.
 - **Theme**: Regnbue (default — forced via `?theme=kid`). Other skins (Havet, Rummet, Junglen,
   Slikland, Dinosaurer) share the same layout; only tokens differ.
 - **Capture tool**: `.claude/skills/ui-screenshot/cdp.mjs` (headless Chrome). JPEG q85. The route

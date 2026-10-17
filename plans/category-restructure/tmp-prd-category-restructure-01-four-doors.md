@@ -1,7 +1,8 @@
 # PRD — Category restructure 01: four front-page doors
 
-Status: authored 2026-10-17. **NOT implemented.** Owner decision session; every question in §2 was
-answered by the owner before this was written.
+Status: authored 2026-10-17. **IMPLEMENTED the same day behind the Krea gate (see §10)**, except the one
+owed door render and the 1.3 release step. Owner decision session; every question in §2 was answered
+by the owner before this was written.
 
 **Reverses / supersedes, by name:**
 - Krea PRD-01 (`plans/krea/tmp-prd-krea-01-section-and-drawing.md`) **§2.5 / §4.1** — Krea stops being a
@@ -300,6 +301,56 @@ reads at a glance; safe-area insets around the mascot on the real device.
 - The Fyld Båden gate (`boatGate.ts`): its own release decision.
 - Any game logic, difficulty values, the reward economy, sticker art.
 - New art beyond the one door render.
+
+---
+
+## 10. Progress log (implemented 2026-10-17, same session, owner away; not pushed)
+
+Status: **W0–W3, W5–W7 IMPLEMENTED** on master, behind the Krea gate. **W4 partly done**: the palette is
+wired, the prompt doc has been handed over, and **the Bogstaver og Ord render is owed by the owner** —
+until then that door shows the plain book stack (D7's fallback). **R (release) has not been done** and
+is the owner's call at 1.3.
+
+Commits: 9d38a24 W0 · 3a23366 W1 · 34aab62 W2 · 850c963 W3 · 3ec08be W5 · ac4140d W6 · daf1f47 W7 ·
+fixes after re-break/sweep (rowLevel, sweep hidden trays, centred home field).
+
+**Deviations from the text above (each deliberate):**
+- **A3 bloom = the MAX of the members, not the sum.** `bloomFor` returns a stage+fill, not raw XP, so a
+  sum has no meaning. Max is also the rule home already uses.
+- **`homeAnchorsKrea` was RENAMED `homeAnchorsDoors`** rather than reused under its old name, because
+  it no longer holds a Krea arc.
+- **T4 reserve is SYMMETRIC.** The first pass reserved only the mascot's side, which shifted the arc
+  ~100px right, off Rummet's planet and Dinosaurer's volcano. Both sides now reserve the mascot's width,
+  so the doors sit centred on each world's art.
+- **The back route went further than "route them through `menuRouteFor`".** GameShell no longer has a
+  `backRoute` prop at all; it derives the route from `categoryId`. One source, and a hard-coded route
+  cannot type-check back in.
+- **Colours alias through `setCategoryPaletteAlias`** (registered in `main.tsx`), not per call site, so
+  every `getCategoryTheme('ordleg'|'krea')` follows the door. The alias changes colours only, never names
+  or game lists.
+
+**Verification (by rung):**
+- Rung 1, Chrome `sweep --phase layout`: 297 jobs over 33 routes × 9 viewports (incl. the new 958×714).
+  All PASS once the load flakes were re-run serially; the `/krea/tegn` rows were a probe false positive
+  (closed stamp tray, `visibility:hidden`), and the probe now skips hidden elements. **No door or menu
+  tile intersects the mascot on any viewport, on any of the 4 skins.**
+- Rung 2, WebKit iPad UA: home + 4 door menus × 9 viewports PASS. One later run hit the dev API's 429
+  rate limit after hours of sweeping. That is environmental, an UNKNOWN rather than a defect.
+- Rung 1 audio (`--audio-report`): home → Bogstaver og Ord plays `4d933d8f…` (the door name). Back from
+  Stav Ordet lands on `/alphabet` in one hop and plays no door clip.
+- Rung 1: the Indstillinger row "Bogstaver og Ord: Svær" writes alphabet+ordleg; "Farver og Krea: Let"
+  writes colors+krea.
+- Production simulated in dev (gate forced off): the 5-section home, "Tal og Regning", and the `/ordleg`
+  menu are all unchanged. **Found: the CURRENT production home already puts the dino on "Alfabetet" at
+  958×714 and 1024×768.** It is left alone (D8, byte-identical) and disappears with the 1.3 release.
+- `/re-break`: 25 unit re-breaks, each flipping its own test, plus the comment-strip control (stayed
+  green). One was VACUOUS (`rowLevel`'s primary lookup was redundant); the code was simplified and the
+  break re-targeted. The sweep's mascot check was re-broken too: with the reserve removed it fails at
+  958×714, 1024×768 and 1254×872.
+
+**Rung 3 (owner's iPad) — UNKNOWN until then:** how the four spoken names sound, "krea" especially (they
+are approved-but-unheard via `audit:approve-all`); whether the child picks the right door from its
+picture; real touch on the 2×2 portrait home.
 
 ---
 
