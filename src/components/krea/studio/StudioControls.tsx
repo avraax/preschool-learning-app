@@ -100,8 +100,11 @@ export const PlusBadge: React.FC = () => (
     />
 )
 
+// The badge hangs off the top-right corner, so the sheet + badge together sit up and to the right of the
+// button's centre; this shift puts their union on the column's centre line, under/over the picker
+// (owner, 2026-10-17: "center align the nyt papir and change picture"). Sheet ink 6–94 %, badge to 102 %.
 const NewPaper: React.FC = () => (
-  <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+  <Box sx={{ position: 'relative', width: '100%', height: '100%', transform: 'translate(-4%, 6%)' }}>
     <Art src={KREA_ART.paper} />
     <PlusBadge />
   </Box>

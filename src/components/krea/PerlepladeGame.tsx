@@ -577,7 +577,8 @@ const PerlepladeGame: React.FC = () => {
   // at 120 + 120 they were, and the board lost 40 px (measured, WebKit 768×1024).
   const big = phone ? '56px' : landscape && !isPattern ? '120px' : '96px'
   const newBoardPicture = (
-    <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+    // Board 12–88 % + the corner badge to 102 %: shifted so their union is centred in the column, like "Nyt papir".
+    <Box sx={{ position: 'relative', width: '100%', height: '100%', transform: 'translate(-7%, 5%)' }}>
       <Box sx={{ position: 'absolute', inset: '12%' }}>
         <BoardArt n={4} mask={Array(16).fill(true)} />
       </Box>
