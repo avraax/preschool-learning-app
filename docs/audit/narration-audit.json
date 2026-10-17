@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-17T07:41:13.666Z",
+  "updatedAt": "2026-10-17T08:29:05.311Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -25544,6 +25544,190 @@
       "text": "hval",
       "group": "krea",
       "updatedAt": 1792222873666
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en sol": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en sol",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|et hjerte": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "et hjerte",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en stjerne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en stjerne",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en blomst": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en blomst",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en sommerfugl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en sommerfugl",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|et træ": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "et træ",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en sky": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en sky",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en måne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en måne",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en ballon": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en ballon",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en bold": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en bold",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en is": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en is",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|et jordbær": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "et jordbær",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en kat": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en kat",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en hund": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en hund",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en fugl": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en fugl",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en and": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en and",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en frø": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en frø",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en mariehøne": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en mariehøne",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en skildpadde": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en skildpadde",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en hval": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en hval",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en bjørn": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en bjørn",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en løve": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en løve",
+      "group": "krea",
+      "updatedAt": 1792225745311
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|en ræv": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "en ræv",
+      "group": "krea",
+      "updatedAt": 1792225745311
     }
   }
 }
