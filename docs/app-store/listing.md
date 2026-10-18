@@ -57,10 +57,13 @@ Counts verified. Keep the subtitle unchanged — a collision is on the name only
 **LIVE IN ASC as of 2026-09-05** (written via the API, read back identical):
 
 ```
-alfabet,bogstaver,læse,stavning,regning,matematik,skolestart,indskoling,børnehaveklasse,børn,spil
+alfabet,bogstaver,læse,stavning,regning,matematik,skolestart,tegne,børnehaveklasse,børn,spil
 ```
 
-**97 characters, 3 spare.** Nothing here repeats `børnelæring`, `abc`, `tal`, `engelsk`, `førskole` or
+**1.3 (owner, 2026-10-18): `indskoling` → `tegne`** so the Krea drawing area is findable; 92 characters,
+8 spare. Written to the 1.3 record and read back. (Until 1.3 is live, the 1.2 set below is what searches hit.)
+
+**Was 97 characters, 3 spare (1.0–1.2).** Nothing here repeats `børnelæring`, `abc`, `tal`, `engelsk`, `førskole` or
 `klasse` — those are already indexed from the name and subtitle, so repeating them buys nothing.
 
 **What search actually reads, first-party** (https://developer.apple.com/app-store/search/ and
@@ -140,8 +143,11 @@ can carry Danish words.
 | **Keywords** | see below | 100 / 100 |
 
 ```
-læring,læringsspil,farver,tælle,læsning,stave,lær,ord,dansk,skole,huskespil,plus,minus,kids,alphabet
+læring,læringsspil,farver,tælle,læsning,stave,lær,ord,dansk,skole,vendespil,plus,minus,kids,alphabet
 ```
+
+**2026-10-18: `huskespil` → `vendespil`** — the memory game was renamed Vendespil for 1.3, and it is the
+word Danish parents search; same length, still 100/100, no overlap with the da pool.
 
 **Measured, not estimated:** no keyword repeats a da token (name, subtitle or keywords) or an en-GB
 name/subtitle token. The name's `børnelæring`/`abc` overlap the da name — unavoidable, the brand stays.
