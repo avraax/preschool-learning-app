@@ -39,6 +39,7 @@ import {
 import Boat, { type BundleFx } from './boat/Boat'
 import { BOAT_LOOKS, boxColumns } from './boat/boatLooks'
 import Quay from './boat/Quay'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import SendButton from './boat/SendButton'
 import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
 
@@ -474,8 +475,23 @@ const FyldBaadenGame: React.FC = () => {
           data-boat-phase={DEV ? phase : undefined}
           sx={{ flex: 1, minHeight: 0, containerType: 'size', position: 'relative' }}>
           {/* "Hør igen" sits centred right under the title (owner, 2026-10-15), over the empty sky — not
-              inside the jetty column, where it competed with the cargo. */}
-          <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 3, pointerEvents: 'none', '& > *': { pointerEvents: 'auto' } }}>
+              inside the jetty column, where it competed with the cargo. On a phone in landscape the boat
+              fills the height, so centred it sat on the masthead: there it moves over the jetty's sky,
+              smaller (device sweep, 2026-10-26). */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              display: 'flex',
+              justifyContent: 'center',
+              zIndex: 3,
+              pointerEvents: 'none',
+              '& > *': { pointerEvents: 'auto' },
+              [PHONE_LANDSCAPE]: { justifyContent: 'flex-start', pl: 'calc(var(--s) * 0.6)', '& > *': { pointerEvents: 'auto', transform: 'scale(0.8)', transformOrigin: 'left top' } },
+            }}
+          >
             <MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />
           </Box>
           <Box
@@ -486,7 +502,15 @@ const FyldBaadenGame: React.FC = () => {
               // everything inside from it.
               // The jetty got more of the width (owner, 2026-10-15: room for the harbour master and both
               // piles) — 5.8 + 12.9 — and its bollard end reaches 0.4 further, toward the boat's stern.
-              '--s': 'min(calc(100cqw / 19.2), calc(100cqh / 9), 80px)',
+              //
+              // ONE composition on every landscape screen (device sweep, 2026-10-26): jetty from the left
+              // edge, the boat moored right beside it, the whole bow on screen. The unit budget is 19.8
+              // (jetty 5.8 + gap 0.9 + boat 12.9 + 0.2 of air at the bow) — 19.2 cut the bow off by 0.4·s
+              // on every width-bound screen. Spare width on a wide screen (phones in landscape, laptops,
+              // 16:9 monitors) goes to the JETTY column, so more planks show and the boat stays moored
+              // beside it — it used to pool between jetty and boat as open water. The 80px cap left a
+              // monitor's scene marooned in the corner; 140 lets it fill a 1440p screen.
+              '--s': 'min(calc(100cqw / 19.8), calc(100cqh / 9), 140px)',
               '--bw': 'calc(var(--s) * 12.9)',
               '--jetty-reach': 'calc(var(--s) * 0.4)',
               height: '100%',
@@ -501,12 +525,19 @@ const FyldBaadenGame: React.FC = () => {
                 // The pier sits right above the moored boat, not stranded at the top of the sea.
                 justifyContent: 'flex-end',
               },
+              // A phone in portrait is so narrow that a whole boat left the cargo ~23px and the horn under
+              // the 44px floor, with an empty band of sea above. The boat is drawn 1.25× the screen's width
+              // with its STERN off the left edge — the wheelhouse is what gets cropped; the mast, the whole
+              // cargo deck, the horn and the bow stay in view (they live right of x 0.40 of the art).
+              [PHONE_PORTRAIT]: { '--s': 'min(calc(100cqw / 12.4), calc(100cqh / 17))' },
             }}
           >
             {/* Quay first in z-order terms: the next boat arrives from BEHIND it. */}
             <Box
               sx={{
-                flex: '0 0 calc(var(--s) * 5.8)',
+                // Grows with the spare width (see `--s`), up to where the jetty's left end would leave the
+                // screen edge (its art is 11·s wide and reaches 0.4·s past the column).
+                flex: '0 0 clamp(calc(var(--s) * 5.8), calc(100cqw - var(--s) * 14), calc(var(--s) * 10.6))',
                 position: 'relative',
                 zIndex: 1,
                 minHeight: 0,
@@ -525,11 +556,11 @@ const FyldBaadenGame: React.FC = () => {
             </Box>
             <Box
               sx={{
-                flex: 1,
+                flex: '0 0 calc(var(--s) * 14)',
                 minWidth: 0,
                 display: 'flex',
                 alignItems: 'flex-end',
-                justifyContent: 'center',
+                justifyContent: 'flex-start',
                 // Lift the boat so the front wave band (HarbourFrontWater, 7dvh) covers only the bottom of
                 // the hull — on a phone the band is taller than the whole hull and hid the bottom row of
                 // deck slots (WebKit phone-portrait probe, 2026-10-13). 0.06·bw ≈ the lowest 10% of the art.
@@ -537,7 +568,9 @@ const FyldBaadenGame: React.FC = () => {
                 // Landscape: the boat stops a little right of centre, clear of the jetty's end, with only
                 // the very tip of the bow past the screen edge (owner, 2026-10-15).
                 pl: 'calc(var(--s) * 0.9)',
-                '@media (orientation: portrait)': { flex: '0 0 auto', pl: 0 },
+                '@media (orientation: portrait)': { flex: '0 0 auto', pl: 0, justifyContent: 'center' },
+                // Bow pinned near the right edge; the wider-than-screen boat overflows at the stern.
+                [PHONE_PORTRAIT]: { justifyContent: 'flex-end', pr: 'calc(var(--bw) * 0.01)' },
               }}
             >
               {gameReady && target > 0 && (

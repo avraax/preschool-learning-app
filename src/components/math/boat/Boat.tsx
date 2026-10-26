@@ -371,6 +371,8 @@ const Boat: React.FC<BoatProps> = ({
         }}
         sx={{ position: 'absolute', left: pct(G.horn.left), top: pct(G.horn.top), width: `calc(var(--bw) * ${G.horn.width})`, aspectRatio: '1', p: 0, border: 0, background: 'transparent', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
       >
+        {/* On a phone the horn art is ~30–45px: a real (invisible) box keeps the press area ≥ 48px. */}
+        <Box aria-hidden sx={{ position: 'absolute', inset: 'min(0px, calc((100% - 48px) / 2))', borderRadius: '50%' }} />
         {blowing && !reduce && (
           <React.Fragment key={`rings-${blowKey}`}>
             {[0, 1, 2].map((i) => (
