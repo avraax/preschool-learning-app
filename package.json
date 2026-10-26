@@ -48,7 +48,8 @@
     "desc:sync": "node scripts/asc-desc.mjs --apply",
     "header:build": "node scripts/app-store-header.mjs --crops",
     "header:check": "node scripts/asc-header.mjs",
-    "header:upload": "node scripts/asc-header.mjs --upload"
+    "header:upload": "node scripts/asc-header.mjs --upload",
+    "watch:installs": "node scripts/install-watch.mjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.1",
