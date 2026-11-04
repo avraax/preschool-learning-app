@@ -22,8 +22,8 @@ export const UNDO_DEPTH = 30
 export type BrushTool = 'crayon' | 'rainbow' | 'glitter' | 'eraser'
 export type Tool = BrushTool | 'stamp'
 
-import { PALETTE_12, type CrayonColor } from '../../../config/kreaPalette.ts'
-export { PALETTE_12, PALETTE_8, type CrayonColor } from '../../../config/kreaPalette.ts'
+import { PALETTE_13, type CrayonColor } from '../../../config/kreaPalette.ts'
+export { PALETTE_13, PALETTE_9, type CrayonColor } from '../../../config/kreaPalette.ts'
 
 export interface BrushStroke {
   tool: BrushTool
@@ -96,7 +96,7 @@ export const seedFor = (index: number): number => (Math.imul(index + 1, 26544357
 // ----- serialise ---------------------------------------------------------------------------------
 
 const TOOLS: ReadonlySet<string> = new Set(['crayon', 'rainbow', 'glitter', 'eraser', 'stamp'])
-const COLORS: ReadonlySet<string> = new Set(PALETTE_12)
+const COLORS: ReadonlySet<string> = new Set(PALETTE_13)
 
 export const serialise = (d: Drawing): string => JSON.stringify({ v: 1, s: d.strokes })
 

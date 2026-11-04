@@ -1322,6 +1322,7 @@ export const PREBAKED_TTS: Record<string, string> = {
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": "dbf78f25f4e82a81.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ballonen er rød": "67ce528168cd8ab7.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bananen er gul": "52ed65cd66eb7bfd.mp3",
+  "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|beige": "514901aa27f53494.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|ben": "e8e46561cd399b54.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bi": "1b65aa2812e0a126.mp3",
   "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|bil": "3a8a5c35adc98880.mp3",

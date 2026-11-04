@@ -33,7 +33,8 @@ import { PickerButton, PieceStudio, PieceWayOn, type PieceStage } from './studio
 // `scripts/krea-regions.mjs`, and a tap paints exactly one of them. The eraser (tap) clears a region,
 // undo takes back the last fill.
 //
-// A page FINISHES when every region has a colour — any colour counts, white too (§2.2.9). Then the done
+// A page FINISHES when every REQUIRED region has a colour — any colour counts, white too (§2.2.9). Small
+// parts (a sun ray, a hoof) and the background are optional: paintable, never holding back the ✓. Then the done
 // ✓ appears; done → the picture comes alive with its describing line, one task of XP, the ceremony at
 // the seam if a slot was crossed, and "next" → back to the grid. With ≤ 3 regions left and 6 s idle the
 // waiting regions pulse softly — the last-region problem (§4.4), not a judgement.
@@ -59,7 +60,7 @@ function loadPiece(id: string): Piece | null {
   try {
     const p = JSON.parse(raw) as { f?: string; done?: boolean }
     const actions = deserialiseFills(p.f, info.count)
-    return { actions, done: !!p.done && allFilled(actions, info.count) }
+    return { actions, done: !!p.done && allFilled(actions, info.count, info.optional) }
   } catch {
     return null
   }
@@ -167,7 +168,8 @@ const FarvelaegGame: React.FC = () => {
   }, [palette, color])
 
   const count = info?.count ?? 0
-  const complete = !!info && allFilled(piece.actions, count)
+  const optional = info?.optional
+  const complete = !!info && allFilled(piece.actions, count, optional)
   const stage: PieceStage = !complete ? 'drawing' : !piece.done ? 'finished' : shown ? 'shown' : 'alive'
 
   const markInteracted = () => {
@@ -191,7 +193,7 @@ const FarvelaegGame: React.FC = () => {
   useEffect(() => {
     setPulse(null)
     if (!info || piece.done) return
-    const left = unfilled(piece.actions, count)
+    const left = unfilled(piece.actions, count, optional)
     if (!left.length || left.length > PULSE_MAX_LEFT) return
     later('pulse', PULSE_IDLE_MS, () => {
       if (mounted.current) setPulse(left)
@@ -201,7 +203,7 @@ const FarvelaegGame: React.FC = () => {
       if (pending.pulse) clearTimeout(pending.pulse)
       pending.pulse = null
     }
-  }, [piece, info, count])
+  }, [piece, info, count, optional])
 
   // ----- session-only resume (§4.6) ----------------------------------------------------------------
   useEffect(() => {

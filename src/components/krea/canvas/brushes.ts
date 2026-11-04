@@ -20,6 +20,8 @@ export const CRAYON_HEX: Record<CrayonColor, string> = {
   blaa: '#1E63D6',
   lilla: '#8E44AD',
   lyseroed: '#F48FB1',
+  // Matched to its crayon render (recoloured from lyserød's wax). Dark enough to read on white paper.
+  beige: '#DFC29A',
   brun: '#8D5524',
   sort: '#2B2B2B',
   hvid: '#FFFFFF',

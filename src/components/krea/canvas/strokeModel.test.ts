@@ -2,16 +2,17 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   addStroke, canUndo, colorsUsed, deserialise, emptyDrawing, hasInk, serialise, undo, seedFor,
-  UNDO_DEPTH, PALETTE_8, PALETTE_12, type CrayonColor, type Drawing, type Stroke,
+  UNDO_DEPTH, PALETTE_9, PALETTE_13, type CrayonColor, type Drawing, type Stroke,
 } from './strokeModel.ts'
 
 const crayon = (color: CrayonColor, i = 0): Stroke => ({ tool: 'crayon', color, points: [10 + i, 20, 30 + i, 40], seed: seedFor(i) })
 const brush = (tool: 'rainbow' | 'glitter' | 'eraser', i = 0): Stroke => ({ tool, points: [1, 2, 3, 4], seed: seedFor(i) })
 
-test("palettes: 12 named crayons, and Let's 8 are a subset of them", () => {
-  assert.equal(PALETTE_12.length, 12)
-  assert.equal(PALETTE_8.length, 8)
-  for (const c of PALETTE_8) assert.ok(PALETTE_12.includes(c), c)
+test("palettes: 13 named crayons, and Let's 9 are a subset of them — beige in both", () => {
+  assert.equal(PALETTE_13.length, 13)
+  assert.equal(PALETTE_9.length, 9)
+  assert.ok(PALETTE_13.includes('beige') && PALETTE_9.includes('beige'))
+  for (const c of PALETTE_9) assert.ok(PALETTE_13.includes(c), c)
 })
 
 test('the colour count counts distinct crayons only — rainbow, glitter, stamps and the eraser never count', () => {

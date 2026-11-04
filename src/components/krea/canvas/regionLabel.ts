@@ -5,8 +5,9 @@
 //   1. threshold the line art into line / not-line;
 //   2. label the connected components of NOT-line pixels (4-connected, so a diagonal pinhole in a line
 //      never joins two areas);
-//   3. components below a minimum area become UNFILLABLE (a 5-year-old can't hit a pupil);
-//   4. the page's outside background is dropped (unfillable) or kept as a region, per page;
+//   3. components below a minimum area become UNFILLABLE (specks no finger can hit — an eye glint);
+//   4. components below `requiredArea`, and the page's outside background when it is `optional`, are
+//      OPTIONAL regions: paintable, but the page finishes without them (a sun ray, a hoof, the sky);
 //   5. what is left is numbered 1..N.
 //
 // Label values: 0 = a line pixel, `UNFILLABLE` = paper you can't colour, 1..N = the regions.
@@ -31,6 +32,8 @@ export interface RegionMap {
   boxes: Array<[number, number, number, number]>
   /** Per region: its pixel count. */
   areas: number[]
+  /** Region ids the page finishes without (small parts, the background), ascending. */
+  optional: number[]
 }
 
 /**
@@ -68,8 +71,10 @@ export const GREY_REJECT = 0.02
 export interface LabelOptions {
   /** Components smaller than this many pixels become unfillable. */
   minArea: number
-  /** Drop the largest component touching the border (the page's outside), or keep it as a region. */
-  outside: 'drop' | 'keep'
+  /** Components smaller than this (and ≥ `minArea`) are optional regions. Default: none are. */
+  requiredArea?: number
+  /** The largest component touching the border (the page's outside): unfillable, a region, or optional. */
+  outside: 'drop' | 'keep' | 'optional'
 }
 
 export function labelRegions(lum: Uint8Array, w: number, h: number, opts: LabelOptions): RegionMap {
@@ -102,7 +107,7 @@ export function labelRegions(lum: Uint8Array, w: number, h: number, opts: LabelO
   }
 
   let outside = -1
-  if (opts.outside === 'drop') {
+  if (opts.outside !== 'keep') {
     for (let c = 0; c < sizes.length; c++) if (touchesBorder[c] && (outside < 0 || sizes[c] > sizes[outside])) outside = c
   }
 
@@ -112,10 +117,12 @@ export function labelRegions(lum: Uint8Array, w: number, h: number, opts: LabelO
   const labels = new Uint16Array(n)
   const boxes: RegionMap['boxes'] = []
   const areas: number[] = []
+  const optional: number[] = []
+  const requiredArea = opts.requiredArea ?? 0
   for (let i = 0; i < n; i++) {
     const c = comp[i]
     if (c < 0) continue
-    if (c === outside || sizes[c] < opts.minArea) {
+    if ((c === outside && opts.outside === 'drop') || sizes[c] < opts.minArea) {
       labels[i] = UNFILLABLE
       continue
     }
@@ -123,6 +130,7 @@ export function labelRegions(lum: Uint8Array, w: number, h: number, opts: LabelO
       remap[c] = ++count
       boxes.push([w, h, -1, -1])
       areas.push(0)
+      if (c === outside || sizes[c] < requiredArea) optional.push(count)
     }
     const id = remap[c]
     labels[i] = id
@@ -135,5 +143,5 @@ export function labelRegions(lum: Uint8Array, w: number, h: number, opts: LabelO
     if (y > b[3]) b[3] = y
     areas[id - 1]++
   }
-  return { w, h, labels, count, boxes, areas }
+  return { w, h, labels, count, boxes, areas, optional }
 }

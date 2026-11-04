@@ -11,7 +11,7 @@
 //
 // Explicit `.ts` extension: this module is in `shared-narration-clips.js`'s plain-Node import graph.
 
-import { PALETTE_12, type CrayonColor } from './kreaPalette.ts'
+import { PALETTE_13, type CrayonColor } from './kreaPalette.ts'
 import { KREA_STAMP_IDS, KREA_STAMP_NAME } from './kreaStamps.ts'
 import { allSubjectLines } from './kreaSubjects.ts'
 import { allPageLines } from './kreaPages.ts'
@@ -28,12 +28,13 @@ export const KREA_COLOR_NAME: Record<CrayonColor, string> = {
   blaa: 'blå',
   lilla: 'lilla',
   lyseroed: 'lyserød',
+  beige: 'beige',
   brun: 'brun',
   sort: 'sort',
   hvid: 'hvid',
 }
 
-export const KREA_COLORS = PALETTE_12
+export const KREA_COLORS = PALETTE_13
 
 /** The rainbow crayon's spoken name — said when it is picked, like every crayon. */
 export const KREA_RAINBOW_NAME = 'regnbue'

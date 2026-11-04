@@ -94,7 +94,7 @@ test('the band is set in CSS px, so a smaller paper gets a wider band in paper u
 test('Tegn med Mig levels: a narrower band each level, all forgiving, demo at Let only', () => {
   assert.deepEqual([KREA_GUIDE.let.tolerancePx, KREA_GUIDE.normal.tolerancePx, KREA_GUIDE.svaer.tolerancePx], [48, 36, 28])
   assert.deepEqual([KREA_GUIDE.let.demo, KREA_GUIDE.normal.demo, KREA_GUIDE.svaer.demo], [true, false, false])
-  assert.deepEqual([KREA_GUIDE.let.palette, KREA_GUIDE.normal.palette, KREA_GUIDE.svaer.palette], [8, 12, 12])
+  assert.deepEqual([KREA_GUIDE.let.palette, KREA_GUIDE.normal.palette, KREA_GUIDE.svaer.palette], [9, 13, 13])
 })
 
 // Owner, 2026-10-17: lines "way off" still counted at 2× the band. A line ~1.7× the band away is NOT about

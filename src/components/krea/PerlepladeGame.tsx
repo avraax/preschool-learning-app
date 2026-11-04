@@ -29,7 +29,7 @@ import {
   type BeadPatternDef,
 } from '../../config/kreaBeads'
 import { KREA_TASKS_IN_ROUND } from '../../config/kreaSubjects'
-import { PALETTE_12 } from '../../config/kreaPalette'
+import { PALETTE_13 } from '../../config/kreaPalette'
 import { NEW_BOARD_LINE, NEW_BOARD_TITLE } from '../../config/kreaPhrases'
 import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { idlePulse } from '../../theme/idleMotion'
@@ -136,7 +136,7 @@ const PerlepladeGame: React.FC = () => {
   const loadBoard = useCallback(
     (id: string): BeadBoard | null => {
       const it = itemById(id)
-      return it ? restoreBeads(freshBoard(it), kreaSession.load(GAME_ID, id), PALETTE_12) : null
+      return it ? restoreBeads(freshBoard(it), kreaSession.load(GAME_ID, id), PALETTE_13) : null
     },
     [freshBoard],
   )
@@ -231,7 +231,7 @@ const PerlepladeGame: React.FC = () => {
   useEffect(() => {
     if (!itemId || !board) return
     later('save', SAVE_DEBOUNCE_MS, () => {
-      if (beadCount(board)) kreaSession.save(GAME_ID, itemId, serialiseBeads(board, PALETTE_12))
+      if (beadCount(board)) kreaSession.save(GAME_ID, itemId, serialiseBeads(board, PALETTE_13))
       else kreaSession.clearItem(GAME_ID, itemId)
     })
   }, [board, itemId])

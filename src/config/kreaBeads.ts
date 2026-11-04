@@ -11,9 +11,9 @@
 // Explicit `.ts` extensions: this module will join `shared-narration-clips.js`'s plain-Node graph (W3).
 
 import { KREA_BEADS, type DifficultyLevel } from './difficulty.ts'
-import { paletteFor, PALETTE_12, type CrayonColor } from './kreaPalette.ts'
+import { paletteFor, PALETTE_13, type CrayonColor } from './kreaPalette.ts'
 
-/** The grid letters. Upper case = the 8 strong crayons; lower case + W = the four light ones. */
+/** The grid letters. Upper case = the 8 strong crayons; lower case + W = the light ones (e = beige). */
 export const BEAD_LEGEND: Record<string, CrayonColor> = {
   R: 'roed',
   O: 'orange',
@@ -26,6 +26,7 @@ export const BEAD_LEGEND: Record<string, CrayonColor> = {
   g: 'lysegroen',
   b: 'lyseblaa',
   p: 'lyseroed',
+  e: 'beige',
   W: 'hvid',
 }
 
@@ -714,7 +715,7 @@ export function boardMask(def: BeadBoardDef, level: BeadLevel): boolean[] {
 export function legendCounts(cells: readonly (CrayonColor | null)[]): Array<[CrayonColor, number]> {
   const n = new Map<CrayonColor, number>()
   for (const c of cells) if (c) n.set(c, (n.get(c) ?? 0) + 1)
-  return PALETTE_12.filter((c) => n.has(c)).map((c) => [c, n.get(c)!])
+  return PALETTE_13.filter((c) => n.has(c)).map((c) => [c, n.get(c)!])
 }
 
 // ----- the reserved layout (§4.2) — the component reads these same numbers ------------------------

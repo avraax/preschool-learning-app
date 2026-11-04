@@ -8,7 +8,7 @@
 // 0xFFFF = paper you can't colour). Never WebP it: lossy encoding corrupts ids.
 
 import { UNFILLABLE } from './regionLabel.ts'
-import { PALETTE_12, type CrayonColor } from '../../../config/kreaPalette.ts'
+import { PALETTE_13, type CrayonColor } from '../../../config/kreaPalette.ts'
 
 export { UNFILLABLE }
 
@@ -101,18 +101,23 @@ export function fillsOf(actions: readonly FillAction[]): Map<number, CrayonColor
   return m
 }
 
-/** Every region has a fill — any colour counts, white too (§2.2.9). */
-export const allFilled = (actions: readonly FillAction[], count: number): boolean => count > 0 && fillsOf(actions).size >= count
+/**
+ * Every REQUIRED region has a fill — any colour counts, white too (§2.2.9). `optional` regions (small
+ * parts, the background) can be painted but never hold back the finish.
+ */
+export const allFilled = (actions: readonly FillAction[], count: number, optional: readonly number[] = []): boolean =>
+  count > optional.length && unfilled(actions, count, optional).length === 0
 
-/** Unfilled region ids, ascending. */
-export function unfilled(actions: readonly FillAction[], count: number): number[] {
+/** Unfilled required region ids, ascending. */
+export function unfilled(actions: readonly FillAction[], count: number, optional: readonly number[] = []): number[] {
   const f = fillsOf(actions)
+  const skip = new Set(optional)
   const out: number[] = []
-  for (let r = 1; r <= count; r++) if (!f.has(r)) out.push(r)
+  for (let r = 1; r <= count; r++) if (!f.has(r) && !skip.has(r)) out.push(r)
   return out
 }
 
-const COLORS: ReadonlySet<string> = new Set(PALETTE_12)
+const COLORS: ReadonlySet<string> = new Set(PALETTE_13)
 
 export const serialiseFills = (actions: readonly FillAction[]): string => JSON.stringify({ v: 1, a: actions })
 

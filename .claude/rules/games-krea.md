@@ -35,9 +35,10 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
 ## Colour-in (`regionLabel.ts` → `regionFill.ts`)
 - `node scripts/krea-regions.mjs` turns `art-src/krea/pages/*.jpg` into `<id>.line.webp` + a
   **LOSSLESS `<id>.regions.png`** (id in R + G×256; 0 = line, 0xFFFF = unfillable) + the generated
-  `kreaPageRegions.ts`. **Never WebP the label map.** 4-connected, specks < 0.35% unfillable, the
-  largest border-touching area dropped (`outside: 'drop'`), and **grey shading is rejected**, not
-  thresholded — re-render the page instead.
+  `kreaPageRegions.ts`. **Never WebP the label map.** 4-connected, specks < 0.01% unfillable; parts
+  < 0.35% (sun rays, hooves) and the background (`outside: 'optional'`) are paintable but OPTIONAL —
+  the ✓ needs only the required ones (owner 2026-11-04: "looks paintable, isn't" was the bug). **Grey
+  shading is rejected**, not thresholded — re-render the page instead.
 - No flood fill at runtime: a tap paints exactly its id inside its box. Fills are an ACTION list
   (undo, resume). The decode is checked (`data-krea-label-bad`) — a colour-managed decode corrupts ids.
 

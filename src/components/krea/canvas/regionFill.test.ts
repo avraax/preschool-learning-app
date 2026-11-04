@@ -28,6 +28,28 @@ test('labelling: two regions, the speck is unfillable, the outside is dropped', 
   assert.equal(labelRegions(lum, w, h, { minArea: 10, outside: 'keep' }).count, 3)
 })
 
+test('small parts and an optional outside are paintable regions the page finishes without', () => {
+  const { lum, w, h } = page()
+  // A small closed cell in the right box (a sun ray): its 4×4 inside is above the speck cut.
+  for (let i = 24; i <= 29; i++) { lum[24 * w + i] = 0; lum[29 * w + i] = 0; lum[i * w + 24] = 0; lum[i * w + 29] = 0 }
+  const m = labelRegions(lum, w, h, { minArea: 10, requiredArea: 100, outside: 'optional' })
+  const outside = m.labels[0]
+  const ray = m.labels[26 * w + 26]
+  const left = m.labels[20 * w + 12]
+  const right = m.labels[20 * w + 32]
+  assert.ok(outside >= 1 && outside !== UNFILLABLE, 'the background is a region')
+  assert.ok(ray >= 1 && ray !== UNFILLABLE, 'the small part is a region')
+  assert.equal(m.labels[9 * w + 9], UNFILLABLE, 'a speck stays unfillable')
+  assert.equal(m.count, 4)
+  assert.deepEqual(m.optional, [outside, ray].sort((a, b) => a - b))
+  // The ✓ needs the two big boxes only; painting the optional ones is allowed but not asked.
+  assert.equal(allFilled([[left, 'roed'], [right, 'gul']], m.count, m.optional), true)
+  assert.equal(allFilled([[left, 'roed'], [outside, 'blaa'], [ray, 'gul']], m.count, m.optional), false)
+  assert.deepEqual(unfilled([[left, 'roed']], m.count, m.optional), [right])
+  assert.equal(regionAt(m.labels, w, h, 26, 26, 0), ray, 'a tap on the small part fills it')
+  assert.equal(regionAt(m.labels, w, h, 1, 1, 0), outside, 'a tap on the background fills it')
+})
+
 test('a one-pixel diagonal gap in a line does NOT join two regions (4-connected)', () => {
   const w = 10, h = 10
   const lum = new Uint8Array(w * h).fill(255)

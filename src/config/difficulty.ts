@@ -546,19 +546,19 @@ export const COLORS_NUANCER: Record<DifficultyLevel, NuancerTuning> = {
 
 /**
  * Krea's free tools (Krea PRD-01 §2.2.5–6, §4.7). A creative tool has nothing to grade, so the ONLY
- * thing the level touches is how many crayons are on the table: 8 at Let, all 12 above. Normal and
+ * thing the level touches is how many crayons are on the table: 9 at Let, all 13 above. Normal and
  * Svær are therefore identical by design — the games are on `EXEMPT` with that reason, and this table
  * is NOT a fake third axis invented to satisfy the distinctness guard. The tools themselves (crayon,
  * rainbow, glitter, stamps, eraser, undo) are the same at every level: hiding the fun ones at Let
  * would take the best part away from the youngest.
  */
 export interface KreaPaletteTuning {
-  palette: 8 | 12
+  palette: 9 | 13
 }
 export const KREA_PALETTE: Record<DifficultyLevel, KreaPaletteTuning> = {
-  let: { palette: 8 },
-  normal: { palette: 12 },
-  svaer: { palette: 12 },
+  let: { palette: 9 },
+  normal: { palette: 13 },
+  svaer: { palette: 13 },
 }
 
 /**
@@ -569,14 +569,14 @@ export const KREA_PALETTE: Record<DifficultyLevel, KreaPaletteTuning> = {
  * reward. XP is the same at every level.
  */
 export interface KreaGuideTuning {
-  palette: 8 | 12
+  palette: 9 | 13
   tolerancePx: number
   demo: boolean
 }
 export const KREA_GUIDE: Record<DifficultyLevel, KreaGuideTuning> = {
-  let: { palette: 8, tolerancePx: 48, demo: true },
-  normal: { palette: 12, tolerancePx: 36, demo: false },
-  svaer: { palette: 12, tolerancePx: 28, demo: false },
+  let: { palette: 9, tolerancePx: 48, demo: true },
+  normal: { palette: 13, tolerancePx: 36, demo: false },
+  svaer: { palette: 13, tolerancePx: 28, demo: false },
 }
 
 /**
@@ -594,7 +594,7 @@ export interface KreaBeadsTuning {
   board: number
   /** Bead diameter as a fraction of the peg pitch. */
   bead: number
-  palette: 8 | 12
+  palette: 9 | 13
   /**
    * How much of a pattern shows on the board itself (owner, 2026-10-17: copying from the card alone was
    * "a bit hard" — a child probed peg after peg). The help fades with the level: Let shows the picture
@@ -604,9 +604,9 @@ export interface KreaBeadsTuning {
   guide: 'colour' | 'shape' | 'none'
 }
 export const KREA_BEADS: Record<DifficultyLevel, KreaBeadsTuning> = {
-  let: { board: 10, bead: 0.88, palette: 12, guide: 'colour' },
-  normal: { board: 13, bead: 0.84, palette: 12, guide: 'shape' },
-  svaer: { board: 16, bead: 0.84, palette: 12, guide: 'none' },
+  let: { board: 10, bead: 0.88, palette: 13, guide: 'colour' },
+  normal: { board: 13, bead: 0.84, palette: 13, guide: 'shape' },
+  svaer: { board: 16, bead: 0.84, palette: 13, guide: 'none' },
 }
 
 // ================================================================================================
@@ -652,8 +652,8 @@ export const EXEMPT: Record<string, string> = {
   'math.learn': 'ungraded browse — responds only via its visible range (MATH_LEARN)',
   'english.learn': 'ungraded browse — the whole vocabulary at every level',
   'colors.learn': 'ungraded browse — all 6 hues and their shades at every level',
-  'krea.draw': 'creative tool — only the palette widens, 8 crayons at Let, 12 above; nothing to grade',
-  'krea.color': 'colour-in — any colour counts and a tap fills a whole region; only the palette widens, 8 at Let, 12 above',
+  'krea.draw': 'creative tool — only the palette widens, 9 crayons at Let, 13 above; nothing to grade',
+  'krea.color': 'colour-in — any colour counts and a tap fills a whole region; only the palette widens, 9 at Let, 13 above',
 }
 
 /**

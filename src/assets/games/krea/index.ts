@@ -11,6 +11,7 @@ import crayonLyseblaa from './crayon-lyseblaa.webp'
 import crayonBlaa from './crayon-blaa.webp'
 import crayonLilla from './crayon-lilla.webp'
 import crayonLyseroed from './crayon-lyseroed.webp'
+import crayonBeige from './crayon-beige.webp'
 import crayonBrun from './crayon-brun.webp'
 import crayonSort from './crayon-sort.webp'
 import crayonHvid from './crayon-hvid.webp'
@@ -35,6 +36,7 @@ export const CRAYON_ART: Record<CrayonColor, string> = {
   blaa: crayonBlaa,
   lilla: crayonLilla,
   lyseroed: crayonLyseroed,
+  beige: crayonBeige,
   brun: crayonBrun,
   sort: crayonSort,
   hvid: crayonHvid,

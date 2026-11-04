@@ -558,7 +558,7 @@ async function optimizeHarbour() {
 // other game icons at their 512² / 0.81 fill. `art-src/krea/pages/` (line art, W5) and `beads/` (PRD-02)
 // are NOT processed here — they have their own pipelines.
 const KREA_OUT = join(ROOT, 'src', 'assets', 'games', 'krea')
-const KREA_CRAYONS = ['roed', 'orange', 'gul', 'lysegroen', 'groen', 'lyseblaa', 'blaa', 'lilla', 'lyseroed', 'brun', 'sort', 'hvid', 'rainbow']
+const KREA_CRAYONS = ['roed', 'orange', 'gul', 'lysegroen', 'groen', 'lyseblaa', 'blaa', 'lilla', 'lyseroed', 'beige', 'brun', 'sort', 'hvid', 'rainbow']
 const KREA_SPECS = {
   ...Object.fromEntries(KREA_CRAYONS.map((c) => [`crayon-${c}`, { size: 320, fill: 0.92, pointDownLeft: true }])),
   glitter: { size: 256, fill: 0.88 },

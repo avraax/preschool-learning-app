@@ -15,7 +15,7 @@ import {
   serialiseBeads,
 } from './beadBoard.ts'
 import { BEAD_BOARDS, BEAD_PATTERNS, boardMask, boardSize, patternCells } from '../../../config/kreaBeads.ts'
-import { PALETTE_12 } from '../../../config/kreaPalette.ts'
+import { PALETTE_13 } from '../../../config/kreaPalette.ts'
 
 // Krea PRD-02 §3, §4.1 — the pure pegboard. `placeBead` is the one resolver both gestures call.
 
@@ -106,11 +106,11 @@ test('geometry: a point becomes its peg by arithmetic; off the peg area is -1', 
 
 test('session: beads round-trip, and a restore never puts a bead the pattern would bounce', () => {
   const b = placeBead(patternBoard(n, target), 'roed', redPeg).board
-  const raw = serialiseBeads(b, PALETTE_12)
-  assert.deepEqual(restoreBeads(patternBoard(n, target), raw, PALETTE_12).beads, b.beads)
+  const raw = serialiseBeads(b, PALETTE_13)
+  assert.deepEqual(restoreBeads(patternBoard(n, target), raw, PALETTE_13).beads, b.beads)
   const forged = raw.split('')
   forged[emptyPeg] = '0'
-  assert.equal(restoreBeads(patternBoard(n, target), forged.join(''), PALETTE_12).beads[emptyPeg], null)
-  assert.deepEqual(restoreBeads(patternBoard(n, target), 'garbage', PALETTE_12).beads, patternBoard(n, target).beads)
+  assert.equal(restoreBeads(patternBoard(n, target), forged.join(''), PALETTE_13).beads[emptyPeg], null)
+  assert.deepEqual(restoreBeads(patternBoard(n, target), 'garbage', PALETTE_13).beads, patternBoard(n, target).beads)
   assert.equal(accepts(b, -1, 'roed'), 'outside')
 })
