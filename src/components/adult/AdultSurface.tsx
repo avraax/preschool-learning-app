@@ -18,8 +18,8 @@
 // broken screen — otherwise no report can ever show the app that broke.
 //
 // **IT IS REACHABLE MID-GAME AGAIN** (owner, 2026-11-04): §2.5 had taken the chip out of the game
-// header, so a report about a game lost the screenshot of the broken board. The chip now sits LEFT by
-// the back button in `GameShell` (the right corner stays the reward ring alone), so the door is on every
+// header, so a report about a game lost the screenshot of the broken board. The chip now sits past
+// the ring in `GameShell`, as on home and the menus, so the door is on every
 // screen and a report captures the board it is about.
 //
 // A second behaviour worth knowing: the chip renders nothing while no child is attached, so during the

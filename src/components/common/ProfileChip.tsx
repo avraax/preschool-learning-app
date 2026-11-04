@@ -47,8 +47,8 @@ import { reportAdultStep } from '../../services/usagePing'
 // TWO clicks, `[data-profile-chip]` then that row.)
 //
 // IN GAME TOO, since 2026-11-04 (owner: "always possible to tap the avatar so you can reach
-// Indstillinger" — reversing §2.5's "not rendered in game"). `GameShell` puts it LEFT beside the back
-// button, so the far right corner stays the book alone, which is the part of §2.5 that still matters.
+// Indstillinger" — reversing §2.5's "not rendered in game"). `GameShell` puts it outermost past the
+// ring, the same corner as home and the menus (a first pass left by the back button went unfound).
 
 interface ProfileChipProps {
   /**

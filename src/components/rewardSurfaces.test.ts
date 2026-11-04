@@ -235,7 +235,7 @@ test('the game header holds NOTHING THAT MEASURES PERFORMANCE', () => {
   // deliberate: it was "the reward ring and NOTHING else" until 2026-08-09, when the owner put the
   // static `ProfileBadge` beside the ring and it was narrowed to "nothing that measures PERFORMANCE"
   // (a portrait measures nothing). Corner identity PRD-01 §2.5 deletes the badge, so the corner is the
-  // ring alone once more (the name pill came back in 2026-11-04, LEFT by the back button) —
+  // ring alone once more (the name pill came back in 2026-11-04, outermost past the ring as on home) —
   // `profileChip.test.ts` holds that half, and the wording here stays "measures performance" because that is the regression
   // it actually forbids (the `ScoreChip` pip row below), not the one that came and went.
   //

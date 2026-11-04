@@ -47,7 +47,7 @@ whose first element is the child themselves, with two labelled rows beneath: **S
   centre returned world art). A z-index that is high enough and still loses is the `authOverlayZ` trap
   in a new shape; the fix is the portal, never a bigger number.
 - **The door is in game too** (owner 2026-11-04, reversing §2.5): `GameShell` renders the name pill
-  LEFT beside the back button; the right corner stays the reward ring alone. So a report filed
+  outermost past the ring, as home and the menus do (a left placement went unfound). So a report filed
   mid-game captures the broken board.
 
 `AdultSurface` (`src/components/adult/AdultSurface.tsx`, mounted globally in `App.tsx`, **renders

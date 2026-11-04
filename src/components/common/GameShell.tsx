@@ -12,7 +12,7 @@ import { getCategoryTheme } from '../../config/categoryThemes'
 import { menuRouteFor } from '../../config/doors'
 import type { SectionId } from '../../config/progressSchema'
 import { fourDoorsShown } from '../../utils/fourDoors'
-import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import { mascotBus } from '../../services/mascotBus'
 import { useTransitionNav } from '../../hooks/useTransitionNav'
 import type { GuideReaction } from './ThemeMascot'
@@ -38,10 +38,9 @@ interface GameShellProps {
   // soft chime are all gone (Endless Play PRD-01 D4), because the ceremony now fires in-game at the
   // seam and is the entire announcement.
   //
-  // This corner holds THE RING AND NOTHING ELSE (Corner identity PRD-01 §2.5), which is where it
-  // started: the static `ProfileBadge` that shared it for a month is deleted, and identity is a pill in
-  // the title row on the surfaces that have one (home, the section menus, Min Bog) and, since
-  // 2026-11-04, beside the back button here — the left cluster, never this corner.
+  // The static `ProfileBadge` disc that shared this corner is deleted (Corner identity PRD-01 §2.5);
+  // since 2026-11-04 the tappable name PILL sits outermost past the ring, exactly as on home and the
+  // section menus.
   // There used to be a `score` slot here holding a `ScoreChip` — a pill of one pip per question in the
   // round — and every game passed one. It was a SECOND progress meter inches from the first, with
   // nothing on screen to say that one counts this round and the other counts the whole book; and eight
@@ -141,18 +140,8 @@ const GameShell: React.FC<GameShellProps> = ({
             [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' },
           }}
         >
-          {/* Left cluster: the shared animated back button (reverses the themed wipe, PRD-02 §8) and
-              the name pill. The pill is in game too now (owner, 2026-11-04: "always possible to tap
-              the avatar so you can reach Indstillinger") — reversing Corner identity §2.5's "no
-              identity in game". It sits LEFT, by the back button, so the far right corner stays the
-              ring alone and the pill-vs-disc separation that PRD bought still holds. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 }, minWidth: 0, flex: '0 1 auto' }}>
-            <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
-            <ProfileChip
-              size={phoneLandscape ? 26 : 32}
-              sx={phoneLandscape ? { minHeight: 40, maxWidth: 120, py: 0.25 } : undefined}
-            />
-          </Box>
+          {/* Left: the shared animated back button (reverses the themed wipe, PRD-02 §8). */}
+          <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
 
           {titleInHeader && (
             <Typography
@@ -177,16 +166,11 @@ const GameShell: React.FC<GameShellProps> = ({
             </Typography>
           )}
 
-          {/* Right cluster: THE BOOK, ALONE — the live cross-game reward ring (Liveliness PRD-04)
-              with the child's own book at its centre. It reads the shared store so it keeps climbing
-              across games; phone-landscape gets a smaller, flyer-less variant so it never fights the
-              inline title row.
-
-              **NO IDENTITY ELEMENT IN THIS CORNER** (Corner identity PRD-01 §2.5). The static
-              `ProfileBadge` that used to sit outermost here is deleted — *"the untappable badge now
-              occupies the corner the tappable ring used to hold, so a child aiming at the far corner
-              for Min Bog hits a dead disc."* The book keeps the corner. The name pill (the way to
-              Indstillinger) is in the LEFT cluster instead, never beside the ring.
+          {/* Right cluster: the live cross-game reward ring (Liveliness PRD-04) with the child's own
+              book at its centre, then the name pill — the same pair as home and the menus. It reads
+              the shared store so it keeps climbing across games; phone-landscape gets a smaller,
+              flyer-less variant so it never fights the inline title row. The old static
+              `ProfileBadge` (a dead disc) stays deleted; the pill is a tappable PILL, never a disc.
 
               The ring is a door to Min Bog HERE TOO (owner, 2026-08-03: "clickable and work on all
               pages"). It used to be pure status in games, on the reasoning that a stray tap mid-play
@@ -194,7 +178,11 @@ const GameShell: React.FC<GameShellProps> = ({
               already leaves the game on a stray tap, so that protection was never real. Leaving
               mid-round abandons the round; the per-task XP is already banked, so nothing earned is
               lost. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 } }}>
+          {/* The name pill rides OUTERMOST, past the ring — the same corner, order and 28px gap as the
+              home page and every section menu (owner, 2026-11-04: in game too, "so you can reach
+              Indstillinger", and "make it look like the other views"; a first pass put it left by the
+              back button and he could not find it). */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3.5, flex: '0 0 auto', minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 }, [PHONE_PORTRAIT]: { gap: 1.75 } }}>
             {levelIndicator && (
               <RewardRing
                 compact={phoneLandscape}
@@ -203,6 +191,10 @@ const GameShell: React.FC<GameShellProps> = ({
                 ariaLabel="Min Bog"
               />
             )}
+            <ProfileChip
+              size={phoneLandscape ? 26 : 32}
+              sx={phoneLandscape ? { minHeight: 40, maxWidth: 120, py: 0.25 } : undefined}
+            />
           </Box>
         </Toolbar>
       </AppBar>
