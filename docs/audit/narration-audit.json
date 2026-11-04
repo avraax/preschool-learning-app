@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-04T14:28:47.421Z",
+  "updatedAt": "2026-11-04T15:46:29.602Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -25776,6 +25776,1102 @@
       "text": "beige",
       "group": "krea",
       "updatedAt": 1793802527421
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor cirkel til hundens hoved.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor cirkel til hundens hoved.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to ovaler til ørerne.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to ovaler til ørerne.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille oval til næsen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille oval til næsen.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en bue til munden.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en bue til munden.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, hunden hopper!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, hunden hopper!",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor cirkel til kaninens hoved.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor cirkel til kaninens hoved.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to lange ovaler til ørerne.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to lange ovaler til ørerne.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, kaninen hopper!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, kaninen hopper!",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor oval til uglens krop.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor oval til uglens krop.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille trekant til næbbet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille trekant til næbbet.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en bue til vingen. Den anden vinge kommer af sig selv.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en bue til vingen. Den anden vinge kommer af sig selv.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en trekant til øret.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en trekant til øret.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor oval til fuglens krop.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor oval til fuglens krop.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en cirkel til hovedet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en cirkel til hovedet.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en bue til vingen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en bue til vingen.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, fuglen flyver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, fuglen flyver!",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor cirkel til sneglens hus.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor cirkel til sneglens hus.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille cirkel inde i huset.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille cirkel inde i huset.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang oval til kroppen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang oval til kroppen.",
+      "group": "krea",
+      "updatedAt": 1793807189601
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to streger til følehornene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to streger til følehornene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, sneglen kravler!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, sneglen kravler!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor bue til skjoldet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor bue til skjoldet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to små firkanter til benene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to små firkanter til benene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en cirkel på skjoldet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en cirkel på skjoldet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, skildpadden svømmer!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, skildpadden svømmer!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to streger til træstammen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to streger til træstammen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor cirkel til trækronen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor cirkel til trækronen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor trekant til grantræet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor trekant til grantræet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en kort streg til stammen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en kort streg til stammen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang streg til stranden.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang streg til stranden.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en bue til parasollen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en bue til parasollen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang streg til parasollens stok.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang streg til parasollens stok.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en høj firkant til fyrtårnet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en høj firkant til fyrtårnet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille firkant til lampen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille firkant til lampen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn fire lange streger til lyset.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn fire lange streger til lyset.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, fyrtårnet lyser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, fyrtårnet lyser!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor trekant til teltet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor trekant til teltet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille trekant til døren.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille trekant til døren.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to buer til månen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to buer til månen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stjerne på himlen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stjerne på himlen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, månen skinner på teltet!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, månen skinner på teltet!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor bue til regnbuen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor bue til regnbuen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en mindre bue indeni.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en mindre bue indeni.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to ovaler til skyerne.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to ovaler til skyerne.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en høj firkant til et hus.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en høj firkant til et hus.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lav firkant til et hus mere.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lav firkant til et hus mere.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en høj firkant til et hus mere.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en høj firkant til et hus mere.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn små firkanter til vinduerne.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn små firkanter til vinduerne.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, solen skinner på byen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, solen skinner på byen!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor cirkel til bolden.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor cirkel til bolden.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to buede streger på bolden.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to buede streger på bolden.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang streg midt på bolden.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang streg midt på bolden.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, bolden hopper!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, bolden hopper!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang firkant til toget.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang firkant til toget.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en høj firkant til førerhuset.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en høj firkant til førerhuset.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille firkant til skorstenen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille firkant til skorstenen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en firkant til vognen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en firkant til vognen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn fire cirkler til hjulene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn fire cirkler til hjulene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to små cirkler til røgen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to små cirkler til røgen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang oval til flyets krop.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang oval til flyets krop.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en trekant til vingen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en trekant til vingen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn tre små cirkler til vinduerne.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn tre små cirkler til vinduerne.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en oval til skyen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en oval til skyen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, flyet flyver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, flyet flyver!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor cirkel til ballonen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor cirkel til ballonen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to buede streger på ballonen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to buede streger på ballonen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to streger til snorene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to streger til snorene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille firkant til kurven.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille firkant til kurven.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, ballonen flyver op!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, ballonen flyver op!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor trekant til vaflen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor trekant til vaflen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor bue til iskuglen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor bue til iskuglen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille cirkel til kirsebærret.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille cirkel til kirsebærret.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn tre små streger på isen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn tre små streger på isen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor bue til paraplyen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor bue til paraplyen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en bølget streg under buen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en bølget streg under buen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang streg til skaftet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang streg til skaftet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille bue til håndtaget.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille bue til håndtaget.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn tre små cirkler til regndråberne.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn tre små cirkler til regndråberne.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, paraplyen svajer i vinden!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, paraplyen svajer i vinden!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor oval til enhjørningens hoved.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor oval til enhjørningens hoved.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang trekant til hornet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang trekant til hornet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to små cirkler til næseborene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to små cirkler til næseborene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang oval til den flyvende tallerken.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang oval til den flyvende tallerken.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en bue til toppen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en bue til toppen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille cirkel til rumvæsenet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille cirkel til rumvæsenet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn tre små cirkler til lysene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn tre små cirkler til lysene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, den flyvende tallerken flyver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, den flyvende tallerken flyver!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang firkant til kronen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang firkant til kronen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en takket streg til toppen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en takket streg til toppen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn tre små cirkler til ædelstenene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn tre små cirkler til ædelstenene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn tre små cirkler til perlerne.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn tre små cirkler til perlerne.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, kronen skinner!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, kronen skinner!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en cirkel til nissens hoved.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en cirkel til nissens hoved.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor trekant til huen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor trekant til huen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille cirkel til kvasten.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille cirkel til kvasten.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor bue til skægget.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor bue til skægget.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lille cirkel til næsen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lille cirkel til næsen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, nissen danser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, nissen danser!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en lang firkant til skibet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en lang firkant til skibet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en stor firkant til sejlet.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en stor firkant til sejlet.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, piratskibet sejler!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, piratskibet sejler!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en cirkel til havfruens hoved.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en cirkel til havfruens hoved.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to bølgede streger til håret.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to bølgede streger til håret.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en oval til kroppen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en oval til kroppen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to buede streger til halen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to buede streger til halen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn en trekant til halefinnen.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn en trekant til halefinnen.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Tegn to streger til armene.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Tegn to streger til armene.",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, havfruen svømmer!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, havfruen svømmer!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, skildpadden går en tur!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, skildpadden går en tur!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, elefanten danser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, elefanten danser!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, solen skinner på gården!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, solen skinner på gården!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, fiskene svømmer!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, fiskene svømmer!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, blomsterne svajer i vinden!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, blomsterne svajer i vinden!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, solen skinner på legepladsen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, solen skinner på legepladsen!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, sneen glimter!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, sneen glimter!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, stjernerne blinker over teltet!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, stjernerne blinker over teltet!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, brandbilen kører!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, brandbilen kører!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, flyet letter!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, flyet letter!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, ballonen stiger op!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, ballonen stiger op!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, lysene skinner på kagen!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, lysene skinner på kagen!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, bamsen danser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, bamsen danser!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, rumvæsenet flyver!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, rumvæsenet flyver!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, feen basker med vingerne!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, feen basker med vingerne!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, dinoen hopper!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, dinoen hopper!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, hunden logrer!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, hunden logrer!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, isen smelter!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, isen smelter!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, svampen vokser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, svampen vokser!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, solen smiler!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, solen smiler!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, æblet triller!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, æblet triller!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, anden siger rap!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, anden siger rap!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, træet vokser!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, træet vokser!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, mariehønen kravler!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, mariehønen kravler!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, uglen blinker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, uglen blinker!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, dinosauren tramper!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, dinosauren tramper!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, kronen glimter!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, kronen glimter!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, pingvinen vralter!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, pingvinen vralter!",
+      "group": "krea",
+      "updatedAt": 1793807189602
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Se, frøen kvækker!": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Se, frøen kvækker!",
+      "group": "krea",
+      "updatedAt": 1793807189602
     }
   }
 }

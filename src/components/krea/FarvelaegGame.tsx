@@ -340,7 +340,7 @@ const FarvelaegGame: React.FC = () => {
     return (
       <GameShell categoryId="krea" title="Farvelæg" dense guide={false} lightScene inlineTitle>
         <StudioBackdrop />
-        <KreaPicker items={KREA_PAGES.map((p) => ({ id: p.id, label: p.name, picture: <PageCard id={p.id} actions={loadPiece(p.id)?.actions ?? null} /> }))} onPick={openPage} />
+        <KreaPicker scrollKey={GAME_ID} items={KREA_PAGES.map((p) => ({ id: p.id, label: p.name, picture: <PageCard id={p.id} actions={loadPiece(p.id)?.actions ?? null} /> }))} onPick={openPage} />
       </GameShell>
     )
   }

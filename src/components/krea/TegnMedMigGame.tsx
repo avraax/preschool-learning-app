@@ -398,6 +398,7 @@ const TegnMedMigGame: React.FC = () => {
       <GameShell categoryId="krea" title="Tegn med Mig" dense guide={false} lightScene inlineTitle>
         <StudioBackdrop />
         <KreaPicker
+          scrollKey={GAME_ID}
           items={KREA_SUBJECTS.map((s) => ({ id: s.id, label: s.name, picture: <SubjectCard subject={s} drawing={loadPiece(s.id)?.drawing ?? null} /> }))}
           onPick={openSubject}
         />

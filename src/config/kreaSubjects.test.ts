@@ -3,10 +3,10 @@ import assert from 'node:assert/strict'
 import { KREA_FAMILIES, KREA_SUBJECTS, MIRROR_AXIS } from './kreaSubjects.ts'
 import { sampleShape, shapePath, mirrorShape } from './kreaShapes.ts'
 
-test('v1 content: 3 subjects per family, 4 families, ids are letters only', () => {
-  assert.equal(KREA_SUBJECTS.length, 12)
-  for (const fam of KREA_FAMILIES) assert.equal(KREA_SUBJECTS.filter((s) => s.family === fam).length, 3, fam)
-  assert.equal(new Set(KREA_SUBJECTS.map((s) => s.id)).size, 12)
+test('content: 9 subjects per family, 4 families, ids are letters only', () => {
+  assert.equal(KREA_SUBJECTS.length, 36)
+  for (const fam of KREA_FAMILIES) assert.equal(KREA_SUBJECTS.filter((s) => s.family === fam).length, 9, fam)
+  assert.equal(new Set(KREA_SUBJECTS.map((s) => s.id)).size, 36)
   for (const s of KREA_SUBJECTS) assert.match(s.id, /^[a-z]+$/)
 })
 
@@ -23,7 +23,7 @@ test('every subject simplifies to ≤ 6 steps, each a whole spoken sentence', ()
 
 test('the symmetric subjects have mirror steps, drawn on the left of the axis', () => {
   const mirrored = KREA_SUBJECTS.filter((s) => s.steps.some((st) => st.mirror)).map((s) => s.id)
-  assert.deepEqual(mirrored.sort(), ['robot', 'slot', 'sommerfugl'])
+  assert.deepEqual(mirrored.sort(), ['robot', 'slot', 'sommerfugl', 'ugle'])
   for (const s of KREA_SUBJECTS)
     for (const st of s.steps.filter((x) => x.mirror))
       for (const sh of st.shapes) {

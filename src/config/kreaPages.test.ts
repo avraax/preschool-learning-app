@@ -7,9 +7,10 @@ import { PAGE_REGIONS } from './kreaPageRegions.ts'
 
 const asset = (f: string) => new URL(`../assets/games/krea/pages/${f}`, import.meta.url)
 
-test('v1 content: 3 pages per family, ids are letters only', () => {
-  assert.equal(KREA_PAGES.length, 12)
-  for (const fam of KREA_FAMILIES) assert.equal(KREA_PAGES.filter((p) => p.family === fam).length, 3, fam)
+test('content: 9 pages per family, ids are letters only and unique', () => {
+  assert.equal(KREA_PAGES.length, 36)
+  assert.equal(new Set(KREA_PAGES.map((p) => p.id)).size, KREA_PAGES.length)
+  for (const fam of KREA_FAMILIES) assert.equal(KREA_PAGES.filter((p) => p.family === fam).length, 9, fam)
   for (const p of KREA_PAGES) {
     assert.match(p.id, /^[a-z]+$/)
     assert.match(p.doneLine, /^Se, .+!$/, p.id)

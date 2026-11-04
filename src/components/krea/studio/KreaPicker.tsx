@@ -1,19 +1,26 @@
-import React from 'react'
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Box, ButtonBase } from '@mui/material'
-import { pressHandlers } from './StudioControls'
 import { CRAYON_HEX } from '../canvas/brushes'
 import { PAPER_H, PAPER_W, type Drawing } from '../canvas/strokeModel'
 
-// The picture grid of Tegn med Mig and Farvelæg (Krea PRD-01 §2.2.7–8, §2.5): twelve sheets of paper
-// lying on the studio table. A card costs no art — a guided card draws its own steps as a finished line
+// The picture grid of Tegn med Mig, Farvelæg and Perleplade (Krea PRD-01 §2.2.7–8, §2.5): sheets of
+// paper lying on the studio table (36 / 36 / 39 of them since 2026-11-04). A card costs no art — a guided card draws its own steps as a finished line
 // drawing, a colour-in card is its line art — and a piece in progress shows the child's own work on it,
 // so switching subjects never needs a confirm.
 //
 // ENDLESS (§4.10): no "3 of 12 done", and a finished subject is NOT marked on its card — that would
 // turn the grid into a checklist, a contingent-reward cue.
 //
-// The grid takes the RESERVED space it is given (the stage's flex remainder): 4 × 3 on a wide screen,
-// 3 × 4 on a tall one, each card the largest square its cell allows — never a scroll.
+// The grid takes the RESERVED space it is given (the stage's flex remainder): 4 across on a wide
+// screen, 3 on a tall one, and each ROW is the height a 3-row (landscape) / 4-row (portrait) grid would
+// give it — the card size the owner signed off with twelve cards. Past that it SCROLLS vertically
+// (owner, 2026-11-04: three times as many pictures, "just make it scrollable", "the size is fine").
+//
+// A scrolling grid changes how a card is picked: on the PRESS (`pressHandlers`) a finger that lands on
+// a card to scroll would open it. So a card opens on the CLICK, which the browser withholds when the
+// touch became a scroll. The scroll position is kept per game for the session, so coming back from a
+// picture lands where the child left the grid. While more cards lie below, the bottom edge fades — a
+// pre-reader's cue that the table goes on.
 
 export interface PickerItem {
   id: string
@@ -22,19 +29,67 @@ export interface PickerItem {
   picture: React.ReactNode
 }
 
-export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) => void }> = ({ items, onPick }) => (
+/** Where each game's grid was scrolled to, for this session (module state: one per game id). */
+const scrollMemory = new Map<string, number>()
+
+const GAP = 'clamp(8px, 2.2vmin, 22px)'
+
+export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) => void; scrollKey: string }> = ({ items, onPick, scrollKey }) => {
+  const scroller = useRef<HTMLDivElement>(null)
+  const [moreBelow, setMoreBelow] = useState(false)
+  const measure = useCallback(() => {
+    const el = scroller.current
+    if (el) setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+  }, [])
+  useLayoutEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    el.scrollTop = scrollMemory.get(scrollKey) ?? 0
+    measure()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null
+    ro?.observe(el)
+    return () => ro?.disconnect()
+  }, [scrollKey, measure])
+  const onScroll = () => {
+    if (scroller.current) scrollMemory.set(scrollKey, scroller.current.scrollTop)
+    measure()
+  }
+  return (
+  // The outer box is the SIZE container: `cqh` below is the height the old fixed grid had, so a row
+  // is exactly the cell it used to be.
+  <Box sx={{ flex: 1, minHeight: 0, containerType: 'size', '--krea-gap': GAP, '--krea-pt': '6px', '--krea-px': 'clamp(4px, 2vmin, 24px)', '--krea-pb': 'calc(env(safe-area-inset-bottom) + clamp(6px, 1.5vmin, 16px))' }}>
   <Box
+    ref={scroller}
     data-krea-picker
+    data-krea-picker-more={moreBelow ? '' : undefined}
+    onScroll={onScroll}
     sx={{
-      flex: 1,
-      minHeight: 0,
+      height: '100%',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      WebkitOverflowScrolling: 'touch',
+      overscrollBehavior: 'contain',
+      // Pan only vertically, so a sideways wobble never fights the scroll.
+      touchAction: 'pan-y',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
       display: 'grid',
       gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-      gridAutoRows: 'minmax(0, 1fr)',
-      gap: 'clamp(8px, 2.2vmin, 22px)',
-      px: 'clamp(4px, 2vmin, 24px)',
-      pb: 'calc(env(safe-area-inset-bottom) + clamp(6px, 1.5vmin, 16px))',
-      '@media (orientation: landscape)': { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' },
+      // A row is the cell the old fixed grid had — but never taller than a column is wide, or a tall
+      // phone gets a band of empty table between rows (the card is a square of the smaller side).
+      gridAutoRows: 'min(calc((100cqh - var(--krea-pt) - var(--krea-pb) - 3 * var(--krea-gap)) / 4), calc((100cqw - 2 * var(--krea-px) - 2 * var(--krea-gap)) / 3))',
+      gap: 'var(--krea-gap)',
+      px: 'var(--krea-px)',
+      // Room for the card tilt/shadow at the top, and the home indicator at the bottom.
+      pt: 'var(--krea-pt)',
+      pb: 'var(--krea-pb)',
+      boxSizing: 'border-box',
+      '@media (orientation: landscape)': {
+        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+        gridAutoRows: 'min(calc((100cqh - var(--krea-pt) - var(--krea-pb) - 2 * var(--krea-gap)) / 3), calc((100cqw - 2 * var(--krea-px) - 3 * var(--krea-gap)) / 4))',
+      },
+      WebkitMaskImage: moreBelow ? 'linear-gradient(to bottom, #000 calc(100% - 44px), transparent)' : 'none',
+      maskImage: moreBelow ? 'linear-gradient(to bottom, #000 calc(100% - 44px), transparent)' : 'none',
     }}
   >
     {items.map((it, i) => (
@@ -42,7 +97,7 @@ export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) =>
         <ButtonBase
           aria-label={it.label}
           data-krea-card={it.id}
-          {...pressHandlers(() => onPick(it.id))}
+          onClick={() => onPick(it.id)}
           sx={{
             width: 'min(100cqw, 100cqh)',
             height: 'min(100cqw, 100cqh)',
@@ -65,7 +120,9 @@ export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) =>
       </Box>
     ))}
   </Box>
-)
+  </Box>
+  )
+}
 
 /** Rainbow strokes on a thumbnail: one gradient, not the per-segment hue of the real brush. */
 const RAINBOW_ID = 'kreaThumbRainbow'

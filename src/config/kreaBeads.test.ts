@@ -18,9 +18,24 @@ import { KREA_BEADS, LEVELS } from './difficulty.ts'
 // Krea PRD-02 §4.4 + §4.2 — every guard on the hand-authored bead content. A typo in one row of a grid
 // is the expected failure, so each test names the pattern, the level and the row it found.
 
-test('v1 content: 8 patterns and 5 free boards, as decided (§2.9)', () => {
-  assert.deepEqual(BEAD_PATTERNS.map((p) => p.id), ['hjerte', 'sommerfugl', 'fisk', 'blomst', 'stjerne', 'hus', 'kat', 'regnbue'])
-  assert.deepEqual(BEAD_BOARDS.map((b) => b.id), ['firkant', 'cirkel', 'hjerte', 'stjerne', 'fisk'])
+test('content: 24 patterns and 15 free boards (§2.9’s 8 + 5, tripled by the owner 2026-11-04)', () => {
+  assert.deepEqual(BEAD_PATTERNS.map((p) => p.id), [
+    'hjerte', 'sommerfugl', 'fisk', 'blomst', 'stjerne', 'hus', 'kat', 'regnbue',
+    'hund', 'bil', 'is', 'svamp', 'sol', 'aeble', 'and', 'raket', 'baad', 'trae', 'mariehoene', 'ugle', 'dino', 'krone', 'pingvin', 'froe',
+  ])
+  assert.deepEqual(BEAD_BOARDS.map((b) => b.id), [
+    'firkant', 'cirkel', 'hjerte', 'stjerne', 'fisk',
+    'trekant', 'diamant', 'blomst', 'sommerfugl', 'maane', 'hus', 'sky', 'kat', 'bil', 'trae',
+  ])
+})
+
+// Ids are deep-link values (`?motiv=<id>`, free boards as `fri-<id>`): ASCII letters only, unique per
+// kind, so a pattern can never be mistaken for a free board and no two cards share a link.
+test('every id is ASCII letters only and unique within its kind', () => {
+  for (const ids of [BEAD_PATTERNS.map((p) => p.id), BEAD_BOARDS.map((b) => b.id)]) {
+    assert.equal(new Set(ids).size, ids.length, `duplicate id in ${ids.join(',')}`)
+    for (const id of ids) assert.match(id, /^[a-z]+$/, id)
+  }
 })
 
 test('every grid and mask is exactly its level’s board, and every char is known', () => {
@@ -82,6 +97,10 @@ test('each pattern says exactly its describing line, and every line is enumerate
   assert.deepEqual(BEAD_PATTERNS.map((p) => p.doneLine), [
     'Se, hjertet hopper!', 'Se, sommerfuglen flagrer!', 'Se, fisken svømmer!', 'Se, blomsten danser!',
     'Se, stjernen funkler!', 'Se, huset vipper!', 'Se, katten hopper!', 'Se, regnbuen skinner!',
+    'Se, hunden logrer!', 'Se, bilen kører!', 'Se, isen smelter!', 'Se, svampen vokser!', 'Se, solen smiler!',
+    'Se, æblet triller!', 'Se, anden siger rap!', 'Se, raketten flyver!', 'Se, båden sejler!', 'Se, træet vokser!',
+    'Se, mariehønen kravler!', 'Se, uglen blinker!', 'Se, dinosauren tramper!', 'Se, kronen glimter!',
+    'Se, pingvinen vralter!', 'Se, frøen kvækker!',
   ])
   for (const p of BEAD_PATTERNS) assert.doesNotMatch(p.doneLine.toLowerCase(), /flot|smuk|dygtig/)
   const { allKreaLines } = await import('./kreaPhrases.ts')
@@ -105,7 +124,8 @@ test('the symmetric patterns are mirror-symmetric, colours included', () => {
       p.grids[level].forEach((row, r) => assert.equal(mirrorRow(row), row, `${p.id}/${level} row ${r}: "${row}" is not symmetric`))
     }
   }
-  for (const b of BEAD_BOARDS.filter((x) => ['cirkel', 'hjerte', 'stjerne', 'firkant'].includes(x.id))) {
+  const symmetricBoards = ['cirkel', 'hjerte', 'stjerne', 'firkant', 'trekant', 'diamant', 'blomst', 'sommerfugl', 'hus', 'sky', 'kat', 'trae']
+  for (const b of BEAD_BOARDS.filter((x) => symmetricBoards.includes(x.id))) {
     for (const level of LEVELS) b.masks[level].forEach((row, r) => assert.equal(mirrorRow(row), row, `${b.id}/${level} row ${r}`))
   }
 })

@@ -583,7 +583,7 @@ const PerlepladeGame: React.FC = () => {
     return (
       <GameShell categoryId="krea" title="Perleplade" dense guide={false} lightScene>
         <StudioBackdrop />
-        <KreaPicker items={cards} onPick={openItem} />
+        <KreaPicker scrollKey={GAME_ID} items={cards} onPick={openItem} />
       </GameShell>
     )
   }
