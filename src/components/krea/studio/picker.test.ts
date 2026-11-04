@@ -11,8 +11,8 @@ const src = readFileSync(new URL('./KreaPicker.tsx', import.meta.url), 'utf8')
   .replace(/\/\/.*$/gm, '')
 
 test('no card in the scrolling picker is a scroll container of its own', () => {
-  const start = src.indexOf('{items.map(')
-  const end = src.indexOf('))}', start)
+  const start = src.indexOf('<ButtonBase')
+  const end = src.indexOf('</ButtonBase>', start)
   assert.ok(start > 0 && end > start, 'the card render moved — re-point this guard')
   const cards = src.slice(start, end)
   assert.doesNotMatch(cards, /overflow[XY]?:\s*'(hidden|auto|scroll)'/, 'a card is a scroll container again — use overflow: clip')
@@ -20,8 +20,8 @@ test('no card in the scrolling picker is a scroll container of its own', () => {
 })
 
 test('cards open on the CLICK, never on the press — a scrolling finger must not open one', () => {
-  const start = src.indexOf('{items.map(')
-  const cards = src.slice(start, src.indexOf('))}', start))
+  const start = src.indexOf('<ButtonBase')
+  const cards = src.slice(start, src.indexOf('</ButtonBase>', start))
   assert.doesNotMatch(cards, /pressHandlers|onPointerDown/)
   assert.match(cards, /onClick=/)
 })

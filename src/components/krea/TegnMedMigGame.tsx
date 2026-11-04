@@ -13,7 +13,8 @@ import { reportKreaFinished } from '../../services/usagePing'
 import { KREA_GUIDE } from '../../config/difficulty'
 import { paletteFor } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, KREA_RAINBOW_NAME, NEW_PAPER_LINE } from '../../config/kreaPhrases'
-import { KREA_SUBJECTS, KREA_TASKS_IN_ROUND, MIRROR_AXIS, subjectById, type KreaSubject } from '../../config/kreaSubjects'
+import { KREA_FAMILIES, KREA_SUBJECTS, KREA_TASKS_IN_ROUND, MIRROR_AXIS, subjectById, type KreaSubject } from '../../config/kreaSubjects'
+import { KREA_FAMILY_LABEL, byFamily } from '../../config/kreaFamilyLabels'
 import { SUBJECT_VIEWBOX, mirrorShape, shapePath, subjectXToPaper } from '../../config/kreaShapes'
 import DrawingSurface from './canvas/DrawingSurface'
 import { addStroke, deserialise, emptyDrawing, serialise, type CrayonColor, type Drawing, type Stroke, type Tool } from './canvas/strokeModel'
@@ -399,7 +400,7 @@ const TegnMedMigGame: React.FC = () => {
         <StudioBackdrop />
         <KreaPicker
           scrollKey={GAME_ID}
-          items={KREA_SUBJECTS.map((s) => ({ id: s.id, label: s.name, picture: <SubjectCard subject={s} drawing={loadPiece(s.id)?.drawing ?? null} /> }))}
+          items={byFamily(KREA_SUBJECTS, KREA_FAMILIES).map((s) => ({ id: s.id, label: s.name, group: KREA_FAMILY_LABEL[s.family], picture: <SubjectCard subject={s} drawing={loadPiece(s.id)?.drawing ?? null} /> }))}
           onPick={openSubject}
         />
       </GameShell>

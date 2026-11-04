@@ -14,7 +14,8 @@ import { KREA_PALETTE } from '../../config/difficulty'
 import { paletteFor } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME, NEW_PAPER_LINE } from '../../config/kreaPhrases'
 import { KREA_PAGES, pageById } from '../../config/kreaPages'
-import { KREA_TASKS_IN_ROUND } from '../../config/kreaSubjects'
+import { KREA_FAMILIES, KREA_TASKS_IN_ROUND } from '../../config/kreaSubjects'
+import { KREA_FAMILY_LABEL, byFamily } from '../../config/kreaFamilyLabels'
 import { PAGE_REGIONS } from '../../config/kreaPageRegions'
 import { PAGE_ART } from '../../assets/games/krea/pages'
 import FillSurface from './canvas/FillSurface'
@@ -115,7 +116,7 @@ const PageCard: React.FC<{ id: string; actions: FillAction[] | null }> = ({ id, 
   return (
     <Box sx={{ position: 'absolute', inset: '5%', '& > *': { position: 'absolute', inset: 0, width: '100%', height: '100%' } }}>
       {actions?.length ? <canvas ref={ref} width={192} height={192} /> : null}
-      <Box component="img" src={art.line} alt="" draggable={false} sx={{ pointerEvents: 'none' }} />
+      <Box component="img" src={art.thumb} alt="" draggable={false} sx={{ pointerEvents: 'none' }} />
     </Box>
   )
 }
@@ -340,7 +341,7 @@ const FarvelaegGame: React.FC = () => {
     return (
       <GameShell categoryId="krea" title="Farvelæg" dense guide={false} lightScene inlineTitle>
         <StudioBackdrop />
-        <KreaPicker scrollKey={GAME_ID} items={KREA_PAGES.map((p) => ({ id: p.id, label: p.name, picture: <PageCard id={p.id} actions={loadPiece(p.id)?.actions ?? null} /> }))} onPick={openPage} />
+        <KreaPicker scrollKey={GAME_ID} items={byFamily(KREA_PAGES, KREA_FAMILIES).map((p) => ({ id: p.id, label: p.name, group: KREA_FAMILY_LABEL[p.family], picture: <PageCard id={p.id} actions={loadPiece(p.id)?.actions ?? null} /> }))} onPick={openPage} />
       </GameShell>
     )
   }

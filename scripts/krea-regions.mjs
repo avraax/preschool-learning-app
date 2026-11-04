@@ -69,6 +69,9 @@ for (const page of pages) {
     rgba[i * 4 + 3] = a
   }
   await sharp(rgba, { raw: { width: w, height: h, channels: 4 } }).webp({ lossless: true }).toFile(join(OUT, `${page.id}.line.webp`))
+  // The picker card's picture: 72 pages × a full 1024² decode was ~300 MB of bitmaps on the iPad just to
+  // show the grid. 400 px covers the biggest card (~293 CSS px on a 12.9" iPad) at 2× closely enough.
+  await sharp(rgba, { raw: { width: w, height: h, channels: 4 } }).resize(400, 400).webp({ quality: 88, alphaQuality: 90 }).toFile(join(OUT, `${page.id}.thumb.webp`))
 
   const ids = Buffer.alloc(w * h * 3)
   for (let i = 0; i < w * h; i++) {

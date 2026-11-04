@@ -17,6 +17,7 @@ import { reportKreaFinished } from '../../services/usagePing'
 import { KREA_BEADS } from '../../config/difficulty'
 import {
   BEAD_BOARDS,
+  BEAD_FAMILIES,
   BEAD_LAYOUT,
   BEAD_PATTERNS,
   beadPalette,
@@ -29,6 +30,7 @@ import {
   type BeadPatternDef,
 } from '../../config/kreaBeads'
 import { KREA_TASKS_IN_ROUND } from '../../config/kreaSubjects'
+import { FREE_BOARDS_LABEL, KREA_FAMILY_LABEL, byFamily } from '../../config/kreaFamilyLabels'
 import { PALETTE_13 } from '../../config/kreaPalette'
 import { NEW_BOARD_LINE, NEW_BOARD_TITLE } from '../../config/kreaPhrases'
 import { PHONE_ANY, PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
@@ -55,6 +57,7 @@ import {
 import { BoardArt, geometryOf, Pegboard, pegBox, PlacedBeads } from './beads/Pegboard'
 import { BeadBowls } from './beads/BeadBowls'
 import { DragGhost } from './beads/HeldBead'
+import { BeadThumb } from './beads/BeadThumb'
 import { PatternCard } from './beads/PatternCard'
 import { flyHome, popOff } from './beads/beadMotion'
 import { StudioBackdrop } from './studio/StudioScene'
@@ -545,22 +548,31 @@ const PerlepladeGame: React.FC = () => {
     [PHONE_LANDSCAPE]: { '--bead-bowl-cols': 3, '--bead-side': '184px', '--bead-legend-cols': 4, '--bead-card-pic-col': '64px' },
     // 12 bowls in a few rows + the side are wider than a portrait phone: 4 rows of 3.
     [PHONE_PORTRAIT]: { '--bead-bowl-rows': 4 },
+    // 13 bowls in 4 rows are 4 columns, and on a portrait phone that squeezed the pattern card to ~70 px
+    // (its legend ran out of it). A TALL phone's board is width-limited, so 5 rows (3 columns) cost it
+    // nothing; the 667-tall SE keeps 4 rows, where the extra row would shrink its board.
+    [`${PHONE_PORTRAIT} and (min-height: 600px)`]: { '--bead-bowl-rows': 5 },
   }
 
   if (!item || !board) {
     const cards = [
-      ...BEAD_PATTERNS.map((def) => {
+      ...byFamily(BEAD_PATTERNS, BEAD_FAMILIES).map((def) => {
         const b = loadBoard(def.id)!
         return {
           id: def.id,
           label: def.name,
+          group: KREA_FAMILY_LABEL[def.family],
           // The picture to copy, faint, with the child's own beads on it if the piece is in progress.
+          // One cached image per card, not a div per bead (`BeadThumb`).
           picture: (
             <Box sx={{ position: 'absolute', inset: '7%' }}>
-              <Box sx={{ position: 'absolute', inset: 0, opacity: beadCount(b) ? 0.3 : 1 }}>
-                <PlacedBeads board={finishedPattern(b.n, patternCells(def, level))} size={tuning.bead} />
-              </Box>
-              <PlacedBeads board={b} size={tuning.bead} />
+              <BeadThumb
+                n={b.n}
+                layers={[
+                  { board: finishedPattern(b.n, patternCells(def, level)), size: tuning.bead, alpha: beadCount(b) ? 0.3 : 1 },
+                  { board: b, size: tuning.bead },
+                ]}
+              />
             </Box>
           ),
         }
@@ -571,10 +583,10 @@ const PerlepladeGame: React.FC = () => {
         return {
           id,
           label: def.name,
+          group: FREE_BOARDS_LABEL,
           picture: (
             <Box sx={{ position: 'absolute', inset: '7%' }}>
-              <BoardArt n={b.n} mask={b.mask} />
-              <PlacedBeads board={b} size={tuning.bead} />
+              <BeadThumb n={b.n} mask={b.mask} layers={[{ board: b, size: tuning.bead }]} />
             </Box>
           ),
         }

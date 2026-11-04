@@ -49,7 +49,13 @@ export const PatternCard: React.FC<{
         sx={{
           position: 'relative',
           flex: '0 0 auto',
-          width: direction === 'column' ? 'min(100%, var(--bead-card-pic-col, 100%))' : 'var(--bead-card-pic)',
+          // A long legend (7+ colours: hus, regnbue) takes a row more, and in the side column that row
+          // came out of the card's bottom (measured 27 px short at 1024×768) — the picture gives it back.
+          width: direction === 'column'
+            ? legend.length > 8
+              ? 'min(36%, calc(var(--bead-card-pic-col, 100%) * 0.55))'
+              : `min(${legend.length > 6 ? '62%' : '100%'}, var(--bead-card-pic-col, 100%))`
+            : legend.length > 6 ? 'calc(var(--bead-card-pic) * 0.8)' : 'var(--bead-card-pic)',
           aspectRatio: '1',
         }}
       >

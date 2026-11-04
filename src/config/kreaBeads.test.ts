@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   BEAD_BOARDS,
+  BEAD_FAMILIES,
   BEAD_LAYOUT,
   BEAD_LEGEND,
   BEAD_PATTERNS,
@@ -18,15 +19,28 @@ import { KREA_BEADS, LEVELS } from './difficulty.ts'
 // Krea PRD-02 §4.4 + §4.2 — every guard on the hand-authored bead content. A typo in one row of a grid
 // is the expected failure, so each test names the pattern, the level and the row it found.
 
-test('content: 24 patterns and 15 free boards (§2.9’s 8 + 5, tripled by the owner 2026-11-04)', () => {
+test('content: 48 patterns and 30 free boards (§2.9’s 8 + 5, tripled then doubled by the owner 2026-11-04)', () => {
   assert.deepEqual(BEAD_PATTERNS.map((p) => p.id), [
     'hjerte', 'sommerfugl', 'fisk', 'blomst', 'stjerne', 'hus', 'kat', 'regnbue',
     'hund', 'bil', 'is', 'svamp', 'sol', 'aeble', 'and', 'raket', 'baad', 'trae', 'mariehoene', 'ugle', 'dino', 'krone', 'pingvin', 'froe',
+    'gris', 'kanin', 'mus', 'snegl', 'bi', 'hval', 'kylling', 'jordbaer', 'kirsebaer', 'gulerod', 'tulipan', 'kaktus',
+    'snefnug', 'fly', 'tog', 'ballon', 'gave', 'kage', 'enhjoerning', 'robot', 'slot', 'rumskib', 'nisse', 'drage',
   ])
   assert.deepEqual(BEAD_BOARDS.map((b) => b.id), [
     'firkant', 'cirkel', 'hjerte', 'stjerne', 'fisk',
     'trekant', 'diamant', 'blomst', 'sommerfugl', 'maane', 'hus', 'sky', 'kat', 'bil', 'trae',
+    'aeg', 'sekskant', 'ottekant', 'plus', 'draabe', 'blad', 'snemand', 'skildpadde', 'fugl', 'elefant', 'paere', 'kop', 'bamse', 'tand', 'haand',
   ])
+})
+
+// The picker groups the patterns by family (owner 2026-11-04). Every pattern has exactly one known
+// family, and none is a token group: each holds at least 6, so a group is a real row to browse.
+test('every pattern has a family, and every family holds at least 6 patterns', () => {
+  for (const p of BEAD_PATTERNS) assert.ok((BEAD_FAMILIES as readonly string[]).includes(p.family), `${p.id}: family "${p.family}"`)
+  for (const f of BEAD_FAMILIES) {
+    const n = BEAD_PATTERNS.filter((p) => p.family === f).length
+    assert.ok(n >= 6, `${f}: only ${n} patterns`)
+  }
 })
 
 // Ids are deep-link values (`?motiv=<id>`, free boards as `fri-<id>`): ASCII letters only, unique per
@@ -101,6 +115,12 @@ test('each pattern says exactly its describing line, and every line is enumerate
     'Se, æblet triller!', 'Se, anden siger rap!', 'Se, raketten flyver!', 'Se, båden sejler!', 'Se, træet vokser!',
     'Se, mariehønen kravler!', 'Se, uglen blinker!', 'Se, dinosauren tramper!', 'Se, kronen glimter!',
     'Se, pingvinen vralter!', 'Se, frøen kvækker!',
+    'Se, grisen siger øf!', 'Se, kaninen hopper!', 'Se, musen piber!', 'Se, sneglen kryber!', 'Se, bien summer!',
+    'Se, hvalen sprøjter!', 'Se, kyllingen pipper!', 'Se, jordbærret er modent!', 'Se, kirsebærrene dingler!',
+    'Se, guleroden gror!', 'Se, tulipanen springer ud!', 'Se, kaktussen har pigge!', 'Se, snefnugget daler!',
+    'Se, flyet letter!', 'Se, toget siger tut!', 'Se, ballonerne svæver!', 'Se, gaven har en sløjfe!',
+    'Se, kagen har lys!', 'Se, enhjørningen galopperer!', 'Se, robotten bipper!', 'Se, slottet har tårne!',
+    'Se, rumskibet lander!', 'Se, nissen vinker!', 'Se, dragen flyver!',
   ])
   for (const p of BEAD_PATTERNS) assert.doesNotMatch(p.doneLine.toLowerCase(), /flot|smuk|dygtig/)
   const { allKreaLines } = await import('./kreaPhrases.ts')
@@ -124,7 +144,8 @@ test('the symmetric patterns are mirror-symmetric, colours included', () => {
       p.grids[level].forEach((row, r) => assert.equal(mirrorRow(row), row, `${p.id}/${level} row ${r}: "${row}" is not symmetric`))
     }
   }
-  const symmetricBoards = ['cirkel', 'hjerte', 'stjerne', 'firkant', 'trekant', 'diamant', 'blomst', 'sommerfugl', 'hus', 'sky', 'kat', 'trae']
+  const symmetricBoards = ['cirkel', 'hjerte', 'stjerne', 'firkant', 'trekant', 'diamant', 'blomst', 'sommerfugl', 'hus', 'sky', 'kat', 'trae',
+    'aeg', 'sekskant', 'ottekant', 'plus', 'draabe', 'snemand', 'skildpadde', 'bamse', 'tand']
   for (const b of BEAD_BOARDS.filter((x) => symmetricBoards.includes(x.id))) {
     for (const level of LEVELS) b.masks[level].forEach((row, r) => assert.equal(mirrorRow(row), row, `${b.id}/${level} row ${r}`))
   }

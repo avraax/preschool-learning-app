@@ -1,5 +1,6 @@
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { Box, ButtonBase } from '@mui/material'
+import { Box, ButtonBase, Typography } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { CRAYON_HEX } from '../canvas/brushes'
 import { PAPER_H, PAPER_W, type Drawing } from '../canvas/strokeModel'
 
@@ -27,6 +28,8 @@ export interface PickerItem {
   label: string
   /** The card's picture, drawn to fill a square. */
   picture: React.ReactNode
+  /** Which shelf it lies on (a family: "Dyr", "Ting"…). Cards keep their given order inside a group. */
+  group?: string
 }
 
 /** Where each game's grid was scrolled to, for this session (module state: one per game id). */
@@ -34,7 +37,22 @@ const scrollMemory = new Map<string, number>()
 
 const GAP = 'clamp(8px, 2.2vmin, 22px)'
 
+// One grid per group, all sized from the OUTER size container: a row is the cell the old fixed grid had
+// — but never taller than a column is wide, or a tall phone gets a band of empty table between rows
+// (the card is a square of the smaller side).
+const gridSx = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gridAutoRows: 'min(calc((100cqh - var(--krea-pt) - var(--krea-pb) - 3 * var(--krea-gap)) / 4), calc((100cqw - 2 * var(--krea-px) - 2 * var(--krea-gap)) / 3))',
+  gap: 'var(--krea-gap)',
+  '@media (orientation: landscape)': {
+    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+    gridAutoRows: 'min(calc((100cqh - var(--krea-pt) - var(--krea-pb) - 2 * var(--krea-gap)) / 3), calc((100cqw - 2 * var(--krea-px) - 3 * var(--krea-gap)) / 4))',
+  },
+} as const
+
 export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) => void; scrollKey: string }> = ({ items, onPick, scrollKey }) => {
+  const theme = useTheme()
   const scroller = useRef<HTMLDivElement>(null)
   const [moreBelow, setMoreBelow] = useState(false)
   const measure = useCallback(() => {
@@ -54,6 +72,15 @@ export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) =>
     if (scroller.current) scrollMemory.set(scrollKey, scroller.current.scrollTop)
     measure()
   }
+  // Groups in order of first appearance; a picker with one group (or none) shows no headings.
+  const groups: Array<{ name: string; items: PickerItem[] }> = []
+  for (const it of items) {
+    const name = it.group ?? ''
+    const g = groups.find((x) => x.name === name)
+    if (g) g.items.push(it)
+    else groups.push({ name, items: [it] })
+  }
+  const headed = groups.length > 1
   return (
   // The outer box is the SIZE container: `cqh` below is the height the old fixed grid had, so a row
   // is exactly the cell it used to be.
@@ -73,26 +100,38 @@ export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) =>
       touchAction: 'pan-y',
       scrollbarWidth: 'none',
       '&::-webkit-scrollbar': { display: 'none' },
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-      // A row is the cell the old fixed grid had — but never taller than a column is wide, or a tall
-      // phone gets a band of empty table between rows (the card is a square of the smaller side).
-      gridAutoRows: 'min(calc((100cqh - var(--krea-pt) - var(--krea-pb) - 3 * var(--krea-gap)) / 4), calc((100cqw - 2 * var(--krea-px) - 2 * var(--krea-gap)) / 3))',
-      gap: 'var(--krea-gap)',
       px: 'var(--krea-px)',
       // Room for the card tilt/shadow at the top, and the home indicator at the bottom.
       pt: 'var(--krea-pt)',
       pb: 'var(--krea-pb)',
       boxSizing: 'border-box',
-      '@media (orientation: landscape)': {
-        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-        gridAutoRows: 'min(calc((100cqh - var(--krea-pt) - var(--krea-pb) - 2 * var(--krea-gap)) / 3), calc((100cqw - 2 * var(--krea-px) - 3 * var(--krea-gap)) / 4))',
-      },
       WebkitMaskImage: moreBelow ? 'linear-gradient(to bottom, #000 calc(100% - 44px), transparent)' : 'none',
       maskImage: moreBelow ? 'linear-gradient(to bottom, #000 calc(100% - 44px), transparent)' : 'none',
     }}
   >
-    {items.map((it, i) => (
+    {groups.map((g, gi) => (
+      <Box key={g.name || gi} data-krea-picker-group={g.name || undefined} sx={{ mt: gi && headed ? 'calc(var(--krea-gap) * 1.5)' : 0 }}>
+        {headed && g.name ? (
+          <Typography
+            component="h2"
+            sx={{
+              fontFamily: theme.titleFontFamily,
+              fontWeight: 700,
+              fontSize: 'clamp(1rem, 2.6vmin, 1.5rem)',
+              lineHeight: 1.2,
+              color: '#6B4A2B',
+              textShadow: '0 1px 0 rgba(255,255,255,0.6)',
+              m: 0,
+              mb: 'calc(var(--krea-gap) * 0.6)',
+              pl: '4px',
+            }}
+          >
+            {g.name}
+          </Typography>
+        ) : null}
+        <Box sx={gridSx}>
+          {g.items.map((it) => {
+            return (
       <Box key={it.id} sx={{ minWidth: 0, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', containerType: 'size' }}>
         <ButtonBase
           aria-label={it.label}
@@ -110,8 +149,10 @@ export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) =>
             overflow: 'clip',
             background: '#FFFEFB',
             boxShadow: '0 6px 14px rgba(80,50,20,0.26), 0 1px 3px rgba(80,50,20,0.2)',
-            // Sheets tipped out on the table, not a tidy toolbar: a small, fixed tilt per card.
-            transform: `rotate(${[-1.6, 1.2, -0.8, 1.8, -1.2, 0.9][i % 6]}deg)`,
+            // STRAIGHT, no tilt. The cards used to lie tipped (±1.8°), and with 72 of them in a scroller
+            // the rotated, shadowed cards cost 85–250 ms stalls while scrolling; flat, 0 long tasks and a
+            // 17 ms median frame (measured 2026-11-04, rung 1).
+            transform: 'rotate(0deg) scale(1)',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
             transition: 'transform 140ms cubic-bezier(0.3,0.7,0.4,1)',
@@ -120,6 +161,10 @@ export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) =>
         >
           {it.picture}
         </ButtonBase>
+      </Box>
+            )
+          })}
+        </Box>
       </Box>
     ))}
   </Box>

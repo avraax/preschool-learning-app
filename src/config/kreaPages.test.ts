@@ -7,10 +7,10 @@ import { PAGE_REGIONS } from './kreaPageRegions.ts'
 
 const asset = (f: string) => new URL(`../assets/games/krea/pages/${f}`, import.meta.url)
 
-test('content: 9 pages per family, ids are letters only and unique', () => {
-  assert.equal(KREA_PAGES.length, 36)
+test('content: 18 pages per family, ids are letters only and unique', () => {
+  assert.equal(KREA_PAGES.length, 72)
   assert.equal(new Set(KREA_PAGES.map((p) => p.id)).size, KREA_PAGES.length)
-  for (const fam of KREA_FAMILIES) assert.equal(KREA_PAGES.filter((p) => p.family === fam).length, 9, fam)
+  for (const fam of KREA_FAMILIES) assert.equal(KREA_PAGES.filter((p) => p.family === fam).length, 18, fam)
   for (const p of KREA_PAGES) {
     assert.match(p.id, /^[a-z]+$/)
     assert.match(p.doneLine, /^Se, .+!$/, p.id)
@@ -49,5 +49,8 @@ test('the game imports every page statically (a missing page is a build error)',
   for (const p of KREA_PAGES) {
     assert.match(idx, new RegExp(`from '\\./${p.id}\\.regions\\.png'`), p.id)
     assert.match(idx, new RegExp(`from '\\./${p.id}\\.line\\.webp'`), p.id)
+    // The picker shows the small thumb, never the 1024² layer (72 full decodes ≈ 300 MB on the iPad).
+    assert.match(idx, new RegExp(`from '\\./${p.id}\\.thumb\\.webp'`), `${p.id}: run node scripts/krea-regions.mjs`)
+    assert.ok(existsSync(asset(`${p.id}.thumb.webp`)), `${p.id}.thumb.webp`)
   }
 })

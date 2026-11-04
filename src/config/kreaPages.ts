@@ -1,7 +1,7 @@
-// Farvelæg's colour-in pages as DATA (Krea PRD-01 §2.2.8, §2.4, §4.4) — 9 per family, 4 families.
+// Farvelæg's colour-in pages as DATA (Krea PRD-01 §2.2.8, §2.4, §4.4) — 18 per family, 4 families.
 //
 // The art is black-on-white line art (`art-src/krea/pages/<id>.jpg`): the first 12 the owner's Gemini
-// renders, the other 24 rasterised from hand-authored SVG (closed shapes, no grey), turned into a transparent
+// renders, the other 60 rasterised from hand-authored SVG (closed shapes, no grey), turned into a transparent
 // line layer + a lossless region label map by `scripts/krea-regions.mjs`, which writes the region
 // counts and boxes to `kreaPageRegions.ts`. `outside` says what happens to the page's outside
 // background: `drop` makes it paper you can't colour, `keep` a region like any other, `optional` a
@@ -61,6 +61,43 @@ export const KREA_PAGES: readonly KreaPage[] = [
   { id: 'fe', name: 'Fe', family: 'fantasi', alive: 'flap', doneLine: 'Se, feen basker med vingerne!', outside: 'optional' },
   { id: 'slot', name: 'Slot', family: 'fantasi', alive: 'glow', doneLine: 'Se, slottet lyser op!', outside: 'optional' },
   { id: 'dino', name: 'Dinosaur', family: 'fantasi', alive: 'hop', doneLine: 'Se, dinoen hopper!', outside: 'optional' },
+  // The third set (2026-11-04): 9 more per family, hand-authored SVG like the second.
+  { id: 'loeve', name: 'Løve', family: 'dyr', alive: 'hop', doneLine: 'Se, løven hopper!', outside: 'optional' },
+  { id: 'giraf', name: 'Giraf', family: 'dyr', alive: 'sway', doneLine: 'Se, giraffen svajer med halsen!', outside: 'optional' },
+  { id: 'pingvin', name: 'Pingvin', family: 'dyr', alive: 'sway', doneLine: 'Se, pingvinen vralter!', outside: 'optional' },
+  { id: 'gris', name: 'Gris', family: 'dyr', alive: 'hop', doneLine: 'Se, grisen hopper i mudderet!', outside: 'optional' },
+  { id: 'ko', name: 'Ko', family: 'dyr', alive: 'sway', doneLine: 'Se, koen danser!', outside: 'optional' },
+  { id: 'and', name: 'And', family: 'dyr', alive: 'swim', doneLine: 'Se, anden svømmer!', outside: 'optional' },
+  { id: 'hest', name: 'Hest', family: 'dyr', alive: 'drive', doneLine: 'Se, hesten traver!', outside: 'optional' },
+  { id: 'pindsvin', name: 'Pindsvin', family: 'dyr', alive: 'drive', doneLine: 'Se, pindsvinet går en tur!', outside: 'optional' },
+  { id: 'hval', name: 'Hval', family: 'dyr', alive: 'swim', doneLine: 'Se, hvalen svømmer!', outside: 'optional' },
+  { id: 'fyrtaarn', name: 'Fyrtårn', family: 'steder', alive: 'glow', doneLine: 'Se, fyrtårnet lyser!', outside: 'optional' },
+  { id: 'karrusel', name: 'Karrusel', family: 'steder', alive: 'glow', doneLine: 'Se, karrusellen lyser op!', outside: 'optional' },
+  { id: 'juletrae', name: 'Juletræet', family: 'steder', alive: 'glow', doneLine: 'Se, juletræet lyser!', outside: 'optional' },
+  { id: 'efteraar', name: 'Efterår', family: 'steder', alive: 'sway', doneLine: 'Se, træet svajer i blæsten!', outside: 'optional' },
+  { id: 'regnbue', name: 'Regnbuen', family: 'steder', alive: 'glow', doneLine: 'Se, regnbuen skinner!', outside: 'optional' },
+  { id: 'hus', name: 'Huset', family: 'steder', alive: 'glow', doneLine: 'Se, solen skinner på huset!', outside: 'optional' },
+  { id: 'bager', name: 'Bageren', family: 'steder', alive: 'glow', doneLine: 'Se, solen skinner på bageren!', outside: 'optional' },
+  { id: 'palmeoe', name: 'Palmeøen', family: 'steder', alive: 'sway', doneLine: 'Se, palmen svajer i vinden!', outside: 'optional' },
+  { id: 'vindmoelle', name: 'Vindmøllen', family: 'steder', alive: 'sway', doneLine: 'Se, møllen svajer i vinden!', outside: 'optional' },
+  { id: 'bus', name: 'Bus', family: 'ting', alive: 'drive', doneLine: 'Se, bussen kører!', outside: 'optional' },
+  { id: 'traktor', name: 'Traktor', family: 'ting', alive: 'drive', doneLine: 'Se, traktoren kører!', outside: 'optional' },
+  { id: 'helikopter', name: 'Helikopter', family: 'ting', alive: 'fly-up', doneLine: 'Se, helikopteren letter!', outside: 'optional' },
+  { id: 'cykel', name: 'Cykel', family: 'ting', alive: 'drive', doneLine: 'Se, cyklen kører!', outside: 'optional' },
+  { id: 'ubaad', name: 'Ubåd', family: 'ting', alive: 'swim', doneLine: 'Se, ubåden sejler!', outside: 'optional' },
+  { id: 'flyvedrage', name: 'Flyvedrage', family: 'ting', alive: 'fly-up', doneLine: 'Se, dragen flyver op!', outside: 'optional' },
+  { id: 'paraply', name: 'Paraply', family: 'ting', alive: 'sway', doneLine: 'Se, paraplyen danser i regnen!', outside: 'optional' },
+  { id: 'gave', name: 'Gaven', family: 'ting', alive: 'hop', doneLine: 'Se, gaven hopper!', outside: 'optional' },
+  { id: 'frugt', name: 'Frugtskålen', family: 'ting', alive: 'hop', doneLine: 'Se, frugten hopper!', outside: 'optional' },
+  { id: 'pirat', name: 'Piratskib', family: 'fantasi', alive: 'swim', doneLine: 'Se, piratskibet sejler!', outside: 'optional' },
+  { id: 'nisse', name: 'Nisse', family: 'fantasi', alive: 'hop', doneLine: 'Se, nissen hopper!', outside: 'optional' },
+  { id: 'troldmand', name: 'Troldmand', family: 'fantasi', alive: 'glow', doneLine: 'Se, tryllestaven glimter!', outside: 'optional' },
+  { id: 'prinsesse', name: 'Prinsesse', family: 'fantasi', alive: 'sway', doneLine: 'Se, prinsessen danser!', outside: 'optional' },
+  { id: 'ridder', name: 'Ridder', family: 'fantasi', alive: 'hop', doneLine: 'Se, ridderen hopper!', outside: 'optional' },
+  { id: 'svampehus', name: 'Svampehuset', family: 'fantasi', alive: 'glow', doneLine: 'Se, svampehuset lyser op!', outside: 'optional' },
+  { id: 'skattekiste', name: 'Skattekisten', family: 'fantasi', alive: 'glow', doneLine: 'Se, skatten glimter!', outside: 'optional' },
+  { id: 'superhelt', name: 'Superhelt', family: 'fantasi', alive: 'fly-up', doneLine: 'Se, superhelten flyver!', outside: 'optional' },
+  { id: 'tryllehat', name: 'Tryllehatten', family: 'fantasi', alive: 'hop', doneLine: 'Se, kaninen hopper op af hatten!', outside: 'optional' },
 ]
 
 export const pageById = (id: string | null | undefined): KreaPage | undefined => KREA_PAGES.find((p) => p.id === id)

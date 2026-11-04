@@ -68,7 +68,9 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
 - **Session only** (`kreaSession`, sessionStorage per child × game × item; cleared on detach/reset). No
   localStorage/IndexedDB "for safety" — the privacy text says nothing is stored.
 - Studio controls act on the PRESS (`pressHandlers` — `click` dropped fast undo taps); a blocking
-  overlay's buttons act on the CLICK, and so do the picker's cards: the picker SCROLLS (36/36/39
-  pictures, 2026-11-04), and a press would open the card a scrolling finger lands on. Held tools lie on the right, tip pointing down-left.
+  overlay's buttons act on the CLICK, and so do the picker's cards: the picker SCROLLS (72/72/78
+  pictures, grouped by family), and a press would open the card a scrolling finger lands on. Its cards
+  are `overflow: clip` (hidden ate the wheel), untilted, and CHEAP: one cached image per bead card
+  (`BeadThumb`), 400 px `thumb.webp` for pages — a div per bead was 35 000 elements. Held tools lie on the right, tip pointing down-left.
 - Probe hooks: `data-krea-step/-steps/-piece`, `data-krea-guide-hint`, `data-krea-fills`,
   `data-krea-labels-src`, `data-krea-card`, `data-krea-control`. Deep link `?motiv=<id>`.
