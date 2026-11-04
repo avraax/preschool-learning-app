@@ -530,7 +530,7 @@ const PerlepladeGame: React.FC = () => {
   // ----- render ------------------------------------------------------------------------------------
   const cssVars = {
     '--bead-bowl': `${landscape ? BEAD_LAYOUT.bowlPx : BEAD_LAYOUT.portraitBowlPx}px`,
-    '--bead-bowl-gap': `${BEAD_LAYOUT.bowlGapPx}px`,
+    '--bead-bowl-gap': `${landscape ? BEAD_LAYOUT.bowlGapPx : BEAD_LAYOUT.portraitBowlGapPx}px`,
     '--bead-bowl-rows': BEAD_LAYOUT.portraitBowlRows,
     '--bead-side': `${wideLandscape ? BEAD_LAYOUT.wideSidePx : BEAD_LAYOUT.sidePx}px`,
     '--bead-card-pic': '120px',
@@ -540,7 +540,9 @@ const PerlepladeGame: React.FC = () => {
     // No panning: a pannable board under a drag gesture would fight the drag.
     [PHONE_ANY]: { '--bead-bowl': '46px', '--bead-bowl-gap': '4px', '--bead-side': '104px', '--bead-card-pic': '64px', '--bead-chip': '14px', '--bead-chip-font': '0.85rem' },
     // 12 bowls in 2 columns are 6 rows — taller than a landscape phone: 3 columns.
-    [PHONE_LANDSCAPE]: { '--bead-bowl-cols': 3 },
+    // Its side is wider with a 3-column legend: a 7-colour legend in 2 columns ran off the bottom; 4 columns keep it to 2 rows
+    // (rainbow, 667×375). The board is height-limited there, so the width costs it nothing.
+    [PHONE_LANDSCAPE]: { '--bead-bowl-cols': 3, '--bead-side': '184px', '--bead-legend-cols': 4, '--bead-card-pic-col': '64px' },
     // 12 bowls in a few rows + the side are wider than a portrait phone: 4 rows of 3.
     [PHONE_PORTRAIT]: { '--bead-bowl-rows': 4 },
   }
@@ -696,8 +698,11 @@ const PerlepladeGame: React.FC = () => {
               // share (`BEAD_LAYOUT`, the same numbers the pitch test reads) and the board is the remainder.
               // Portrait: the board takes the full width; the row under it holds the bowls (3 rows), the
               // card and the two controls side by side.
-              gridTemplateColumns: 'auto auto auto',
-              justifyContent: 'center',
+              // The middle track FLEXES: with three `auto` tracks the board (spanning all three) was only
+              // as wide as the row under it, so a free board — no card — got 390 of 704 px (pitch 30,
+              // under the 40 floor; measured 2026-11-04).
+              gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+              justifyContent: 'stretch',
               alignItems: 'center',
               gridTemplateRows: 'minmax(0, 1fr) auto',
               gridTemplateAreas: '"board board board" "bowls card side"',
@@ -733,7 +738,7 @@ const PerlepladeGame: React.FC = () => {
               />
             </Box>
           </Box>
-          {!landscape && card ? <Box sx={{ gridArea: 'card', display: 'flex', minWidth: 0 }}>{card}</Box> : null}
+          {!landscape && card ? <Box sx={{ gridArea: 'card', display: 'flex', justifyContent: 'center', minWidth: 0 }}>{card}</Box> : null}
           <Box
             sx={{
               gridArea: 'side',

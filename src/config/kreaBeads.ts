@@ -742,9 +742,19 @@ export const BEAD_LAYOUT = {
    * 584 either way, keeps every pixel (2026-11-04).
    */
   bowlPx: 76,
-  portraitBowlPx: 70,
+  /**
+   * Portrait: the bowls share their row with the pattern card (measured 244 px wide) and the side
+   * (132 px of content), so the bowls get ≤ 704 − 244 − 132 − 2×16 = 296 px. 13 bowls in 3 rows of 70
+   * were 5 columns = 382 px and the side overlapped the card's legend; in 4 rows of 58 they are 4 columns
+   * = 250 px, and the 250 px row height still leaves Svær's 16×16 its 35 px pitch floor.
+   */
+  portraitBowlPx: 58,
+  portraitBowlGapPx: 6,
   bowlGapPx: 8,
-  portraitBowlRows: 3,
+  portraitBowlRows: 4,
+  /** The portrait row's other two occupants, measured (WebKit-free Chrome, 768×1024, 2026-11-04). */
+  portraitCardPx: 244,
+  portraitSideContentPx: 132,
   /** The side column (landscape): the picker door, the pattern card, the way on. */
   sidePx: 168,
   /**
@@ -766,6 +776,6 @@ export function boardPitch(n: number, stage: { w: number; h: number }, orientati
   const box =
     orientation === 'landscape'
       ? Math.min(stage.w - bowlsAcross - L.sidePx - 2 * L.gapPx, stage.h)
-      : Math.min(stage.w, stage.h - (L.portraitBowlRows * L.portraitBowlPx + (L.portraitBowlRows - 1) * L.bowlGapPx) - L.gapPx)
+      : Math.min(stage.w, stage.h - (L.portraitBowlRows * L.portraitBowlPx + (L.portraitBowlRows - 1) * L.portraitBowlGapPx) - L.gapPx)
   return box / (n + L.rimPitches)
 }

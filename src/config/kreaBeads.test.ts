@@ -153,13 +153,16 @@ test('every level’s board keeps its minimum peg pitch on the iPad, both orient
 // fell off the bottom of the iPad stage. Every bowl at every level must fit the stage it stands in.
 test('every bowl fits the iPad stage, both orientations', () => {
   const L = BEAD_LAYOUT
-  const span = (count: number, px: number) => count * px + (count - 1) * L.bowlGapPx
+  const span = (count: number, px: number, gap: number) => count * px + (count - 1) * gap
   for (const level of LEVELS) {
     const bowls = beadPalette(level).length
     const rows = Math.ceil(bowls / 2)
-    assert.ok(span(rows, L.bowlPx) <= L.ipadStage.landscape.h, `${level} landscape: ${rows} rows of ${L.bowlPx}px`)
+    assert.ok(span(rows, L.bowlPx, L.bowlGapPx) <= L.ipadStage.landscape.h, `${level} landscape: ${rows} rows of ${L.bowlPx}px`)
+    // Portrait: bowls + the pattern card + the side share ONE row (the side overlapped the card's
+    // legend when 13 bowls made 5 columns).
     const cols = Math.ceil(bowls / L.portraitBowlRows)
-    assert.ok(span(cols, L.portraitBowlPx) + L.gapPx + L.sidePx <= L.ipadStage.portrait.w, `${level} portrait: ${cols} columns`)
+    const row = span(cols, L.portraitBowlPx, L.portraitBowlGapPx) + L.portraitCardPx + L.portraitSideContentPx + 2 * L.gapPx
+    assert.ok(row <= L.ipadStage.portrait.w, `${level} portrait: ${cols} columns, the row is ${row}px`)
   }
 })
 
