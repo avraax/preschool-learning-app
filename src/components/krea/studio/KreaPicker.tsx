@@ -104,7 +104,10 @@ export const KreaPicker: React.FC<{ items: PickerItem[]; onPick: (id: string) =>
             minWidth: '56px',
             minHeight: '56px',
             borderRadius: '10px',
-            overflow: 'hidden',
+            // CLIP, not hidden: `hidden` makes every card a scroll container of its own, and the mouse
+            // wheel latched onto the card under the pointer and scrolled nothing (owner 2026-11-04:
+            // "can't scroll while hovering a drawing"). `clip` clips the same, scrolls nothing (Safari 16+).
+            overflow: 'clip',
             background: '#FFFEFB',
             boxShadow: '0 6px 14px rgba(80,50,20,0.26), 0 1px 3px rgba(80,50,20,0.2)',
             // Sheets tipped out on the table, not a tidy toolbar: a small, fixed tilt per card.
