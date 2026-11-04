@@ -46,9 +46,9 @@ import { reportAdultStep } from '../../services/usagePing'
 // (It read "Til de voksne" until the owner renamed the adult area on 2026-09-05; the harness now needs
 // TWO clicks, `[data-profile-chip]` then that row.)
 //
-// NOT rendered in game (§2.5): `GameShell` shows the book and stops. Nobody needs telling who they are
-// mid-round, that is the surface where real estate matters most, and it gives the tappable corner back
-// to Min Bog.
+// IN GAME TOO, since 2026-11-04 (owner: "always possible to tap the avatar so you can reach
+// Indstillinger" — reversing §2.5's "not rendered in game"). `GameShell` puts it LEFT beside the back
+// button, so the far right corner stays the book alone, which is the part of §2.5 that still matters.
 
 interface ProfileChipProps {
   /**

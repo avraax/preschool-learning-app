@@ -112,15 +112,23 @@ test('the badge that used to share the corner stays deleted (§6.2 #1)', () => {
 
 // ─── §6.2 #2 — no identity element in game ────────────────────────────────────────────────────────
 
-test('GameShell renders NO identity element (§6.2 #2)', () => {
-  // §2.5. Nobody needs telling who they are mid-round, this is the surface where real estate matters
-  // most, and it gives the far corner back to Min Bog — GameShell's own header recorded the cost of
-  // losing it: "a child aiming at the far corner for Min Bog hits a dead disc".
+test('GameShell: the name pill is in game, LEFT by the back button, never in the ring corner (§6.2 #2)', () => {
+  // §2.5 kept identity out of the game header. The owner reversed that on 2026-11-04 — "always
+  // possible to tap the avatar so you can reach Indstillinger" — so the pill is in game too. What §2.5
+  // still buys is the far corner: "a child aiming at the far corner for Min Bog hits a dead disc". So
+  // the pill rides in the BackButton's cluster, and the ring's cluster holds the ring alone.
   const code = codeOf(SHELL)
-  for (const forbidden of ['ProfileChip', 'ProfileBadge', 'avatarArt', 'useProfiles', 'profileStore']) {
-    assert.ok(!code.includes(forbidden), `the game header grew an identity element back (${forbidden})`)
+  for (const forbidden of ['ProfileBadge', 'avatarArt', 'useProfiles', 'profileStore']) {
+    assert.ok(!code.includes(forbidden), `the game header grew a second identity element (${forbidden})`)
   }
-  assert.ok(code.includes('<RewardRing'), 'GameShell no longer renders the ring — re-point this guard')
+  const back = code.indexOf('<BackButton')
+  const chip = code.indexOf('<ProfileChip')
+  const ring = code.indexOf('<RewardRing')
+  assert.ok(ring > 0, 'GameShell no longer renders the ring — re-point this guard')
+  assert.ok(chip > 0, 'the game header lost the name pill — Indstillinger is unreachable mid-game')
+  assert.ok(back < chip && chip < ring, 'the pill must follow the back button and precede the ring')
+  // Same cluster as the back button: no closing tag between them that would end it.
+  assert.doesNotMatch(code.slice(back, chip), /<\/Box>/, 'the pill left the back button’s cluster')
 })
 
 // ─── §6.2 #3 — the chip is not a meter ────────────────────────────────────────────────────────────

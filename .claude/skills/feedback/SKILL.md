@@ -83,7 +83,6 @@ Then, and only for the faults, open the implicated code. For a fault worth real 
 - **Absence is not health.** Nothing prompts a parent to write — there is no rating prompt and no nudge
   (Kids Guideline 1.3 keeps everything adult-directed behind the gate). An empty list means nobody
   opened the settings and typed, not that nothing is wrong.
-- **A message can only be sent from the section menus, never mid-game** — the in-game header holds the
-  reward ring alone. So a complaint about a game arrives with the *menu* screenshotted, or with the
-  board only if the adult opened settings straight from it. Don't read a menu screenshot as "the bug is
-  on the menu".
+- **Since 1.3.1 a message can be sent mid-game** (the name pill is in the game header). Messages from
+  1.3 and earlier came from a section menu, so their screenshot shows the *menu* — don't read that as
+  "the bug is on the menu".

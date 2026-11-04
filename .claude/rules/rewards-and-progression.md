@@ -177,12 +177,12 @@ spinner that reset, not a progress meter).
   leaves the game on a stray tap, so it protected nothing and only made one control behave differently per
   screen. Don't re-mute it). What must never come back is a SECOND entrance on one screen (two objects
   meaning "your rewards" is the confusion this model exists to remove) — `rewardSurfaces.test.ts` asserts
-  exactly one `/album` route per surface, the ring's own tap. **In game the header holds the ring
-  ALONE** (Corner identity PRD-01 §2.5) and **nothing that measures performance**: the `ScoreChip` pip
-  row is deleted, and so is the identity disc that shared the corner for a month — nobody needs telling
-  who they are mid-round, and it gives the far corner back to a tappable control.
-- **`ProfileChip`** (`src/components/common/ProfileChip.tsx` — home, the section menus and Min Bog;
-  **NOT in game**): the active child's baked portrait plus **their NAME AS TEXT**, in a pill, outermost
+  exactly one `/album` route per surface, the ring's own tap. **In game the right corner holds the
+  ring ALONE** (Corner identity PRD-01 §2.5) and **nothing that measures performance**: the `ScoreChip`
+  pip row is deleted, and so is the identity disc that shared the corner for a month. The name pill is
+  in game since 2026-11-04, but LEFT by the back button, never beside the ring.
+- **`ProfileChip`** (`src/components/common/ProfileChip.tsx` — home, the section menus, Min Bog
+  and — since 2026-11-04 — every game, left by the back button): the active child's baked portrait plus **their NAME AS TEXT**, in a pill, outermost
   past the ring. It replaces `ProfileBadge`, a same-size disc 8-12px from the ring whose own header
   called the collision "the accepted cost" — two identical discs going to two different places.
   **The invariant is SHAPE, not distance** (owner, 2026-09-05, after seeing both): the ring is the only

@@ -17,12 +17,10 @@
 // report captures `document.body` at the moment this opens, so the door MUST be reachable from the
 // broken screen — otherwise no report can ever show the app that broke.
 //
-// **THE ONE PLACE IT IS NO LONGER REACHABLE IS MID-GAME** (§2.5): the in-game header holds the reward
-// ring alone now, and neither the chip nor the sheet renders there. That is a deliberate trade — the
-// corner a child aims at for Min Bog stopped being a dead disc — and the cost is that a report about a
-// game must be filed from the section menu one tap away, on a screen that still shows the same build,
-// the same device and the same diagnostics rings. What it loses is the SCREENSHOT of the broken board.
-// If that turns out to matter, the answer is a route back into the game, not a second door in it.
+// **IT IS REACHABLE MID-GAME AGAIN** (owner, 2026-11-04): §2.5 had taken the chip out of the game
+// header, so a report about a game lost the screenshot of the broken board. The chip now sits LEFT by
+// the back button in `GameShell` (the right corner stays the reward ring alone), so the door is on every
+// screen and a report captures the board it is about.
 //
 // A second behaviour worth knowing: the chip renders nothing while no child is attached, so during the
 // cold-boot window before the roster settles there is no adult door at all. That window also has no

@@ -7,6 +7,7 @@ import Mascot from './Mascot'
 import BackButton from './BackButton'
 import CelebrationEffect from './CelebrationEffect'
 import RewardRing from './RewardRing'
+import ProfileChip from './ProfileChip'
 import { getCategoryTheme } from '../../config/categoryThemes'
 import { menuRouteFor } from '../../config/doors'
 import type { SectionId } from '../../config/progressSchema'
@@ -39,7 +40,8 @@ interface GameShellProps {
   //
   // This corner holds THE RING AND NOTHING ELSE (Corner identity PRD-01 §2.5), which is where it
   // started: the static `ProfileBadge` that shared it for a month is deleted, and identity is a pill in
-  // the title row on the surfaces that have one (home, the section menus, Min Bog) and absent here.
+  // the title row on the surfaces that have one (home, the section menus, Min Bog) and, since
+  // 2026-11-04, beside the back button here — the left cluster, never this corner.
   // There used to be a `score` slot here holding a `ScoreChip` — a pill of one pip per question in the
   // round — and every game passed one. It was a SECOND progress meter inches from the first, with
   // nothing on screen to say that one counts this round and the other counts the whole book; and eight
@@ -139,8 +141,18 @@ const GameShell: React.FC<GameShellProps> = ({
             [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' },
           }}
         >
-          {/* Shared animated back button — reverses the themed wipe (PRD-02 §8). */}
-          <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
+          {/* Left cluster: the shared animated back button (reverses the themed wipe, PRD-02 §8) and
+              the name pill. The pill is in game too now (owner, 2026-11-04: "always possible to tap
+              the avatar so you can reach Indstillinger") — reversing Corner identity §2.5's "no
+              identity in game". It sits LEFT, by the back button, so the far right corner stays the
+              ring alone and the pill-vs-disc separation that PRD bought still holds. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 1.5 }, minWidth: 0, flex: '0 1 auto' }}>
+            <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
+            <ProfileChip
+              size={phoneLandscape ? 26 : 32}
+              sx={phoneLandscape ? { minHeight: 40, maxWidth: 120, py: 0.25 } : undefined}
+            />
+          </Box>
 
           {titleInHeader && (
             <Typography
@@ -170,14 +182,11 @@ const GameShell: React.FC<GameShellProps> = ({
               across games; phone-landscape gets a smaller, flyer-less variant so it never fights the
               inline title row.
 
-              **NO IDENTITY ELEMENT IN GAME** (Corner identity PRD-01 §2.5). The static `ProfileBadge`
-              that used to sit outermost here is deleted, and identity does not come back as a chip:
-              nobody needs telling who they are mid-round, this is the surface where real estate matters
-              most, and it retires a cost this file recorded against itself — *"the untappable badge now
+              **NO IDENTITY ELEMENT IN THIS CORNER** (Corner identity PRD-01 §2.5). The static
+              `ProfileBadge` that used to sit outermost here is deleted — *"the untappable badge now
               occupies the corner the tappable ring used to hold, so a child aiming at the far corner
-              for Min Bog hits a dead disc."* The book takes the corner back. The adult door leaves the
-              in-game header with it, which is intended: nobody opens settings mid-round, and backing
-              out is one tap on the back button already in this header.
+              for Min Bog hits a dead disc."* The book keeps the corner. The name pill (the way to
+              Indstillinger) is in the LEFT cluster instead, never beside the ring.
 
               The ring is a door to Min Bog HERE TOO (owner, 2026-08-03: "clickable and work on all
               pages"). It used to be pure status in games, on the reasoning that a stray tap mid-play
