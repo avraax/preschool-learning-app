@@ -56,8 +56,9 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
 ## Perleplade (`beads/`, `kreaBeads.ts`)
 - **One resolver**: drag and tap both land through the game's `resolve()`, the only `placeBead` call.
   ONE droppable board + arithmetic pegs, never a droppable per peg. By hand: no tweezers (owner).
-- The dragged bead and its landing read the REAL pointer (0.45 pitch up on touch, 0 for a mouse), not
-  dnd-kit's delta; **no transform on a bowl's DraggableItem ancestor** (WebKit drift).
+- The dragged bead and its landing read the REAL pointer, not dnd-kit's delta. On touch it floats a
+  FIXED px clearance above the finger (`heldBeadLiftPx`: bottom edge 12px past the touch point, ≥ 28px
+  drawn) — never a share of the pitch, which hid it under the fingertip on phones; 0 for a mouse; **no transform on a bowl's DraggableItem ancestor** (WebKit drift).
 - A wrong bead leaves the board unchanged and flies home; the 2nd miss on a peg glows the bowl. Free
   board: no XP, no finish (like Fri Tegning). Patterns: one task on the done press, `popOff`, the seam.
 - Grids are per-level strings (10/13/16): derived legend counts ≤ 100, symmetric ones tested, no level

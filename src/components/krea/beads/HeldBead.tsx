@@ -1,6 +1,6 @@
 import React from 'react'
 import { Bead } from './Bead'
-import type { BeadColor } from './beadBoard'
+import { heldBeadPx, type BeadColor } from './beadBoard'
 
 // The bead in hand (Krea PRD-02 §4.2) — picked up BY HAND, no tweezers: the owner wanted it to feel like
 // picking a real bead up and pressing it onto the plate (2026-10-16; the tweezers were removed).
@@ -17,10 +17,13 @@ export const LiftedBead: React.FC<{ colour: BeadColor }> = ({ colour }) => (
 )
 
 /**
- * The bead under the finger while dragging, just above the fingertip on touch (the game sets the offset).
+ * The bead in the finger while dragging, peeking out just past the fingertip on touch (the game sets the
+ * offset, `heldBeadLiftPx`); never smaller than `HELD_BEAD_MIN_PX`, so a phone bead isn't a speck.
  * Positioned imperatively on every pointermove (`translate`), so a drag re-renders nothing.
  */
-export const DragGhost: React.FC<{ ghostRef: React.Ref<HTMLDivElement>; colour: BeadColor | null; beadPx: number }> = ({ ghostRef, colour, beadPx }) => (
+export const DragGhost: React.FC<{ ghostRef: React.Ref<HTMLDivElement>; colour: BeadColor | null; beadPx: number }> = ({ ghostRef, colour, beadPx }) => {
+  const d = heldBeadPx(beadPx)
+  return (
   <div
     ref={ghostRef}
     data-krea-ghost={colour ?? ''}
@@ -30,8 +33,9 @@ export const DragGhost: React.FC<{ ghostRef: React.Ref<HTMLDivElement>; colour: 
     {colour ? (
       <Bead
         colour={colour}
-        style={{ position: 'absolute', width: beadPx * 1.08, height: beadPx * 1.08, left: (-beadPx * 1.08) / 2, top: (-beadPx * 1.08) / 2, boxShadow: '0 8px 10px rgba(60,40,20,0.38)' }}
+        style={{ position: 'absolute', width: d, height: d, left: -d / 2, top: -d / 2, boxShadow: '0 8px 10px rgba(60,40,20,0.38)' }}
       />
     ) : null}
   </div>
-)
+  )
+}

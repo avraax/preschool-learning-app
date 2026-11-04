@@ -159,3 +159,25 @@ export function restoreBeads(b: BeadBoard, raw: string | null, palette: readonly
   }
   return { ...b, beads }
 }
+
+// ----- the bead in the finger ---------------------------------------------------------------------
+//
+// Where the dragged bead floats, in CSS px (owner 2026-11-04: "sometimes it's hidden under the finger —
+// mostly on phones"). It used to be 0.45 of a PITCH above the touch point; but the finger does not
+// shrink with the board, so on a phone's ~20px pitch that was 9px — the whole bead sat inside the
+// fingertip. Like a pinched real bead, it now peeks out just past the top of the pad: its bottom edge
+// sits `FINGER_PAD_PX` above the touch point (the contact centroid; a child's pad reaches ~12px above
+// it), so it is seen and still almost under the finger. It is also never drawn smaller than
+// `HELD_BEAD_MIN_PX`, so a tiny phone bead isn't a speck beside the fingertip.
+
+/** How far a child's fingertip pad reaches above the reported touch point, CSS px. */
+export const FINGER_PAD_PX = 12
+/** The bead in the finger is never drawn smaller than this, CSS px. */
+export const HELD_BEAD_MIN_PX = 28
+
+/** The diameter of the bead in the finger for a board bead of `beadPx`. */
+export const heldBeadPx = (beadPx: number): number => Math.max(beadPx * 1.08, HELD_BEAD_MIN_PX)
+
+/** How far above the touch point the held bead's CENTRE floats; 0 for a mouse, which hides nothing. */
+export const heldBeadLiftPx = (beadPx: number, pointer: 'touch' | 'mouse'): number =>
+  pointer === 'mouse' ? 0 : FINGER_PAD_PX + heldBeadPx(beadPx) / 2

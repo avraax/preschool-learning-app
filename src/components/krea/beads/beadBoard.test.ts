@@ -13,7 +13,29 @@ import {
   removeBead,
   restoreBeads,
   serialiseBeads,
+  FINGER_PAD_PX,
+  HELD_BEAD_MIN_PX,
+  heldBeadLiftPx,
+  heldBeadPx,
 } from './beadBoard.ts'
+
+// Owner 2026-11-04: the dragged bead hid under the finger on phones. The lift was 0.45 PITCH — 9px on a
+// 20px phone pitch, i.e. the bead's centre inside the fingertip. The held bead's bottom edge must clear
+// the pad at EVERY board size, so small boards are the case that matters.
+test('the bead in the finger peeks out past the fingertip at every pitch — and a mouse hides nothing', () => {
+  for (const beadPx of [14, 18, 24, 34, 40, 48, 60]) {
+    const d = heldBeadPx(beadPx)
+    const lift = heldBeadLiftPx(beadPx, 'touch')
+    assert.ok(d >= HELD_BEAD_MIN_PX, `${beadPx}: drawn at ${d}px`)
+    assert.ok(d >= beadPx, `${beadPx}: the bead in hand is never smaller than the bead on the board`)
+    // Bottom edge of the bead = lift − d/2 above the touch point: just past the pad, and no further
+    // than a few px (a full pitch felt detached, owner 2026-10-16).
+    assert.ok(lift - d / 2 >= FINGER_PAD_PX, `${beadPx}: the bead's bottom is under the fingertip`)
+    assert.ok(lift - d / 2 <= FINGER_PAD_PX + 2, `${beadPx}: the bead floats away from the finger`)
+    assert.equal(heldBeadLiftPx(beadPx, 'mouse'), 0)
+  }
+  assert.ok(FINGER_PAD_PX >= 10 && FINGER_PAD_PX <= 16, 'a child’s fingertip pad above the touch centroid')
+})
 import { BEAD_BOARDS, BEAD_PATTERNS, boardMask, boardSize, patternCells } from '../../../config/kreaBeads.ts'
 import { PALETTE_13 } from '../../../config/kreaPalette.ts'
 

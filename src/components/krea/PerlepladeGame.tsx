@@ -49,6 +49,8 @@ import {
   type BeadBoard,
   type BeadColor,
   type PlaceResult,
+  heldBeadLiftPx,
+  heldBeadPx,
 } from './beads/beadBoard'
 import { BoardArt, geometryOf, Pegboard, pegBox, PlacedBeads } from './beads/Pegboard'
 import { BeadBowls } from './beads/BeadBowls'
@@ -83,13 +85,10 @@ import { KreaPicker } from './studio/KreaPicker'
 
 const GAME_ID = 'krea.beads'
 const SAVE_DEBOUNCE_MS = 500
-/**
- * How far the bead in the finger sits above the touch point, in pitches (§4.2). A full pitch kept the
- * peg visible but felt detached — not like picking a bead up (owner, 2026-10-16). Half a pitch lets the
- * bead peek out just above the fingertip, which is where a pinched bead is. A mouse hides nothing, so
- * there it sits right under the pointer.
- */
-const TOUCH_LIFT_PITCHES = 0.45
+// How far the bead in the finger sits above the touch point is `heldBeadLiftPx` (beadBoard.ts): a
+// fixed fingertip clearance in CSS px, not a share of the pitch — the finger doesn't shrink with the
+// board, so 0.45 pitch hid the bead under it on a phone (owner, 2026-11-04). A full pitch had felt
+// detached (owner, 2026-10-16); this keeps it just past the pad. A mouse hides nothing: 0.
 /** Free boards' picker/deep-link ids are prefixed, so they never collide with a pattern's (hjerte…). */
 const FREE_PREFIX = 'fri-'
 
@@ -181,7 +180,7 @@ const PerlepladeGame: React.FC = () => {
   // notes) — the bead in the finger and its landing peg must follow the finger, so they read this.
   const livePt = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const unlisten = useRef<(() => void) | null>(null)
-  const liftPitches = useRef(TOUCH_LIFT_PITCHES)
+  const pointerKind = useRef<'touch' | 'mouse'>('touch')
   const [beadPx, setBeadPx] = useState(48)
 
   const welcomeTriggered = useRef(false)
@@ -322,19 +321,25 @@ const PerlepladeGame: React.FC = () => {
     return t ? { x: t.clientX, y: t.clientY } : { x: 0, y: 0 }
   }
 
+  /** How far above the finger the held bead floats right now — one value for the ghost AND its landing. */
+  const liftNow = (): number => {
+    const b = boardRef.current
+    const g = b && geometryOf(hitRef.current, b.n)
+    return heldBeadLiftPx(g ? g.pitch * tuning.bead : beadPx, pointerKind.current)
+  }
+
   /** Where a dragged bead would land: under the floating bead, just above the finger. */
   const landingPeg = (x: number, y: number): number => {
     const b = boardRef.current
     const g = b && geometryOf(hitRef.current, b.n)
     if (!b || !g) return -1
-    const peg = pegAt(g, x, y - liftPitches.current * g.pitch)
+    const peg = pegAt(g, x, y - liftNow())
     return peg >= 0 && b.mask[peg] ? peg : -1
   }
 
   const moveGhost = (x: number, y: number) => {
     const b = boardRef.current
-    const g = b && geometryOf(hitRef.current, b.n)
-    const lift = (g?.pitch ?? beadPx) * liftPitches.current
+    const lift = liftNow()
     if (ghostRef.current) ghostRef.current.style.transform = `translate(${x}px, ${y - lift}px)`
     const ring = ringRef.current
     if (!ring || !b) return
@@ -353,7 +358,7 @@ const PerlepladeGame: React.FC = () => {
     audio.updateUserInteraction()
     showReturn(null)
     const p = pointOf(e.activatorEvent)
-    liftPitches.current = (e.activatorEvent as PointerEvent | null)?.pointerType === 'mouse' ? 0 : TOUCH_LIFT_PITCHES
+    pointerKind.current = (e.activatorEvent as PointerEvent | null)?.pointerType === 'mouse' ? 'mouse' : 'touch'
     startPt.current = p
     livePt.current = p
     unlisten.current?.()
@@ -409,12 +414,12 @@ const PerlepladeGame: React.FC = () => {
     // The landing is judged where the floating BEAD is, not by `over`: the bead hovers above the finger,
     // so a drop onto the top row can have the finger below the board. Off every peg → it rolls home.
     const peg = overBowls ? -1 : landingPeg(x, y)
-    const lift = (geometryOf(hitRef.current, b.n)?.pitch ?? beadPx) * liftPitches.current
+    const lift = liftNow()
     if (g.from === 'bowl') {
       if (peg >= 0) resolve(b, g.colour, peg)
       else {
         sfx.play('bead-back')
-        flyHome(g.colour, { x, y: y - lift }, beadPx, reduce)
+        flyHome(g.colour, { x, y: y - lift }, heldBeadPx(beadPx), reduce)
       }
       return
     }
