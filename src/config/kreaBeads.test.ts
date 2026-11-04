@@ -149,6 +149,20 @@ test('every level’s board keeps its minimum peg pitch on the iPad, both orient
   }
 })
 
+// Beige made it 13 bowls (2026-11-04): in 2 landscape columns that is 7 rows, and at 84 px the 7th
+// fell off the bottom of the iPad stage. Every bowl at every level must fit the stage it stands in.
+test('every bowl fits the iPad stage, both orientations', () => {
+  const L = BEAD_LAYOUT
+  const span = (count: number, px: number) => count * px + (count - 1) * L.bowlGapPx
+  for (const level of LEVELS) {
+    const bowls = beadPalette(level).length
+    const rows = Math.ceil(bowls / 2)
+    assert.ok(span(rows, L.bowlPx) <= L.ipadStage.landscape.h, `${level} landscape: ${rows} rows of ${L.bowlPx}px`)
+    const cols = Math.ceil(bowls / L.portraitBowlRows)
+    assert.ok(span(cols, L.portraitBowlPx) + L.gapPx + L.sidePx <= L.ipadStage.portrait.w, `${level} portrait: ${cols} columns`)
+  }
+})
+
 test('board size and bead size step with the level; XP does not live here', () => {
   assert.ok(KREA_BEADS.let.board < KREA_BEADS.normal.board && KREA_BEADS.normal.board < KREA_BEADS.svaer.board)
   assert.ok(KREA_BEADS.let.bead > KREA_BEADS.normal.bead, 'Let has the biggest beads')

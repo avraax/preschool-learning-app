@@ -736,11 +736,12 @@ export const BEAD_LAYOUT = {
    *
    * Grown from 64 (owner, 2026-10-17: "the bowls and the beads in them are too small"; the heap beads
    * are a % of the bowl, so they grow with it). Each size is the most that costs the BOARD nothing it
-   * needs: landscape 84 is exactly where the board stops being height-limited on the iPad stage (2×84+8
-   * + side + gaps = 960 − 584), and 6 rows (6×84 + 5×8 = 544) still fit its 584 height; portrait 70
-   * keeps Svær's 16×16 above its 35 px floor (`kreaBeads.test.ts` measures both).
+   * needs; portrait 70 keeps Svær's 16×16 above its 35 px floor (`kreaBeads.test.ts` measures both).
+   * Landscape was 84 for 12 bowls (6 rows); beige made 13 = 7 rows, and 7×84 + 6×8 = 636 ran off the
+   * iPad's 584 stage. 76 is the most that fits (7×76 + 6×8 = 580), and the board, height-limited at
+   * 584 either way, keeps every pixel (2026-11-04).
    */
-  bowlPx: 84,
+  bowlPx: 76,
   portraitBowlPx: 70,
   bowlGapPx: 8,
   portraitBowlRows: 3,
