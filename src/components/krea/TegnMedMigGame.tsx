@@ -26,7 +26,7 @@ import NewPaperConfirm from './studio/NewPaperConfirm'
 import { playAlive, swapPaper } from './studio/alive'
 import { GuideLayer, DemoPencil } from './studio/GuideLayer'
 import { InkThumb, KreaPicker } from './studio/KreaPicker'
-import { PickerButton, PieceStudio, PieceWayOn, type PieceStage } from './studio/PieceStudio'
+import { PieceStudio, PieceWayOn, type PieceStage } from './studio/PieceStudio'
 
 // Tegn med Mig (`krea.guide`, Krea PRD-01 §2.2.7, §4.3) — pick a subject from a picture grid, then draw
 // it ONE STEP AT A TIME on a thick dotted guide. Each step is spoken and names a shape ("Tegn en stor
@@ -441,18 +441,15 @@ const TegnMedMigGame: React.FC = () => {
           </Paper>
         }
         side={
-          <>
-            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
-            <PieceWayOn
-              stage={stage}
-              hasInk={piece.drawing.strokes.length > 0}
-              disabled={confirmOpen || busy}
-              reduce={reduce}
-              onNewPaper={askNewPaper}
-              onDone={onDone}
-              onNext={onNext}
-            />
-          </>
+          <PieceWayOn
+            stage={stage}
+            hasInk={piece.drawing.strokes.length > 0}
+            disabled={confirmOpen || busy}
+            reduce={reduce}
+            onNewPaper={askNewPaper}
+            onDone={onDone}
+            onNext={onNext}
+          />
         }
         palette={
           <Box aria-hidden={!crayonInHand || piece.done} sx={{ visibility: crayonInHand && !piece.done ? 'visible' : 'hidden' }}>

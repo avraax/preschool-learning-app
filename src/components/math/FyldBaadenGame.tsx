@@ -463,6 +463,7 @@ const FyldBaadenGame: React.FC = () => {
         // The corner companion would stand IN THE SEA here (owner, 2026-10-14) — the same mascot stands on
         // the jetty as harbour master instead. `guideReaction` still reaches it through mascotBus.
         guide={false}
+        bleedLeft
         guideReaction={guideReaction}
         celebration={{ show: showCelebration, intensity: celebrationIntensity, duration: celebrationDuration, onComplete: stopCelebration }}
       >

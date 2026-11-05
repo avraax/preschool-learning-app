@@ -75,6 +75,10 @@ interface GameShellProps {
   // open, so the back arrow steps back to that grid first and only the grid's arrow leaves for the menu
   // (owner, 2026-10-17). A step inside the page, not a route — the menu route is still derived above.
   onBackWithin?: () => void
+  // The game draws scenery that runs off the LEFT screen edge (Fyld Båden's pier). The body then does
+  // not clip at its own box — whose edge is the safe-area inset + padding, 47px+ into an iPhone in
+  // landscape (owner 2026-11-05, PWWCX) — but at the shell's, which is the screen.
+  bleedLeft?: boolean
   children: React.ReactNode
 }
 
@@ -91,6 +95,7 @@ const GameShell: React.FC<GameShellProps> = ({
   lightScene = false,
   inlineTitle = false,
   onBackWithin,
+  bleedLeft = false,
   children,
 }) => {
   const theme = useTheme()
@@ -224,7 +229,8 @@ const GameShell: React.FC<GameShellProps> = ({
           flexDirection: 'column',
           py: inlineTitle ? { xs: 0.5, md: 1 } : dense ? { xs: 1, md: 2 } : { xs: 2, md: 3 },
           ...(inlineTitle ? { px: { xs: 1.5, md: 1.5 } } : {}),
-          overflow: 'hidden',
+          // The shell (overflow hidden, edge = the screen's) still clips a bleeding game.
+          overflow: bleedLeft ? 'visible' : 'hidden',
           [PHONE_LANDSCAPE]: { py: 0.5 },
         }}
       >

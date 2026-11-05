@@ -1,7 +1,6 @@
 import React from 'react'
 import { Box } from '@mui/material'
 import { BTN, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StudioButton, studioColumns, studioPalSx, studioStageVars } from './StudioControls'
-import { gameIconImages } from '../../../assets/themes/icons/games'
 import { idlePulse } from '../../../theme/idleMotion'
 import { PHONE_PORTRAIT } from '../../../theme/phoneMedia'
 
@@ -52,10 +51,11 @@ export const PieceStudio: React.FC<{
         display: 'flex',
         flexDirection: landscape ? 'column' : 'row',
         alignItems: 'center',
-        // The way back to the picture grid at the top; the way-on control ("Nyt papir" / ✓ / →) at the
-        // BOTTOM right, the same spot as Fri Tegning's "Nyt papir" and Perleplade's "Ny plade" (owner,
-        // 2026-10-17). In portrait the column is a row, so the way on is the rightmost control.
-        justifyContent: 'space-between',
+        // The way-on control ("Nyt papir" / ✓ / →) at the BOTTOM right, the same spot as Fri Tegning's
+        // "Nyt papir" and Perleplade's "Ny plade" (owner, 2026-10-17). In portrait the column is a row,
+        // so it is the rightmost control. No "back to the pictures" button: the back arrow does exactly
+        // that (`onBackWithin`), and a second one was redundant (owner, 2026-11-05, ZVBE5).
+        justifyContent: 'flex-end',
         gap: 'clamp(10px, 2.4vmin, 22px)',
         minHeight: 0,
         // A row under the paper: the way on is rightmost, its + badge ending where the name pill does.
@@ -75,13 +75,6 @@ export const PieceStudio: React.FC<{
 /** The biggest control the side column holds: the ✓ / → (`PieceWayOn`'s `big`). */
 const BIG_BTN = `calc(${BTN} * 1.55)`
 const COLS = studioColumns(BIG_BTN)
-
-/** Back to the picture grid: the game's own tile picture ("the drawings"), so it needs no words. */
-export const PickerButton: React.FC<{ gameId: 'krea.guide' | 'krea.color' | 'krea.beads'; disabled?: boolean; onPress: () => void }> = ({ gameId, disabled, onPress }) => (
-  <StudioButton dataId="to-picker" label="Vælg en anden tegning" size={SIDE_BTN} disabled={disabled} onPress={onPress}>
-    <Box component="img" src={gameIconImages[gameId]} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
-  </StudioButton>
-)
 
 export type PieceStage = 'drawing' | 'finished' | 'alive' | 'shown'
 

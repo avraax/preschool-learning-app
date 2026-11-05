@@ -236,6 +236,14 @@ const Quay: React.FC<{
             {JETTY_POSTS.map((p) => (
               <Box key={`far-${p.x}`} aria-hidden sx={[RING_SX(p), { borderTopColor: RING_COLOUR }]} />
             ))}
+            {/* The pier runs on to the SCREEN's left edge (owner 2026-11-05, PWWCX: on an iPhone its cut-off
+                end showed 47px in, beside the notch). A mirror of the levelled render continues it leftward
+                — mirrored about the cut, the planks meet it at exactly the same height — so 22·s of pier
+                reach past any safe-area inset or centred desktop column; GameShell's `bleedLeft` lets it
+                draw into that strip instead of clipping at the content box. */}
+            <Box aria-hidden data-boat-jetty-run sx={{ position: 'absolute', top: 0, bottom: 0, right: '100%', width: '100%', pointerEvents: 'none' }}>
+              <Box component="img" src={jettyArt} alt="" draggable={false} sx={{ ...imgSx, position: 'absolute', inset: 0, width: '100%', height: '100%', transform: `scaleX(-1) rotate(${JETTY_LEVEL_DEG}deg)`, WebkitMaskImage: POST_FADE, maskImage: POST_FADE }} />
+            </Box>
             <Box component="img" src={jettyArt} alt="" draggable={false} sx={{ ...imgSx, position: 'absolute', inset: 0, width: '100%', height: '100%', transform: `rotate(${JETTY_LEVEL_DEG}deg)`, WebkitMaskImage: POST_FADE, maskImage: POST_FADE }} />
             {JETTY_POSTS.map((p) => (
               <Box key={`near-${p.x}`} aria-hidden sx={[RING_SX(p), { borderBottomColor: RING_COLOUR }]} />

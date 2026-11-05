@@ -27,7 +27,7 @@ import { CrayonPalette, ToolRow } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { playAlive, swapPaper } from './studio/alive'
 import { KreaPicker } from './studio/KreaPicker'
-import { PickerButton, PieceStudio, PieceWayOn, type PieceStage } from './studio/PieceStudio'
+import { PieceStudio, PieceWayOn, type PieceStage } from './studio/PieceStudio'
 
 // Farvelæg (`krea.color`, Krea PRD-01 §2.2.8, §4.4) — pick a page from a picture grid, then TAP a region
 // to fill it with the crayon in hand. A tap never leaks: the regions were labelled once by
@@ -366,10 +366,7 @@ const FarvelaegGame: React.FC = () => {
           </Paper>
         }
         side={
-          <>
-            <PickerButton gameId={GAME_ID} disabled={confirmOpen || busy} onPress={toPicker} />
-            <PieceWayOn stage={stage} hasInk={piece.actions.length > 0} disabled={confirmOpen || busy} reduce={reduce} onNewPaper={askNewPaper} onDone={onDone} onNext={onNext} />
-          </>
+          <PieceWayOn stage={stage} hasInk={piece.actions.length > 0} disabled={confirmOpen || busy} reduce={reduce} onNewPaper={askNewPaper} onDone={onDone} onNext={onNext} />
         }
         palette={
           <Box aria-hidden={tool !== 'crayon' || piece.done} sx={{ visibility: tool === 'crayon' && !piece.done ? 'visible' : 'hidden' }}>

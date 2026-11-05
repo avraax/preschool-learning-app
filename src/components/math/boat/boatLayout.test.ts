@@ -31,6 +31,19 @@ test('the game sizes the row from these numbers, never from a container unit ins
   assert.match(src, /width:\s*`calc\(var\(--s\) \* \$\{BOAT_COL_S\}\)`/, 'the boat column no longer reads BOAT_COL_S')
 })
 
+test('the pier runs on to the SCREEN edge, not the safe-area/content edge', () => {
+  // PWWCX (owner 2026-11-05, iPhone 844×390): the body clipped at its own box, 47px in (the notch's
+  // safe-area inset), so the pier's cut-off end showed beside an empty strip.
+  const strip = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+  const game = strip(readFileSync(new URL('../FyldBaadenGame.tsx', import.meta.url), 'utf8'))
+  const quay = strip(readFileSync(new URL('./Quay.tsx', import.meta.url), 'utf8'))
+  const shell = strip(readFileSync(new URL('../../common/GameShell.tsx', import.meta.url), 'utf8'))
+  assert.match(game, /<GameShell\b[^>]*\bbleedLeft\b/, 'Fyld Båden clips its pier at the content box again')
+  assert.match(shell, /overflow:\s*bleedLeft\s*\?\s*'visible'\s*:\s*'hidden'/, 'GameShell ignores bleedLeft')
+  assert.match(quay, /data-boat-jetty-run[\s\S]{0,300}right:\s*'100%',\s*width:\s*'100%'/, 'the pier no longer continues past its art')
+  assert.match(quay, /scaleX\(-1\) rotate\(\$\{JETTY_LEVEL_DEG\}deg\)/, 'the continuation is not the mirrored, levelled render')
+})
+
 test('"Hør igen" stands on the pier (in the Quay), once, at full size', () => {
   // UDZM5 (owner 2026-11-05): top-left under the back button on a phone it was "weirdly placed", and its
   // phone-landscape scale(0.8) took it to 38px — under the 44px floor.

@@ -71,7 +71,7 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
   its predecessor resized. Pitch floor 40 px on the iPad, 35 at Svær (owner).
 - The pattern card FILLS a reserved box (side remainder / portrait cell), absolutely inside it, and
   sizes its picture from what the measured legend leaves — never a shrinkable flex item (its legend hung
-  out of it in WebKit) or a fixed px picture. No "choose another board" button: back does it (owner).
+  out of it in WebKit) or a fixed px picture. No "choose another board/picture" button in ANY open piece: back does it (owner; `kreaBack.test`).
 
 ## Persistence & controls
 - **Session only** (`kreaSession`, sessionStorage per child × game × item; cleared on detach/reset). No

@@ -15,6 +15,14 @@ for (const file of ['./TegnMedMigGame.tsx', './FarvelaegGame.tsx', './Perleplade
     assert.equal(shells.filter((s) => /onBackWithin=\{toPicker\}/.test(s)).length, 1, 'the piece shell does not step back to the grid')
     assert.ok(!/onBackWithin/.test(shells[0]), 'the grid shell must leave for the menu')
   })
+
+  // Owner, 2026-11-04/05 (F5VYR, ZVBE5): a second "back to the pictures" button in the open piece did
+  // exactly what the back arrow does. The arrow is the one way back.
+  test(`${file}: no second "back to the grid" button in the open piece`, () => {
+    const code = src(file)
+    assert.doesNotMatch(code, /PickerButton|dataId="to-picker"/, 'the redundant picker button is back')
+    assert.doesNotMatch(code, /onPress=\{toPicker\}/, 'a control in the open piece steps back to the grid')
+  })
 }
 
 // Owner, 2026-10-17: the "no, keep it" choice shows the piece in hand (this drawing, this board with its
