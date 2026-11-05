@@ -341,6 +341,49 @@ only on the device for the current session — nothing is saved, uploaded, share
 else; there is no gallery, export or chat. The settings area gains a "Bedøm appen" row that opens the App
 Store's review page; like every external link it sits behind the parental gate."*
 
+### 1.4e "Nyheder" / "What's New" — 1.3.1 (written to ASC 2026-11-05, read back)
+
+Description, keywords, screenshots order and header carried over from 1.3 unchanged; all 12 shots
+re-taken (in-game name pill, centred titles, new pier, the grouped Perleplade picker).
+
+```
+Flere billeder i Krea — og mange små forbedringer.
+
+• Krea har fået mange flere billeder: flere tegninger i Tegn med Mig og Farvelæg, og flere mønstre og plader i Perleplade.
+• Beige er kommet med blandt farverne.
+• Tegn: træk med et stempel for at lave en hel række.
+• Perleplade: større mønsterbillede, og perlen svæver lige over fingeren.
+• Fyld Båden: kajen og båden står bedre, og hornet kan trykkes.
+• Barnets navn vises nu også inde i spillene.
+• Mange små rettelser i layout på iPhone og iPad.
+```
+
+en-GB: the same bullets in English (ASC is the copy of record; "Draw with Me", "Colour In", "Bead
+Board", "Fill the Boat").
+
+### 1.4f The download drop after 1.3 — measured 2026-11-05, PARKED for a later look (owner)
+
+From the ONGOING Analytics Reports feed (`analyticsReportRequests` 594bc37a…, reports r3 "App
+Downloads Standard" + r14 "App Store Discovery and Engagement Standard", daily, 2026-09-11 → 11-04;
+one segment fetch 500'd and succeeded on retry). First-time downloads exclude institutional:
+
+| period | DL/day | impressions/day | DL ÷ impressions |
+|---|---|---|---|
+| 11–30 Sep | 1.7 | 5.5 | 31% |
+| 1–10 Oct (spike) | 2.6 | 9.2 | 28% |
+| 11–18 Oct (1.2) | 1.4 | 4.6 | 30% |
+| 19 Oct–4 Nov (1.3) | 0.8 | 5.9 | **14%** |
+
+**Visibility did not drop** — search impressions are flat-to-up, so the en-GB locale and the
+`indskoling→tegne` swap are cleared. **Conversion halved** at 1.3, which changed only visuals a searcher
+sees (new screenshots led by the four-door home, header/search image). No ratings exist, so not a
+review. Small numbers (14 vs ~30 expected) — suggestive, not proof. The owner chose to KEEP the
+screenshot order for 1.3.1 and look at it later; the candidate fix was learning screens first
+(Bogstav Quiz, Fyld Båden, Krea) and the home screen fourth.
+
+**Also in the data:** 2026-10-21, **1500 "Institutional purchase"** downloads, DK, Desktop, v1.3 — an
+Apple School Manager volume purchase, i.e. a school or municipality. Keep it out of conversion maths.
+
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
 
 ```
