@@ -59,3 +59,45 @@ test('serialise round-trips exactly, and resume never throws on junk', () => {
   assert.deepEqual(mixed?.strokes, [{ tool: 'crayon', color: 'roed', points: [0, 900, 3, 4], seed: 1 }])
   assert.equal(deserialise('{"v":1,"s":[{"tool":"stamp","stamp":"nope","x":1,"y":1,"size":1,"seed":1}]}', new Set(['sun'])), null)
 })
+
+// ─── A dragged stamp (owner 2026-11-04, ANTC2): a drag lays a row, a TAP still lays exactly one ────────
+
+test('stamp trail: a tap — still or with a 5-year-old’s jitter — adds NOTHING; only a real drag trails', async () => {
+  const { extendStampTrail, STAMP_STEP } = await import('./strokeModel.ts')
+  const fresh = () => ({ tool: 'stamp' as const, stamp: 'sun', x: 500, y: 400, size: 150, seed: 1, trail: [] as number[] })
+  // A tap: 0 px, then wobbles of up to ~10 CSS px. A paper unit is ≈ 0.75–1.4 CSS px across every
+  // screen, so 14 units is MORE than a 10 px wobble on any of them.
+  for (const [dx, dy] of [[0, 0], [6, 0], [0, -8], [10, 10], [-14, 3]]) {
+    const s = fresh()
+    assert.equal(extendStampTrail(s, 500 + dx, 400 + dy), 0, `jitter ${dx},${dy}`)
+    assert.deepEqual(s.trail, [])
+  }
+  // The threshold is a whole picture's spacing, far past any jitter.
+  assert.ok(STAMP_STEP >= 100, `STAMP_STEP ${STAMP_STEP} is too small to tell a tap from a drag`)
+  // A drag across the paper: an even row, one picture per STAMP_STEP, whatever the event rate.
+  const slow = fresh()
+  for (let x = 500; x <= 1100; x += 7) extendStampTrail(slow, x, 400)
+  const fast = fresh()
+  extendStampTrail(fast, 1100, 400)
+  assert.equal(slow.trail.length / 2, Math.floor(600 / STAMP_STEP))
+  assert.deepEqual(fast.trail, slow.trail, 'a flick lays the same row as a slow drag')
+  for (let i = 0; i < fast.trail.length; i += 2) assert.equal(fast.trail[i] - (i ? fast.trail[i - 2] : 500), STAMP_STEP)
+})
+
+test('stamp trail: one drag is ONE stroke — one undo takes the whole row; it survives a resume', async () => {
+  const { extendStampTrail, stampPlacements } = await import('./strokeModel.ts')
+  const s = { tool: 'stamp' as const, stamp: 'sun', x: 100, y: 100, size: 150, seed: 3, trail: [] as number[] }
+  extendStampTrail(s, 800, 600)
+  assert.ok(s.trail.length >= 6)
+  let d = addStroke(addStroke(emptyDrawing(), crayon('roed')), s)
+  assert.equal(d.strokes.length, 2)
+  const back = deserialise(serialise(d), new Set(['sun']))!
+  assert.deepEqual(back.strokes[1], s)
+  assert.equal(stampPlacements(back.strokes[1] as typeof s).length, 1 + s.trail.length / 2)
+  d = undo(d)
+  assert.equal(d.strokes.length, 1, 'one undo removes the whole dragged row')
+  // A broken trail drops the trail, never the stamp.
+  const bad = deserialise('{"v":1,"s":[{"tool":"stamp","stamp":"sun","x":1,"y":1,"size":150,"seed":1,"trail":[1,"x"]}]}', new Set(['sun']))!
+  assert.equal(bad.strokes.length, 1)
+  assert.equal((bad.strokes[0] as { trail?: number[] }).trail, undefined)
+})

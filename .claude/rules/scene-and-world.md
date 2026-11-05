@@ -76,6 +76,9 @@ Rendered **INSIDE each page** — menus mount `ThemeMascot`, games mount GameShe
 game events (`cheer`/`think`/…) via the `mascotBus` (`src/services/mascotBus.ts`). It is deliberately
 decoupled from the world layer to avoid Chrome hover-compositing flicker; keep it that way. Its footprint is
 exported as `MASCOT_CORNER_SIZE` so a layout reserves it rather than re-measuring (responsive-design.md).
+**Place the INK, not the box**: sprite padding differs per skin/pose, so each surface pins its box to the
+corner and shifts the sprite by `MASCOT_INK` (re-run `node scripts/mascot-ink.mjs` after re-keying) to
+`MASCOT_INK_INSET` from left AND bottom.
 
 ## The music bed
 

@@ -10,7 +10,8 @@ import { hexToRgba } from '../../theme/tokens/helpers'
 import { getTapAnims, TAP_ANIM_MAX_MS, type TapAnim } from '../../theme/mascotAnimations'
 import { idleFloat } from '../../theme/idleMotion'
 import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
-import { MASCOT_CORNER_PHONE_PORTRAIT, MASCOT_CORNER_SIZE } from './mascotCorner'
+import { inkPlacementSx, MASCOT_CORNER_PHONE_PORTRAIT, MASCOT_CORNER_SIZE } from './mascotCorner'
+import { MASCOT_INK } from '../../theme/mascotInk'
 
 // Reactive corner mascot (UI/UX Overhaul PRD §5.5). ONE reusable emotional guide that reacts to
 // gameplay events (correct/wrong/streak/round/hint/sticker/welcome) via the `mascotBus`. Games
@@ -145,6 +146,10 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent, grounded = false }) => 
   }, [])
 
   const url = loaded && loaded.id === themeId ? loaded.mascot : ''
+  // This sprite's measured ink box (generated table; a skin without one falls back to the plain box).
+  // Only the CORNER companion: a grounded one is seated on scene art by its caller (Fyld Båden's deck),
+  // whose seat is measured against the plain box.
+  const ink = grounded ? undefined : MASCOT_INK[themeId]?.mascot
   const { animate, transition } = poseAnim(pose)
   // The idle bob, as CSS, on the SPRITE — one layer below the framer feedback on the button, so the
   // two transforms compose instead of overwriting each other. Stood down while a reaction pose or a
@@ -160,8 +165,10 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent, grounded = false }) => 
       sx={{
         position: 'fixed',
         zIndex: 6,
-        left: 'calc(env(safe-area-inset-left) + 6px)',
-        bottom: 'calc(env(safe-area-inset-bottom) + 2px)',
+        // The BOX sits in the corner; the image inside is shifted by its own ink box so the visible
+        // figure lands MASCOT_INK_INSET of the box in from the left AND the bottom (mascotCorner.ts).
+        left: 'env(safe-area-inset-left)',
+        bottom: 'env(safe-area-inset-bottom)',
         width: MASCOT_CORNER_SIZE,
         height: MASCOT_CORNER_SIZE,
         pointerEvents: 'none',
@@ -231,6 +238,7 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent, grounded = false }) => 
           border: 'none',
           background: 'transparent',
           display: 'block',
+          position: 'relative',
           cursor: 'pointer',
           pointerEvents: 'auto', // tappable even though the container is click-through
           WebkitTapHighlightColor: 'transparent',
@@ -246,10 +254,8 @@ const Mascot: React.FC<MascotProps> = ({ sx, forceEvent, grounded = false }) => 
             alt=""
             draggable={false}
             sx={[
+              ink ? inkPlacementSx(ink) : { width: '100%', height: '100%', objectFit: 'contain' },
               {
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
                 filter: grounded ? 'none' : 'drop-shadow(0 6px 12px rgba(0,0,0,0.28))',
                 userSelect: 'none',
               },

@@ -39,7 +39,8 @@ import {
 import Boat, { type BundleFx } from './boat/Boat'
 import { BOAT_LOOKS, boxColumns } from './boat/boatLooks'
 import Quay from './boat/Quay'
-import { PHONE_LANDSCAPE, PHONE_PORTRAIT } from '../../theme/phoneMedia'
+import { BOAT_COL_S, BOAT_GAP_S, BOAT_W_S, JETTY_COL_MAX_S, JETTY_COL_MIN_S, JETTY_REACH_S, LANDSCAPE_BUDGET_S } from './boat/boatLayout'
+import { PHONE_PORTRAIT } from '../../theme/phoneMedia'
 import SendButton from './boat/SendButton'
 import { HarbourBackdrop, HarbourFrontWater } from './boat/HarbourScene'
 
@@ -474,26 +475,6 @@ const FyldBaadenGame: React.FC = () => {
           data-boat-loaded={DEV ? deckValue(deck) : undefined}
           data-boat-phase={DEV ? phase : undefined}
           sx={{ flex: 1, minHeight: 0, containerType: 'size', position: 'relative' }}>
-          {/* "Hør igen" sits centred right under the title (owner, 2026-10-15), over the empty sky — not
-              inside the jetty column, where it competed with the cargo. On a phone in landscape the boat
-              fills the height, so centred it sat on the masthead: there it moves over the jetty's sky,
-              smaller (device sweep, 2026-10-26). */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              display: 'flex',
-              justifyContent: 'center',
-              zIndex: 3,
-              pointerEvents: 'none',
-              '& > *': { pointerEvents: 'auto' },
-              [PHONE_LANDSCAPE]: { justifyContent: 'flex-start', pl: 'calc(var(--s) * 0.6)', '& > *': { pointerEvents: 'auto', transform: 'scale(0.8)', transformOrigin: 'left top' } },
-            }}
-          >
-            <MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />
-          </Box>
           <Box
             sx={{
               // Landscape: quay (5.8) | boat art (12.9, ≈7.9 tall at its 849:519 aspect) side by side.
@@ -510,9 +491,9 @@ const FyldBaadenGame: React.FC = () => {
               // 16:9 monitors) goes to the JETTY column, so more planks show and the boat stays moored
               // beside it — it used to pool between jetty and boat as open water. The 80px cap left a
               // monitor's scene marooned in the corner; 140 lets it fill a 1440p screen.
-              '--s': 'min(calc(100cqw / 19.8), calc(100cqh / 9), 140px)',
-              '--bw': 'calc(var(--s) * 12.9)',
-              '--jetty-reach': 'calc(var(--s) * 0.4)',
+              '--s': `min(calc(100cqw / ${LANDSCAPE_BUDGET_S}), calc(100cqh / 9), 140px)`,
+              '--bw': `calc(var(--s) * ${BOAT_W_S})`,
+              '--jetty-reach': `calc(var(--s) * ${JETTY_REACH_S})`,
               height: '100%',
               display: 'flex',
               flexDirection: 'row',
@@ -535,13 +516,23 @@ const FyldBaadenGame: React.FC = () => {
             {/* Quay first in z-order terms: the next boat arrives from BEHIND it. */}
             <Box
               sx={{
-                // Grows with the spare width (see `--s`), up to where the jetty's left end would leave the
-                // screen edge (its art is 11·s wide and reaches 0.4·s past the column).
-                flex: '0 0 clamp(calc(var(--s) * 5.8), calc(100cqw - var(--s) * 14), calc(var(--s) * 10.6))',
+                // Takes the spare width (flex-GROW), from 5.8·s up to 8.6·s. The jetty art is 11·s wide and
+                // its bollard end reaches 0.4·s past the column, so its LEFT end sits at colW + 0.4·s − 11·s:
+                // at 8.6·s that is still 2·s off the stage's left edge — past GameShell's Container padding
+                // and an iPhone's safe-area inset, so the pier always comes in from off-screen.
+                //
+                // Owner 2026-11-04 (ZZATX, F4E9D): on the device the pier's beginning showed and the whole
+                // row slid right, pushing the boat's bow and horn off-screen. This used to be
+                // `flex: 0 0 clamp(5.8·s, 100cqw − 14·s, 10.6·s)`: a `cqw` inside a flex-basis clamp, whose
+                // cap (10.6·s) put the jetty's end exactly AT the stage edge — 32px into the screen — and
+                // on the iPad it resolved to that cap. Width + max-width + flex-grow need no container unit.
+                flex: '1 0 auto',
+                width: `calc(var(--s) * ${JETTY_COL_MIN_S})`,
+                maxWidth: `calc(var(--s) * ${JETTY_COL_MAX_S})`,
                 position: 'relative',
                 zIndex: 1,
                 minHeight: 0,
-                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 9)' },
+                '@media (orientation: portrait)': { flex: '0 0 auto', width: 'calc(var(--s) * 9)', maxWidth: 'none' },
               }}
             >
               <Quay
@@ -552,11 +543,17 @@ const FyldBaadenGame: React.FC = () => {
                 counts={{ box: Math.max(0, boxStock - boxesOut), fish: BAY_SLOTS - deck.fish }}
                 stock={{ box: boxStock, fish: BAY_SLOTS }}
                 boxCols={boxCols}
+                // "Hør igen" stands on the PIER, just above the cargo (owner 2026-11-05, UDZM5: top-left
+                // under the back button on a phone it was "weirdly placed"). It rides in the jetty column,
+                // so it follows the pier on every screen and can never meet the header, the boat or ✓.
+                // Full size everywhere — the phone's old scale(0.8) took it under the 44px floor.
+                aboveSlot={<MathRepeatButton onClick={() => { markInteracted(); speakPrompt() }} disabled={!gameReady} />}
               />
             </Box>
             <Box
               sx={{
-                flex: '0 0 calc(var(--s) * 14)',
+                flex: '0 0 auto',
+                width: `calc(var(--s) * ${BOAT_COL_S})`,
                 minWidth: 0,
                 display: 'flex',
                 alignItems: 'flex-end',
@@ -567,7 +564,7 @@ const FyldBaadenGame: React.FC = () => {
                 pb: 'max(0px, calc(7dvh - var(--bw) * 0.06 - 10px))',
                 // Landscape: the boat stops a little right of centre, clear of the jetty's end, with only
                 // the very tip of the bow past the screen edge (owner, 2026-10-15).
-                pl: 'calc(var(--s) * 0.9)',
+                pl: `calc(var(--s) * ${BOAT_GAP_S})`,
                 '@media (orientation: portrait)': { flex: '0 0 auto', pl: 0, justifyContent: 'center' },
                 // Bow pinned near the right edge; the wider-than-screen boat overflows at the stern.
                 [PHONE_PORTRAIT]: { justifyContent: 'flex-end', pr: 'calc(var(--bw) * 0.01)' },

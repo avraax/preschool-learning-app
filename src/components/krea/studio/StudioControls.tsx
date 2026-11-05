@@ -25,6 +25,65 @@ export const SIDE_BTN = `calc(${BTN} * 1.4)`
  */
 export const SIDE_TOP_CLEARANCE = 'clamp(14px, 3.4vmin, 30px)'
 
+/** How far the + badge hangs past a "new" control's right edge — `PlusBadge`'s `right: -14%`. */
+const BADGE_OVERHANG = 0.14
+
+/**
+ * The studio's COLUMN GEOMETRY, one definition for all three drawing games (owner 2026-11-04, iPad Pro
+ * 12.9": "the crayons are not centred under the canvas" and "the + and paper are too far right — give it
+ * the same spacing as the avatar pill").
+ *
+ * - The crayon row spans the whole stage, but the side column is wider than the tool column, so the row's
+ *   centre sat 15–22 px right of the paper's. Both columns are now DEFINITE widths in landscape, and the
+ *   row pads its right by their difference — so it is centred on the paper, by construction.
+ * - The right-hand controls stand in a lane as wide as the widest of them, set in from the stage's edge
+ *   so the + badge's OUTER edge lands where the header's name pill ends. The pill ends at the Toolbar's
+ *   gutter (16 px, 24 px from 600 px wide); the shell's content sits 12 px in already — that difference is
+ *   `--krea-pill-gap`, set by `studioStageVars`. Measured, not assumed: the sweep compares the two edges.
+ *
+ * `widest` is the biggest control the side column ever holds (Fri Tegning: the sheet; a piece: the ✓/→).
+ */
+export const studioColumns = (widest: string) => {
+  // Lane centred, sheet centred in it, badge hanging 14 % past the sheet: pull it in by the difference.
+  const inset = `calc(var(--krea-pill-gap) + ${SIDE_BTN} * ${BADGE_OVERHANG} - (${widest} - ${SIDE_BTN}) / 2)`
+  return {
+    tools: BTN,
+    side: `calc(${widest} + ${inset})`,
+    inset,
+    /** A row under the paper (portrait): the sheet is the rightmost control, so only its badge counts. */
+    rowInset: `calc(var(--krea-pill-gap) + ${SIDE_BTN} * ${BADGE_OVERHANG})`,
+  }
+}
+
+const PAL_GAP = 'clamp(0px, 0.4vmin, 6px)'
+
+/**
+ * The `pal` grid cell under the paper: the crayon row's size CONTAINER, centred on the paper. It spans
+ * the whole stage, so in landscape it pads its right by (side − tools) — the paper's offset — unless the
+ * row would no longer fit at the 44 px floor (a phone), where fitting beats a few px of centring.
+ * `n` = how many items the widest row holds.
+ */
+export const studioPalSx = (cols: ReturnType<typeof studioColumns>, n: number) => ({
+  gridArea: 'pal',
+  display: 'grid',
+  // ONE track exactly as wide as the row: an `auto` track grew to the stamp tray's max-content (24
+  // pictures, wider than the screen) and the crayons were centred on THAT, not on the paper.
+  gridTemplateColumns: 'minmax(0, 1fr)',
+  justifyItems: 'center',
+  alignItems: 'end',
+  containerType: 'inline-size',
+  '& > *': { gridArea: '1 / 1', width: '100%' },
+  '@media (orientation: landscape)': {
+    pr: `max(0px, min(${cols.side} - ${cols.tools}, 100% - ${n} * 44px - ${n - 1} * ${PAL_GAP}))`,
+  },
+})
+
+/** The stage-level custom property `studioColumns` reads (see there). */
+export const studioStageVars = {
+  '--krea-pill-gap': '4px',
+  '@media (min-width: 600px)': { '--krea-pill-gap': '12px' },
+} as const
+
 const REST_SHADOW = 'drop-shadow(0 3px 3px rgba(70,40,15,0.35))'
 const LIFT_SHADOW = 'drop-shadow(0 0 7px rgba(255,214,90,0.95)) drop-shadow(0 9px 7px rgba(70,40,15,0.35))'
 
@@ -236,23 +295,25 @@ export const CrayonPalette: React.FC<CrayonPaletteProps> = ({ colors, color, inH
     ...(onPickRainbow ? [{ id: 'rainbow' as const, label: KREA_RAINBOW_NAME, src: KREA_ART.crayonRainbow, on: inHand === 'rainbow', pick: onPickRainbow }] : []),
   ]
   const n = items.length
-  // One row on a tablet: 13 must fit 768 wide in portrait INSIDE the shell's side padding (measured: at
-  // `(100vw - 40px) / 13.6` the rainbow wrapped alone onto a second line). On a phone in portrait, two
-  // even rows.
-  const cell = `min(calc(${BTN} * 1.02), calc((100vw - 64px) / ${n + 1.2}))`
+  // A GRID with a fixed column count, never a wrapping flow: ONE row everywhere but a phone in portrait,
+  // which gets two even rows (7 + 7, 7 + 6, 5 + 5…). A wrapping flow sized from `100vw` broke on the
+  // owner's iPad (2026-11-04: the rainbow crayon alone on a second line). The cell is sized from the
+  // row's OWN width (`cqw` — the `pal` box around it is the container, `studioPalSx`), so it cannot
+  // outgrow it short of the 44 px floor.
+  const cols = (k: number) => `max(44px, min(calc(${BTN} * 1.02), calc((100cqw - ${k - 1} * ${PAL_GAP}) / ${k})))`
+  const half = Math.ceil(n / 2)
   return (
     <Box
       data-krea-palette
       data-krea-palette-size={colors.length}
       sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
+        display: 'grid',
+        gridTemplateColumns: `repeat(${n}, ${cols(n)})`,
         justifyContent: 'center',
-        alignItems: 'flex-end',
-        columnGap: 'clamp(0px, 0.4vmin, 6px)',
+        alignItems: 'end',
+        columnGap: PAL_GAP,
         rowGap: '2px',
-        maxWidth: `calc(${BTN} * ${n + 1.4})`,
-        '@media (orientation: portrait) and (max-width: 480px)': { maxWidth: `calc(${BTN} * ${Math.ceil(n / 2) + 0.8})` },
+        '@media (orientation: portrait) and (max-width: 480px)': { gridTemplateColumns: `repeat(${half}, ${cols(half)})` },
       }}
     >
       {items.map((it) => (
@@ -264,9 +325,9 @@ export const CrayonPalette: React.FC<CrayonPaletteProps> = ({ colors, color, inH
           disabled={disabled}
           {...pressHandlers(it.pick)}
           sx={{
-            width: cell,
+            width: '100%',
+            aspectRatio: '1',
             minWidth: '44px',
-            height: cell,
             minHeight: '44px',
             borderRadius: '50%',
             touchAction: 'manipulation',
@@ -314,8 +375,9 @@ export const StampTray: React.FC<StampTrayProps> = ({ stamps, stamp, onPick, dis
       WebkitOverflowScrolling: 'touch',
       scrollbarWidth: 'none',
       '&::-webkit-scrollbar': { display: 'none' },
+      // As wide as the row under the paper (`studioPalSx`), padding included.
       width: '100%',
-      maxWidth: 'calc(100vw - 32px)',
+      boxSizing: 'border-box',
       px: '18px',
       pt: '22px',
       pb: '14px',

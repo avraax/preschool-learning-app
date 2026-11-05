@@ -8,6 +8,8 @@ import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { getTapAnims, TAP_ANIM_MAX_MS, type TapAnim } from '../../theme/mascotAnimations'
 import { idleFloat } from '../../theme/idleMotion'
 import ThemedBurst, { type ThemedBurstHandle } from './ThemedBurst'
+import { inkPlacementSx } from './mascotCorner'
+import { MASCOT_INK, type MascotSprite } from '../../theme/mascotInk'
 
 // Per-world mascot (Theme Worlds PRD §5.4) — upgraded to the reactive GUIDE (Liveliness PRD-05 W6).
 // The ONE interactive element of the world layer. It now cross-fades between baked soft-3D POSES
@@ -42,7 +44,7 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
   const theme = useTheme()
   const { themeId } = useThemeSwitch()
   const reduce = useReducedMotion()
-  const [loaded, setLoaded] = useState<{ id: string; poses: MascotPoses } | null>(null)
+  const [loaded, setLoaded] = useState<{ id: string; poses: MascotPoses; authoredPoses: boolean } | null>(null)
   const [tapAnim, setTapAnim] = useState<TapAnim | null>(null)
   // A short-lived pose (greet on mount / point on attract) layered over the resting idle.
   const [transient, setTransient] = useState<Pose | null>(reduce ? null : 'greet')
@@ -60,7 +62,7 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
       if (!alive || !a) return
       // Prefer authored poses; fall back to the single sprite as idle so un-updated skins still work.
       const poses = a.mascotPoses ?? (a.mascot ? { idle: a.mascot } : null)
-      if (poses) setLoaded({ id: themeId, poses })
+      if (poses) setLoaded({ id: themeId, poses, authoredPoses: !!a.mascotPoses })
     })
     return () => {
       alive = false
@@ -117,11 +119,17 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
   const activePose: Pose = reaction === 'cheer' ? 'celebrate' : transient ?? 'idle'
 
   // Distinct pose→url list to render as a cross-fade stack (only present poses; deduped).
+  // Each layer carries the measured ink box of ITS sprite (poses differ in aspect), so every pose's
+  // figure lands on the same corner inset — see mascotCorner.ts. A skin that fell back to the single
+  // sprite as idle uses that sprite's box.
   const layers = useMemo(() => {
-    if (!poses) return [] as { pose: Pose; url: string }[]
+    if (!poses) return [] as { pose: Pose; url: string; sprite: MascotSprite }[]
     const order: Pose[] = ['idle', 'greet', 'point', 'celebrate']
-    return order.filter((p) => poses[p]).map((p) => ({ pose: p, url: poses[p] as string }))
-  }, [poses])
+    const authored = !!loaded && loaded.authoredPoses
+    return order
+      .filter((p) => poses[p])
+      .map((p) => ({ pose: p, url: poses[p] as string, sprite: (authored ? `mascot-${p}` : 'mascot') as MascotSprite }))
+  }, [poses, loaded])
 
   if (!layers.length || !lines.length) return null
 
@@ -208,7 +216,9 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
             pose stack rather than sharing the button with framer's reaction transforms. */}
         <Box {...bob.props} sx={[{ position: 'absolute', inset: 0 }, bob.sx]}>
         {/* Cross-fade pose stack — all present poses mounted; only the active one is opaque. */}
-        {layers.map(({ pose, url }) => (
+        {layers.map(({ pose, url, sprite }) => {
+          const ink = MASCOT_INK[themeId]?.[sprite]
+          return (
           <Box
             key={pose}
             component="img"
@@ -216,12 +226,9 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
             alt=""
             draggable={false}
             sx={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              objectPosition: 'bottom center',
+              ...(ink
+                ? inkPlacementSx(ink)
+                : { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom center' }),
               filter: 'drop-shadow(0 6px 12px rgba(0, 0, 0, 0.28))',
               pointerEvents: 'none',
               userSelect: 'none',
@@ -229,7 +236,8 @@ const ThemeMascot: React.FC<ThemeMascotProps> = ({
               transition: reduce ? 'none' : 'opacity 0.3s ease',
             }}
           />
-        ))}
+          )
+        })}
         </Box>
       </Box>
 

@@ -18,6 +18,7 @@ import { newSeen } from '../../services/newSeen'
 import type { SceneSectionId } from '../../theme/tokens/types'
 import RewardRing from '../common/RewardRing'
 import ProfileChip from '../common/ProfileChip'
+import { MASCOT_INK_INSET } from '../common/mascotCorner'
 import ThemeMascot from '../common/ThemeMascot'
 import LivingCard from '../common/LivingCard'
 import SceneObjectField, { type SceneFieldItem } from '../common/scene/SceneObjectField'
@@ -81,9 +82,10 @@ const homeItems: HomeItem[] = FOUR_DOORS
 // ~30% smaller than the first cut (128/156/184): "a tad too big", then "still takes too much focus from
 // the menu items" (owner, 2026-10-17 ×2). The doors are the point of this screen; the mascot accompanies.
 const HOME_MASCOT = { xs: 92, sm: 110, md: 128 } as const
-const MASCOT_INSET_LEFT = 6
 const MASCOT_GAP = 10
-const reserveFor = (px: number) => `calc(env(safe-area-inset-left) + ${MASCOT_INSET_LEFT + px + MASCOT_GAP}px)`
+// The box is in the corner and the figure stands MASCOT_INK_INSET of its size in from it, so the widest
+// pose reaches (1 + inset) × the box — that, not the box, is what the doors must clear.
+const reserveFor = (px: number) => `calc(env(safe-area-inset-left) + ${Math.ceil(px * (1 + MASCOT_INK_INSET)) + MASCOT_GAP}px)`
 
 const HomePage: React.FC = () => {
   const theme = useTheme()
@@ -438,12 +440,13 @@ const HomePage: React.FC = () => {
       <ThemeMascot
         attract={attractOn}
         sx={{
-          left: `calc(env(safe-area-inset-left) + ${MASCOT_INSET_LEFT}px)`,
-          // Lifted off the bottom edge — it sat too close to it (owner, 2026-10-17; was +2px).
-          bottom: 'calc(env(safe-area-inset-bottom) + 18px)',
+          // The BOX sits in the corner; ThemeMascot shifts each pose by its measured ink box so the
+          // figure stands MASCOT_INK_INSET of its size in from the left AND the bottom (mascotCorner.ts).
+          left: 'env(safe-area-inset-left)',
+          bottom: 'env(safe-area-inset-bottom)',
           width: HOME_MASCOT,
           height: HOME_MASCOT,
-          [PHONE_ANY]: { width: 64, height: 64, bottom: 'calc(env(safe-area-inset-bottom) + 8px)' },
+          [PHONE_ANY]: { width: 64, height: 64 },
         }}
       />
     </Box>

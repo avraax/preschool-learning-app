@@ -5,7 +5,7 @@
 //
 // The crayon is a SOLID colour (owner, 2026-10-16) — the earlier wax grain read as white dots in the line.
 
-import { BRUSH_WIDTH, type CrayonColor, type Stroke } from './strokeModel.ts'
+import { BRUSH_WIDTH, stampPlacements, type CrayonColor, type Stroke } from './strokeModel.ts'
 
 /** The crayon colours as drawn. Pure, saturated, like the baked crayons' names promise. */
 export const CRAYON_HEX: Record<CrayonColor, string> = {
@@ -77,7 +77,8 @@ interface PainterState {
   /** Glitter: the leftover distance to the next star, and the seeded generator. */
   carry: number
   r: () => number
-  stamped: boolean
+  /** Stamp: how many of its placements are painted (a dragged stamp grows while the finger moves). */
+  placed: number
 }
 
 export interface StrokePainter {
@@ -91,7 +92,7 @@ const STAR_STEP = 12
 const GLITTER_TRAIL = '#F6DC8F'
 
 export function createPainter(s: Stroke): StrokePainter {
-  const st: PainterState = { sx: 0, sy: 0, dist: 0, edge: 1, done: false, carry: STAR_STEP, r: rng(s.seed), stamped: false }
+  const st: PainterState = { sx: 0, sy: 0, dist: 0, edge: 1, done: false, carry: STAR_STEP, r: rng(s.seed), placed: 0 }
   if (s.tool !== 'stamp') {
     st.sx = s.points[0]
     st.sy = s.points[1]
@@ -103,17 +104,23 @@ export function createPainter(s: Stroke): StrokePainter {
       const xs = (x: number): number[] => (mx === undefined ? [x] : [x, 2 * mx - x])
       ctx.save()
       if (s.tool === 'stamp') {
+        // Every placement not painted yet — a live drag lays its trail picture by picture. Each one
+        // takes the NEXT tilt from the stroke's seeded generator, in order, so a replay tilts every
+        // picture exactly as it was (and a single stamp tilts as it always did: the first draw).
         const img = env.stampImage(s.stamp)
-        if (img && !st.stamped) {
-          st.stamped = true
-          const tilt = (rng(s.seed)() - 0.5) * 0.24
+        if (img) {
+          const all = stampPlacements(s)
           const size = s.size * k
-          for (const x of xs(s.x)) {
-            ctx.save()
-            ctx.translate(x * k, s.y * k)
-            ctx.rotate(tilt)
-            ctx.drawImage(img, -size / 2, -size / 2, size, size)
-            ctx.restore()
+          for (; st.placed < all.length; st.placed++) {
+            const [px, py] = all[st.placed]
+            const tilt = (st.r() - 0.5) * 0.24
+            for (const x of xs(px)) {
+              ctx.save()
+              ctx.translate(x * k, py * k)
+              ctx.rotate(tilt)
+              ctx.drawImage(img, -size / 2, -size / 2, size, size)
+              ctx.restore()
+            }
           }
         }
         ctx.restore()

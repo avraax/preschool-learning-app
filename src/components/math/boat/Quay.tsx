@@ -7,6 +7,8 @@ import type { CargoKind } from './boatDeck'
 import { BOX_ASPECT, FishBoxView, FishView } from './Cargo'
 import jettyArt from '../../../assets/games/boat/jetty.webp'
 import { deckItemWidth } from './boatLooks'
+// The jetty's width in slot units; most of what exceeds the column runs off the left edge.
+import { JETTY_W } from './boatLayout'
 
 // The jetty (owner's Gemini render, batch I): a long wooden jetty coming in from the left edge of the
 // screen — from the shore, off-picture — with two supply piles on its planks: a stack of fish boxes and a
@@ -23,8 +25,9 @@ import { deckItemWidth } from './boatLooks'
 // (back edge) to ~0.45 (front edge), the bollard cap tops out at x ~0.93, y ~0.13, the posts end ~0.95.
 
 const JETTY_ASPECT = 966 / 298
-/** The jetty's width in slot units; most of what exceeds the column runs off the left edge. */
-const JETTY_W = 11
+/** Air between the TALLEST the piles can stand (a full 5-tier box column, the 4-3-2-1 fish heap) and the
+ *  slot above them (Hør igen) — plus the 10px the piles' drag targets reach past their art. */
+const QUAY_SLOT_GAP = 'calc(var(--s) * 0.3 + 10px)'
 /** The render rises ~3° to the right; the image is counter-rotated so the planks read level. */
 const JETTY_LEVEL_DEG = 3
 /** Where the piles stand, as `bottom` (fraction of the jetty box from its bottom edge): mid-plank, well
@@ -192,11 +195,20 @@ const Quay: React.FC<{
   stock: Record<CargoKind, number>
   /** The level's box columns on the deck, so a jetty box is the size of a deck box. */
   boxCols: number
-}> = ({ interactive, overQuay, onLoad, refills, counts, stock, boxCols }) => {
+  /** Stands on the pier, just above the piles (the game's "Hør igen"). */
+  aboveSlot?: React.ReactNode
+}> = ({ interactive, overQuay, onLoad, refills, counts, stock, boxCols, aboveSlot }) => {
   // Right to left from the bollard: the fish heap, then the box stack.
   const fishL = pileLayout('fish', stock.fish)
   const fishW = `calc(var(--bw) * ${(deckItemWidth('fish', boxCols) * fishL.W).toFixed(4)})`
   const fishRight = `${PILE_RIGHT * 100}%`
+  const boxUnit = deckItemWidth('box', boxCols)
+  const boxL = pileLayout('box', stock.box)
+  const boxW = `calc(var(--bw) * ${(boxUnit * boxL.W).toFixed(4)})`
+  // The highest the piles stand at this level, in px of the boat's width: the level's full box stock
+  // (≤ 5 tiers), the full heap — so the slot above them never moves as a pile runs down.
+  const boxMaxH = `calc(var(--bw) * ${(boxUnit * boxL.H).toFixed(4)})`
+  const fishMaxH = `calc(var(--bw) * ${(deckItemWidth('fish', boxCols) * fishL.H).toFixed(4)})`
   const boxRight = `calc(${PILE_RIGHT * 100}% + ${fishW} + var(--s) * 0.45)`
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', minHeight: 0 }}>
@@ -229,6 +241,23 @@ const Quay: React.FC<{
               <Box key={`near-${p.x}`} aria-hidden sx={[RING_SX(p), { borderBottomColor: RING_COLOUR }]} />
             ))}
             <Pile kind="box" right={boxRight} count={counts.box} stock={stock.box} boxCols={boxCols} interactive={interactive} onLoad={onLoad} refill={refills.box} />
+            {/* "Hør igen" stands just above the piles, centred over them. Measured from the FULL-stock
+                heights (a box column is 5 tiers at most), so it never moves as a pile runs down. */}
+            {aboveSlot ? (
+              <Box
+                data-boat-repeat
+                sx={{
+                  position: 'absolute',
+                  zIndex: 3,
+                  right: `calc(${PILE_RIGHT * 100}% + (${fishW} + var(--s) * 0.45 + ${boxW}) / 2)`,
+                  bottom: `calc(max(${STAND.box} + ${boxMaxH}, ${STAND.fish} + ${fishMaxH}) + ${QUAY_SLOT_GAP})`,
+                  transform: 'translateX(50%)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {aboveSlot}
+              </Box>
+            ) : null}
             <Pile kind="fish" right={fishRight} count={counts.fish} stock={stock.fish} boxCols={boxCols} interactive={interactive} onLoad={onLoad} refill={refills.fish} />
           </Box>
         </DroppableZone>

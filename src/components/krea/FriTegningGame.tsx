@@ -27,7 +27,7 @@ import {
   type Tool,
 } from './canvas/strokeModel'
 import { StudioBackdrop, Paper } from './studio/StudioScene'
-import { BTN, CrayonPalette, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StampTray, StudioButton, ToolRow } from './studio/StudioControls'
+import { CrayonPalette, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StampTray, StudioButton, ToolRow, studioColumns, studioPalSx, studioStageVars } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { InkThumb } from './studio/KreaPicker'
 import { STAMPS, STAMP_IDS, STAMP_URLS } from './studio/stamps'
@@ -50,6 +50,8 @@ import { swapPaper } from './studio/alive'
 const GAME_ID = 'krea.draw'
 const ITEM_ID = 'paper'
 const SAVE_DEBOUNCE_MS = 500
+/** The side column holds the sheet alone, so it is as wide as the sheet (`studioColumns`). */
+const COLS = studioColumns(SIDE_BTN)
 
 const FriTegningGame: React.FC = () => {
   useOccludeWorld()
@@ -222,9 +224,11 @@ const FriTegningGame: React.FC = () => {
         justifyContent: 'flex-end',
         gap: 'clamp(8px, 2vmin, 16px)',
         minHeight: 0,
-        minWidth: `calc(${BTN} * 1.5)`,
-        '@media (orientation: landscape)': { pt: SIDE_TOP_CLEARANCE },
-        [PHONE_PORTRAIT]: { minWidth: 0, px: 1 },
+        // The sheet's + badge ends where the header's name pill does (owner, 2026-11-04) — in a row
+        // under the paper and in the column beside it alike (`studioColumns`).
+        pr: COLS.rowInset,
+        '@media (orientation: landscape)': { pt: SIDE_TOP_CLEARANCE, pr: COLS.inset },
+        [PHONE_PORTRAIT]: { pl: 1 },
       }}
     >
       <Box sx={{ visibility: ink ? 'visible' : 'hidden' }}>
@@ -241,6 +245,7 @@ const FriTegningGame: React.FC = () => {
       <Box
         data-krea-stage
         sx={{
+          ...studioStageVars,
           flex: 1,
           minHeight: 0,
           display: 'grid',
@@ -251,7 +256,8 @@ const FriTegningGame: React.FC = () => {
           gridTemplateRows: 'minmax(0, 1fr) auto auto',
           gridTemplateAreas: '"paper paper" "tools side" "pal pal"',
           '@media (orientation: landscape)': {
-            gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+            // DEFINITE side columns, so the crayon row can be centred on the paper (`studioPalSx`).
+            gridTemplateColumns: `${COLS.tools} minmax(0, 1fr) ${COLS.side}`,
             gridTemplateRows: 'minmax(0, 1fr) auto',
             gridTemplateAreas: '"tools paper side" "pal pal pal"',
           },
@@ -285,7 +291,7 @@ const FriTegningGame: React.FC = () => {
             tool with no variants (the eraser) — a row of crayons that does nothing for the eraser
             read as "pick one" (owner, 2026-10-16). Both trays are stacked in ONE grid cell and only
             hidden, never removed, so the row keeps its height and the paper never jumps size. */}
-        <Box data-krea-variants={crayonInHand ? 'crayons' : tool === 'stamp' ? 'stamps' : 'none'} sx={{ gridArea: 'pal', display: 'grid', justifyItems: 'center', alignItems: 'end', '& > *': { gridArea: '1 / 1' } }}>
+        <Box data-krea-variants={crayonInHand ? 'crayons' : tool === 'stamp' ? 'stamps' : 'none'} sx={studioPalSx(COLS, 14)}>
           <Box aria-hidden={!crayonInHand} sx={{ visibility: crayonInHand ? 'visible' : 'hidden' }}>
             <CrayonPalette colors={palette} color={color} inHand={tool === 'crayon' || tool === 'rainbow' ? tool : null} disabled={!drawingEnabled || !crayonInHand} onPick={pickColor} onPickRainbow={pickRainbow} />
           </Box>

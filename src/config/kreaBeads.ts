@@ -4205,10 +4205,15 @@ export const BEAD_LAYOUT = {
   portraitBowlGapPx: 6,
   bowlGapPx: 8,
   portraitBowlRows: 4,
-  /** The portrait row's other two occupants, measured (WebKit-free Chrome, 768×1024, 2026-11-04). */
+  /**
+   * The portrait row's other two occupants. The pattern card FILLS the cell left between the bowls and
+   * the side (PatternCard measures it), so this is the least it needs: a 2-column legend (~116 px) plus
+   * a picture that still reads (~100 px) plus padding. The side holds only the way on (108 px) since the
+   * "choose another board" button went (owner 2026-11-04: the back arrow does the same).
+   */
   portraitCardPx: 244,
-  portraitSideContentPx: 132,
-  /** The side column (landscape): the picker door, the pattern card, the way on. */
+  portraitSideContentPx: 108,
+  /** The side column (landscape): the pattern card, the way on. */
   sidePx: 168,
   /**
    * The side column on a WIDE landscape screen (≥ 1200 px — the 12.9" iPad), so its two big controls can

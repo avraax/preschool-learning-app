@@ -5,10 +5,12 @@ import {
   PAPER_H,
   PAPER_W,
   STAMP_SIZE,
+  extendStampTrail,
   quantise,
   seedFor,
   type CrayonColor,
   type Drawing,
+  type StampStroke,
   type Stroke,
   type Tool,
 } from './strokeModel'
@@ -274,18 +276,21 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     if (e.pointerType === 'mouse' && e.button !== 0) return
     rectRef.current = hostRef.current!.getBoundingClientRect()
     const [x, y] = toPaper(e)
-    if (tool === 'stamp') {
-      if (!stamp) return
-      onStrokeStart?.('stamp')
-      onCommit({ tool: 'stamp', stamp, x, y, size: STAMP_SIZE, seed: seedFor(drawingRef.current.strokes.length) })
-      onStrokeEnd?.('stamp')
-      rectRef.current = null
-      return
-    }
+    if (tool === 'stamp' && !stamp) return
     try {
       hostRef.current?.setPointerCapture(e.pointerId)
     } catch {
       /* a synthetic pointer may not be capturable */
+    }
+    // A STAMP is a live stroke too (owner, 2026-11-04): the first picture lands on the press, and a
+    // drag keeps laying pictures along the finger's path — one stroke, so one undo takes the row back.
+    if (tool === 'stamp') {
+      if (!stamp) return
+      const stroke: StampStroke & { trail: number[] } = { tool: 'stamp', stamp, x, y, size: STAMP_SIZE, seed: seedFor(drawingRef.current.strokes.length), trail: [] }
+      active.current = { id: e.pointerId, stroke, points: stroke.trail, painter: createPainter(stroke) }
+      onStrokeStart?.('stamp')
+      schedule()
+      return
     }
     // The live stroke and its painter share ONE points array: moves push into it, frames paint the tail.
     const seed = seedFor(drawingRef.current.strokes.length)
@@ -302,6 +307,13 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     if (!a || e.pointerId !== a.id) return
     const native = e.nativeEvent as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] }
     const evs = typeof native.getCoalescedEvents === 'function' ? native.getCoalescedEvents() : []
+    const s = a.stroke
+    if (s.tool === 'stamp') {
+      // Only the latest position matters: the trail walks the straight line to it in even steps.
+      const [x, y] = toPaper(evs.length ? evs[evs.length - 1] : native)
+      if (extendStampTrail(s as StampStroke & { trail: number[] }, x, y)) schedule()
+      return
+    }
     for (const ev of evs.length ? evs : [native]) {
       const [x, y] = toPaper(ev)
       const n = a.points.length
@@ -328,8 +340,9 @@ const DrawingSurface: React.FC<DrawingSurfaceProps> = ({
     rectRef.current = null
     onStrokeEnd?.(a.stroke.tool)
     // The committed stroke is repainted whole on the ink layer by a fresh painter; the live layer is
-    // cleared when the drawing re-renders.
-    onCommit(a.stroke)
+    // cleared when the drawing re-renders. A tapped stamp commits without an (empty) trail.
+    const s = a.stroke
+    onCommit(s.tool === 'stamp' && !s.trail?.length ? { tool: 'stamp', stamp: s.stamp, x: s.x, y: s.y, size: s.size, seed: s.seed } : s)
   }
 
   return (

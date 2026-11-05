@@ -101,7 +101,12 @@ const GameShell: React.FC<GameShellProps> = ({
   // Phone landscape: play-surface first — the title moves INTO the header row (between back
   // and the ring) so its own row's height goes to the game body instead.
   const phoneLandscape = useMediaQuery(PHONE_LANDSCAPE.replace('@media ', ''))
-  const titleInHeader = phoneLandscape || inlineTitle
+  // …but NEVER in phone portrait: back (44) + ring and pill (~150) leave no room for a title that is
+  // centred on the SCREEN, and centred-in-the-gap reads as "a tad to the left" (owner 2026-11-05) —
+  // measured at 390×844 the inline title ran 22px under the ring. There it takes a compact row below.
+  const phonePortrait = useMediaQuery(PHONE_PORTRAIT.replace('@media ', ''))
+  const titleInHeader = phoneLandscape || (inlineTitle && !phonePortrait)
+  const compactTitleRow = inlineTitle && phonePortrait
   const { navigateWithTransition } = useTransitionNav()
 
   // Bridge the legacy `guideReaction` prop onto the mascot bus so EVERY game that already reports
@@ -135,17 +140,29 @@ const GameShell: React.FC<GameShellProps> = ({
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar
           sx={{
-            justifyContent: 'space-between',
+            // THREE equal-sided columns, not `space-between`: the right cluster (ring + pill) is wider
+            // than the back button, so a flex middle item sat left of the screen's centre (owner
+            // 2026-11-05: "the title is a tad to the left"). `1fr auto 1fr` puts the inline title on
+            // the true centre whatever the two sides hold; it still ellipsises when space runs out.
+            display: 'grid',
+            gridTemplateColumns: '1fr minmax(0, auto) 1fr',
+            alignItems: 'center',
             py: inlineTitle ? 1 : 2,
             [PHONE_LANDSCAPE]: { py: 0.25, minHeight: '48px !important' },
           }}
         >
           {/* Left: the shared animated back button (reverses the themed wipe, PRD-02 §8). */}
-          <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
+          <Box sx={{ gridColumn: 1, justifySelf: 'start', display: 'flex', alignItems: 'center' }}>
+            <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
+          </Box>
 
           {titleInHeader && (
             <Typography
+              data-game-title
               sx={{
+                gridColumn: 2,
+                justifySelf: 'center',
+                textAlign: 'center',
                 fontFamily: theme.titleFontFamily,
                 fontWeight: 700,
                 fontSize: phoneLandscape ? '1rem' : 'clamp(1.2rem, 3vmin, 1.6rem)',
@@ -182,7 +199,7 @@ const GameShell: React.FC<GameShellProps> = ({
               home page and every section menu (owner, 2026-11-04: in game too, "so you can reach
               Indstillinger", and "make it look like the other views"; a first pass put it left by the
               back button and he could not find it). */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3.5, flex: '0 0 auto', minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 }, [PHONE_PORTRAIT]: { gap: 1.75 } }}>
+          <Box sx={{ gridColumn: 3, justifySelf: 'end', display: 'flex', alignItems: 'center', gap: 3.5, flex: '0 0 auto', minWidth: 0, [PHONE_LANDSCAPE]: { gap: 2.5 }, [PHONE_PORTRAIT]: { gap: 1.75 } }}>
             {levelIndicator && (
               <RewardRing
                 compact={phoneLandscape}
@@ -217,7 +234,7 @@ const GameShell: React.FC<GameShellProps> = ({
           <Box
             sx={{
               textAlign: 'center',
-              mb: promptStage ? { xs: 1, md: 1.5 } : dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
+              mb: compactTitleRow ? 0.5 : promptStage ? { xs: 1, md: 1.5 } : dense ? { xs: 1, md: 1.5 } : { xs: 2, md: 3 },
               flex: '0 0 auto',
             }}
           >
@@ -228,12 +245,14 @@ const GameShell: React.FC<GameShellProps> = ({
             >
               <Typography
                 variant="h3"
+                data-game-title
                 sx={{
                   fontFamily: theme.titleFontFamily,
                   // White on dark worlds, readable-on-white accent on light worlds (see onTileColor).
                   color: dark ? '#FFFFFF' : category.onTileColor,
                   fontWeight: 700,
-                  fontSize: { xs: '1.6rem', md: '2.1rem' },
+                  fontSize: compactTitleRow ? '1.2rem' : { xs: '1.6rem', md: '2.1rem' },
+                  lineHeight: compactTitleRow ? 1.2 : undefined,
                   textShadow: dark
                     ? '0 0 16px rgba(120,170,255,0.55), 0 2px 8px rgba(0,0,0,0.5)'
                     : `1px 1px 2px ${category.accentColor}33`,

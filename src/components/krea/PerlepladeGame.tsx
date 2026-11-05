@@ -21,7 +21,6 @@ import {
   BEAD_LAYOUT,
   BEAD_PATTERNS,
   beadPalette,
-  boardById,
   boardMask,
   legendCounts,
   patternById,
@@ -536,16 +535,16 @@ const PerlepladeGame: React.FC = () => {
     '--bead-bowl-gap': `${landscape ? BEAD_LAYOUT.bowlGapPx : BEAD_LAYOUT.portraitBowlGapPx}px`,
     '--bead-bowl-rows': BEAD_LAYOUT.portraitBowlRows,
     '--bead-side': `${wideLandscape ? BEAD_LAYOUT.wideSidePx : BEAD_LAYOUT.sidePx}px`,
-    '--bead-card-pic': '120px',
     '--bead-chip': '22px',
     '--bead-chip-font': '1.25rem',
+    // Legend rows overlap their 44 px hit boxes by this much top and bottom (PatternCard).
+    '--bead-chip-pull': '-4px',
     // A phone is not the target device: the board simply takes what is left (measured 2026-10-16, WebKit).
     // No panning: a pannable board under a drag gesture would fight the drag.
-    [PHONE_ANY]: { '--bead-bowl': '46px', '--bead-bowl-gap': '4px', '--bead-side': '104px', '--bead-card-pic': '64px', '--bead-chip': '14px', '--bead-chip-font': '0.85rem' },
-    // 12 bowls in 2 columns are 6 rows — taller than a landscape phone: 3 columns.
-    // Its side is wider with a 3-column legend: a 7-colour legend in 2 columns ran off the bottom; 4 columns keep it to 2 rows
-    // (rainbow, 667×375). The board is height-limited there, so the width costs it nothing.
-    [PHONE_LANDSCAPE]: { '--bead-bowl-cols': 3, '--bead-side': '184px', '--bead-legend-cols': 4, '--bead-card-pic-col': '64px' },
+    [PHONE_ANY]: { '--bead-bowl': '46px', '--bead-bowl-gap': '4px', '--bead-side': '104px', '--bead-chip': '14px', '--bead-chip-font': '0.85rem', '--bead-chip-pull': '-7px', '--bead-chip-gap': '2px', '--bead-chip-px': '0px', '--bead-chip-min': '36px', '--bead-legend-gap': '2px' },
+    // 12 bowls in 2 columns are 6 rows — taller than a landscape phone: 3 columns. Its side is wider so
+    // the legend gets 4 columns (2 rows for the 9-colour rainbow) and the picture room.
+    [PHONE_LANDSCAPE]: { '--bead-bowl-cols': 3, '--bead-side': '184px' },
     // 12 bowls in a few rows + the side are wider than a portrait phone: 4 rows of 3.
     [PHONE_PORTRAIT]: { '--bead-bowl-rows': 4 },
     // 13 bowls in 4 rows are 4 columns, and on a portrait phone that squeezed the pattern card to ~70 px
@@ -602,39 +601,18 @@ const PerlepladeGame: React.FC = () => {
 
   const orientation = landscape ? 'landscape' : 'portrait'
   const isPattern = item.kind === 'pattern'
-  // "Choose another board" is a small copy of the grid it opens: white cards, three finished bead
-  // pictures and ONE EMPTY round board — the grid holds free boards too, and the picture should say so
-  // (owner, 2026-10-17). A lone tile icon, and then a pile of empty cream boards, read as decoration
-  // rather than a door (owner, 2026-10-16 — the same lesson as Fri Tegning's "Nyt papir").
-  const pickerCards: Array<{ key: string; content: React.ReactNode }> = [
-    ...(['hjerte', 'stjerne', 'fisk'] as const).map((id) => ({
-      key: id,
-      content: <PlacedBeads board={finishedPattern(10, patternCells(patternById(id)!, 'let'))} size={0.96} />,
-    })),
-    { key: 'free', content: <BoardArt n={10} mask={boardMask(boardById('cirkel')!, 'let')} /> },
-  ]
-  const pickerPicture = (
-    <Box sx={{ width: '100%', height: '100%', p: '6%', boxSizing: 'border-box', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8%' }}>
-      {pickerCards.map(({ key, content }, i) => (
-        // The empty board is cream: on a white card it vanished, so its card is a warm tan.
-        <Box key={key} sx={{ position: 'relative', background: key === 'free' ? '#E8CFA8' : '#FFFEFB', borderRadius: '14%', boxShadow: '0 2px 4px rgba(80,50,20,0.3)', transform: `rotate(${[-4, 3, 2, -3][i]}deg)` }}>
-          <Box sx={{ position: 'absolute', inset: '6%' }}>{content}</Box>
-        </Box>
-      ))}
-    </Box>
-  )
-  // The side column's two big controls — "Vælg en anden plade" and the way on (Ny plade / Færdig /
-  // Næste) — are ONE size, so they share a centre line (owner, 2026-10-17: "much larger … centrally
-  // aligned with Ny plade, maybe same size"). Each value is the most its layout has room for:
+  // There is NO "choose another board" button here (owner, 2026-11-04: "redundant since they go to the
+  // same view as the back button"): the back arrow already steps back to the grid (`onBackWithin`), and
+  // its room went to the pattern card's picture.
+  //
+  // The way on (Ny plade / Færdig / Næste), the side column's one big control. Each value is the most its
+  // layout has room for:
   //   - a wide landscape screen (the 12.9" iPad): the column widens to 210 px (`--bead-side`) out of slack
   //     the board never needed — its pitch there is set by the HEIGHT — so 190 px;
-  //   - the 1024-wide iPad: the 168 px column; 120 when the pattern card shares it (it must fit beside a
-  //     584 px board), 150 otherwise;
-  //   - portrait: both stand stacked beside the bowls, within their 3 rows (3×70 + 2×8 = 226 px) → 108;
+  //   - the 1024-wide iPad: the 168 px column → 150;
+  //   - portrait: beside the bowls, within their rows → 108;
   //   - a phone: 64.
-  const sideBtn = phone ? '64px' : !landscape ? '108px' : wideLandscape ? '190px' : isPattern ? '120px' : '150px'
-  const pickerSize = sideBtn
-  const big = sideBtn
+  const big = phone ? '64px' : !landscape ? '108px' : wideLandscape ? '190px' : '150px'
   const newBoardPicture = (
     // The board fills the button like every other icon (6 %, the picker's own margin); the + hangs off its
     // corner and extends it, never shrinks it (owner, 2026-10-17).
@@ -688,6 +666,9 @@ const PerlepladeGame: React.FC = () => {
       direction={landscape || phone ? 'column' : 'row'}
       disabled={confirmOpen || swapping}
       onChip={tapChip}
+      // The card FILLS this box (it measures it): the side column's remainder above the way on, or the
+      // portrait row's middle cell, stretched to the row the bowls set.
+      sx={landscape ? { flex: '1 1 0', width: '100%' } : { gridArea: 'card', alignSelf: 'stretch', justifySelf: 'stretch' }}
     />
   ) : null
 
@@ -750,14 +731,15 @@ const PerlepladeGame: React.FC = () => {
               />
             </Box>
           </Box>
-          {!landscape && card ? <Box sx={{ gridArea: 'card', display: 'flex', justifyContent: 'center', minWidth: 0 }}>{card}</Box> : null}
+          {!landscape ? card : null}
           <Box
             sx={{
               gridArea: 'side',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'space-around',
+              // The way on stands at the BOTTOM, under the card (or alone, on a free board).
+              justifyContent: 'flex-end',
               gap: 1,
               minHeight: 0,
               minWidth: 0,
@@ -766,9 +748,6 @@ const PerlepladeGame: React.FC = () => {
               pt: landscape ? SIDE_TOP_CLEARANCE : 0,
             }}
           >
-            <StudioButton dataId="to-picker" label="Vælg en anden plade" size={pickerSize} disabled={confirmOpen || swapping || stage === 'alive'} onPress={toPicker}>
-              {pickerPicture}
-            </StudioButton>
             {landscape ? card : null}
             {wayOn}
           </Box>

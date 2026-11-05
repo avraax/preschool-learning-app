@@ -5,6 +5,30 @@ description: Headlessly drive the local app to SEE and verify UI - screenshot a 
 
 # UI screenshot & layout verification
 
+## The device matrix — EVERY UI change, implicitly (owner, 2026-11-05)
+
+Every change to anything visible is verified on ALL of these, both orientations where they rotate,
+without being asked. Not "the viewport the report came from" — a fix for one screen is how the next
+report gets filed.
+
+| class | CSS viewports (landscape / portrait) |
+|---|---|
+| iPad Pro 12.9" | 1366×1024 / 1024×1366 |
+| iPad Pro 11" / Air | 1194×834 / 834×1194 |
+| iPad 9.7–10.5" (the 17.7 floor class) | 1024×768 / 768×1024 |
+| iPhone Pro Max / Plus | 932×430 / 430×932 |
+| iPhone 14/15 | 844×390 / 390×844 |
+| iPhone SE | 667×375 / 375×667 |
+| Android phone | 915×412 / 412×915 |
+| Desktop PC / Mac browser | 1920×1080, 1440×900, 1280×800 |
+
+- **Engines:** rung 1 (`cdp.mjs`, Chrome) across the whole matrix; rung 2 (`webkit.mjs`, Safari engine)
+  at least at 1366×1024, 1024×768, 844×390 and 375×667 plus one desktop size — layout differs between
+  engines, so a Chrome-only pass is not "verified".
+- **Measure, don't eyeball:** rects inside the stage, no overlap, `scrollWidth == innerWidth`, centres
+  where they should be, hit-test the controls. Then compare against the untouched screens for regressions.
+- Say which rung each claim came from; real touch, safe areas and true iPadOS 17.7 stay UNKNOWN (rung 3).
+
 ## Say which rung a claim came from
 
 Three rungs, in increasing cost and decreasing convenience — and the opposite error (calling a WebKit

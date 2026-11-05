@@ -46,6 +46,12 @@ export interface StampStroke {
   y: number
   size: number
   seed: number
+  /**
+   * A DRAGGED stamp (owner, 2026-11-04: "keep painting multiple trees as I drag, as in other paint
+   * programs"): the further placements after (x, y), flat [x1, y1, x2, y2, …], `STAMP_STEP` apart along
+   * the finger's path. One drag is ONE stroke, so one undo takes the whole trail back. Absent on a tap.
+   */
+  trail?: number[]
 }
 
 export type Stroke = BrushStroke | StampStroke
@@ -61,6 +67,43 @@ export const emptyDrawing = (): Drawing => ({ strokes: [], baked: 0 })
 export const BRUSH_WIDTH: Record<BrushTool, number> = { crayon: 22, rainbow: 22, glitter: 20, eraser: 56 }
 
 export const STAMP_SIZE = 150
+
+/** How far apart (paper units) a dragged stamp's pictures land: just under a picture apart, so a trail
+ *  reads as a row of trees rather than one smeared blob, and the pictures' own margins keep them apart. */
+export const STAMP_STEP = Math.round(STAMP_SIZE * 0.9)
+
+/** The most pictures one drag may lay (a scribble across the page is ~30); keeps the session copy small. */
+export const STAMP_TRAIL_MAX = 60
+
+/** Every placement of a stamp stroke, in drawing order: (x, y) first, then its trail. */
+export const stampPlacements = (s: StampStroke): Array<[number, number]> => {
+  const out: Array<[number, number]> = [[s.x, s.y]]
+  const t = s.trail ?? []
+  for (let i = 0; i + 1 < t.length; i += 2) out.push([t[i], t[i + 1]])
+  return out
+}
+
+/**
+ * Extend a dragged stamp's trail toward the finger at (x, y): one placement every `STAMP_STEP` along the
+ * straight line from the last placement, so a fast flick lays the same even row a slow drag does.
+ * Mutates `trail` (the live stroke's own array); returns how many placements it added.
+ */
+export function extendStampTrail(s: StampStroke & { trail: number[] }, x: number, y: number): number {
+  let added = 0
+  const n = s.trail.length
+  let lx = n ? s.trail[n - 2] : s.x
+  let ly = n ? s.trail[n - 1] : s.y
+  let d = Math.hypot(x - lx, y - ly)
+  while (d >= STAMP_STEP && s.trail.length / 2 < STAMP_TRAIL_MAX) {
+    const k = STAMP_STEP / d
+    lx = quantise(lx + (x - lx) * k, PAPER_W)
+    ly = quantise(ly + (y - ly) * k, PAPER_H)
+    s.trail.push(lx, ly)
+    added++
+    d = Math.hypot(x - lx, y - ly)
+  }
+  return added
+}
 
 export const quantise = (v: number, max: number): number => Math.max(0, Math.min(max, Math.round(v)))
 
@@ -121,6 +164,10 @@ export function deserialise(raw: string | null | undefined, stampIds?: ReadonlyS
     if (r.tool === 'stamp') {
       const stamp = String(r.stamp ?? '')
       if (!stamp || (stampIds && !stampIds.has(stamp))) continue
+      // A malformed trail drops the TRAIL, not the stamp: the first picture still stands.
+      const tr = Array.isArray(r.trail) ? (r.trail as unknown[]) : []
+      const trailOk = tr.length >= 2 && tr.length % 2 === 0 && tr.every((n) => Number.isFinite(n))
+      const trail = trailOk ? (tr as number[]).slice(0, STAMP_TRAIL_MAX * 2).map((n, i) => quantise(n, i % 2 === 0 ? PAPER_W : PAPER_H)) : null
       strokes.push({
         tool: 'stamp',
         stamp,
@@ -128,6 +175,7 @@ export function deserialise(raw: string | null | undefined, stampIds?: ReadonlyS
         y: quantise(Number(r.y), PAPER_H),
         size: quantise(Number(r.size) || STAMP_SIZE, PAPER_W),
         seed,
+        ...(trail ? { trail } : {}),
       })
       continue
     }

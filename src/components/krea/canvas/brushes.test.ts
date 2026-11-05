@@ -94,3 +94,26 @@ test('painting a stroke incrementally makes exactly the marks of painting it who
     assert.deepEqual(geom(live.log).filter((l) => !/Style=/.test(l)), geom(whole.log).filter((l) => !/Style=/.test(l)), s.tool)
   }
 })
+
+test('a dragged stamp paints every picture of its row; a live paint and a replay paint the same', async () => {
+  const { createPainter } = await import('./brushes.ts')
+  const trail = [300, 300, 435, 300, 570, 300]
+  const s: Stroke = { tool: 'stamp', stamp: 'sun', x: 165, y: 300, size: 150, seed: seedFor(0), trail }
+  const whole = replay(addStroke(emptyDrawing(), s))
+  assert.equal(whole.filter((l) => l.startsWith('drawImage(')).length, 4)
+  // Live: the row grows while the finger moves; frame by frame it must paint the same calls, in order.
+  const { ctx, log } = recorder()
+  const env: BrushEnv = { ctx, scale: 1.5, crayonPaint: (c) => `paint:${c}`, stampImage: (id) => ({ id }) as unknown as CanvasImageSource }
+  const live = { ...s, trail: [] as number[] }
+  const p = createPainter(live)
+  p.paint(env, false)
+  for (let i = 0; i < trail.length; i += 2) {
+    live.trail.push(trail[i], trail[i + 1])
+    p.paint(env, false)
+  }
+  p.paint(env, true)
+  assert.deepEqual(log.filter((l) => /^(drawImage|rotate|translate)\(/.test(l)), whole.filter((l) => /^(drawImage|rotate|translate)\(/.test(l)))
+  // A single stamp still tilts exactly as before the trail existed (old sessions replay unchanged).
+  const one = replay(addStroke(emptyDrawing(), { tool: 'stamp', stamp: 'sun', x: 900, y: 200, size: 150, seed: seedFor(3) }))
+  assert.equal(one.filter((l) => l.startsWith('drawImage(')).length, 1)
+})

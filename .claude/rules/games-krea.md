@@ -39,12 +39,18 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
   < 0.35% (sun rays, hooves) and the background (`outside: 'optional'`) are paintable but OPTIONAL —
   the ✓ needs only the required ones (owner 2026-11-04: "looks paintable, isn't" was the bug). **Grey
   shading is rejected**, not thresholded — re-render the page instead.
+- **A hole in a line merges two parts** and one tap paints both (owner 2026-11-05: strand's frame, skov's
+  ground — fixed in the `.jpg`). Fix the ART, not the labeller: gap-closing (dilate R px) also splits real
+  narrow passages (a mane, a pig's face) and seals nothing wider than 2R. Audit by colouring each page's
+  background region; pin each fix as a probe pair in `kreaPages.test.ts` (`MUST_BE_SEPARATE`).
 - No flood fill at runtime: a tap paints exactly its id inside its box. Fills are an ACTION list
   (undo, resume). The decode is checked (`data-krea-label-bad`) — a colour-managed decode corrupts ids.
 
 ## Canvas on Safari 17 (`canvas/`)
 - No `getCoalescedEvents` before 18.2 (feature-detect); quadratic smoothing; one rAF per frame; one
   pointer per surface; palm guard after a `pen`; `touch-action: none` + non-passive touchmove/gesture.
+- A stamp DRAG is one stroke (`trail`, one picture per `STAMP_STEP`, nothing until a full step away —
+  a jittery tap stays ONE stamp); one undo removes the row. Studio columns are shared (`studioColumns`).
 - Never bitmap snapshots for undo: replay the stroke list from one checkpoint. Brushes are SEEDED per
   stroke — an unseeded random redraws a different picture on undo/resume.
 - Cap dpr at 2, release canvases to 0×0 on unmount — **and restore the size in the paint path**:
@@ -63,6 +69,9 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
   board: no XP, no finish (like Fri Tegning). Patterns: one task on the done press, `popOff`, the seam.
 - Grids are per-level strings (10/13/16): derived legend counts ≤ 100, symmetric ones tested, no level
   its predecessor resized. Pitch floor 40 px on the iPad, 35 at Svær (owner).
+- The pattern card FILLS a reserved box (side remainder / portrait cell), absolutely inside it, and
+  sizes its picture from what the measured legend leaves — never a shrinkable flex item (its legend hung
+  out of it in WebKit) or a fixed px picture. No "choose another board" button: back does it (owner).
 
 ## Persistence & controls
 - **Session only** (`kreaSession`, sessionStorage per child × game × item; cleared on detach/reset). No

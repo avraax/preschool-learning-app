@@ -36,6 +36,35 @@ test('every page has its generated regions and both art files, and the label map
   }
 })
 
+// A HOLE IN A LINE merges two parts into one region, and a tap then paints both — the owner's report
+// (2026-11-05): "it will also color the entire background/frame". Two pages leaked through gaps in the
+// art itself (too wide for any gap-closing to seal, and closing also splits real narrow passages — a
+// lion's mane, a pig's face — so it is not the fix): strand's frame had a 210 px hole in its top edge
+// under the sun's rays, and skov's ground line stopped short of both page edges. Each pair below must
+// be two DIFFERENT paintable regions. Found by colouring every page's background region (all 72) and
+// a gap-closing audit (R 3–12 px); add a pair here whenever a page is fixed for a leak.
+const MUST_BE_SEPARATE: Record<string, Array<{ what: string; a: [number, number]; b: [number, number] }>> = {
+  strand: [{ what: 'the margin outside the frame vs the sky inside it', a: [20, 20], b: [600, 200] }],
+  skov: [{ what: 'the sky vs the ground', a: [20, 20], b: [500, 950] }],
+}
+
+test('no leaks: parts the line art separates are separate regions', async () => {
+  const { default: sharp } = await import('sharp')
+  for (const [id, pairs] of Object.entries(MUST_BE_SEPARATE)) {
+    const { data, info } = await sharp(readFileSync(asset(`${id}.regions.png`))).removeAlpha().raw().toBuffer({ resolveWithObject: true })
+    const at = ([x, y]: [number, number]) => {
+      const i = (y * info.width + x) * info.channels
+      return data[i] | (data[i + 1] << 8)
+    }
+    for (const { what, a, b } of pairs) {
+      const ra = at(a)
+      const rb = at(b)
+      for (const [p, r] of [[a, ra], [b, rb]] as const) assert.ok(r > 0 && r <= PAGE_REGIONS[id].count, `${id}: probe ${p} is not a paintable region (${r}) — re-pick it`)
+      assert.notEqual(ra, rb, `${id}: ${what} are ONE region — a gap in the line art leaks (re-check art-src/krea/pages/${id}.jpg)`)
+    }
+  }
+})
+
 test('difficulty: Farvelæg only widens the palette (EXEMPT), Tegn med Mig has a real level axis', async () => {
   const { EXEMPT, TUNING, KREA_PALETTE, KREA_GUIDE } = await import('./difficulty.ts')
   assert.ok((EXEMPT['krea.color'] ?? '').length > 30)

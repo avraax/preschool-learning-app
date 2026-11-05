@@ -2,7 +2,7 @@ import React, { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Box, ButtonBase, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { CRAYON_HEX } from '../canvas/brushes'
-import { PAPER_H, PAPER_W, type Drawing } from '../canvas/strokeModel'
+import { PAPER_H, PAPER_W, stampPlacements, type Drawing } from '../canvas/strokeModel'
 
 // The picture grid of Tegn med Mig, Farvelæg and Perleplade (Krea PRD-01 §2.2.7–8, §2.5): sheets of
 // paper lying on the studio table (36 / 36 / 39 of them since 2026-11-04). A card costs no art — a guided card draws its own steps as a finished line
@@ -190,7 +190,8 @@ export const InkThumb: React.FC<{
   drawing.strokes.forEach((s, i) => {
     if (s.tool === 'stamp') {
       const href = stampSrc?.(s.stamp)
-      if (href) lines.push(<image key={i} href={href} x={s.x - s.size / 2} y={s.y - s.size / 2} width={s.size} height={s.size} />)
+      // A dragged stamp is a ROW of pictures in one stroke — draw every one, not just the first.
+      if (href) stampPlacements(s).forEach(([px, py], j) => lines.push(<image key={`${i}-${j}`} href={href} x={px - s.size / 2} y={py - s.size / 2} width={s.size} height={s.size} />))
       return
     }
     if (s.tool === 'eraser') return

@@ -12,10 +12,8 @@ Short, plain, natural language. Answer first. A few sentences, not a report.
 - Still say plainly what's broken or blocked, and flag real caveats — in a sentence, not a section.
 - Keep the density where a future session is the reader: PRDs, commit messages, `.claude/rules`, this file.
 
-This has been asked for three times (2026-08-01 ×2, 2026-08-04) and kept not sticking, because it only
-lived in agent memory, which is advisory. It lives here now. Don't delete it, and don't let a long
-research answer be the exception — the 2026-08-04 orientation question got ~10 paragraphs and the useful
-version was three sentences.
+Asked three times before it lived here (memory is advisory). Don't delete it; a long research answer is
+no exception — a 10-paragraph reply whose useful version was three sentences is the failure.
 
 ## Tech Stack
 
@@ -133,7 +131,8 @@ Three rungs, and **a claim must name the rung it came from**: (1) headless Chrom
 an iPad UA — **which settles layout, not rung 1; they size flex differently**, (3) the owner's iPad —
 the residue: the Danish sounding right, real touch feel, safe-area insets, true iPadOS 17.7. **Unverified is not broken; say UNKNOWN.** The ladder, probes, recipes
 and DEV query params live in **`.claude/skills/ui-screenshot/`**; reach for it whenever the
-work touches visible UI or audio. Screenshots of every view live in `docs/ui-reference/`.
+work touches visible UI or audio. **Every UI change is verified, unasked, on its whole device matrix**
+(iPads, iPhones, Android, desktop; both orientations; Chrome + WebKit). Screenshots of every view live in `docs/ui-reference/`.
 
 ## Conventions
 

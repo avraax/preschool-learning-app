@@ -81,6 +81,16 @@ const PALE_TARGET_HEXES = new Set(['#FFB3BA', '#BFDBFE', '#FEF9C3', '#9CA3AF'])
 // wider and darker than the old 9% plate so pale hues genuinely read.
 const GOAL_RING_PX = 16
 
+/** The gap between a disc and its chip, and the chip and the Tøm slot — part of `--rf-below`. */
+const RF_GAP_PX = 8
+/** The "Mål" / "Din blanding" chips are a FIXED height (`--rf-chip`) so the below-disc stack is known. */
+const rfChipBoxSx = {
+  height: 'var(--rf-chip)',
+  boxSizing: 'border-box',
+  display: 'flex',
+  alignItems: 'center',
+} as const
+
 // Drag-id prefix for a reverse task's result swatches, so one DndContext can tell them from droplets.
 const SWATCH_PREFIX = 'swatch-'
 
@@ -594,6 +604,14 @@ const RamFarvenGame: React.FC = () => {
               minHeight: 0,
               display: 'flex',
               flexDirection: 'column',
+              // ONE CENTRE LINE (owner feedback A4VPB, 2026-11-04: "the arrow is not vertically centred
+              // to the two boxes"). Each disc column is disc + label chip + Tøm slot, so a centred row
+              // centred the arrow and the tray on that whole stack — 42 px below the discs at 1366×1024.
+              // The stack below a disc is DEFINED here (gap + fixed-height chip + gap + 44 px Tøm), and
+              // the arrow and the landscape tray reserve exactly it underneath themselves, so every
+              // centre lands on the disc line by construction — not by a tuned offset.
+              '--rf-chip': '26px',
+              '--rf-below': `calc(${RF_GAP_PX}px + var(--rf-chip) + ${RF_GAP_PX}px + 44px)`,
               // Landscape: lay the stage and the droplet tray side-by-side, centred as one group
               // with a modest gap (avoids the big void between the pot and the tray). Portrait
               // keeps the tray along the bottom.
@@ -629,7 +647,7 @@ const RamFarvenGame: React.FC = () => {
               }}>
                 {/* Goal swatch. Same column structure as the pot (circle → label → 44px reserve)
                     so the two circles line up on the same centre line. */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: `${RF_GAP_PX}px`, flex: '0 0 auto' }}>
                   <motion.div
                     key={targetColor.hex}
                     initial={reduce ? { opacity: 1 } : { scale: 0.8, opacity: 0 }}
@@ -654,6 +672,7 @@ const RamFarvenGame: React.FC = () => {
                           where the near-white goal would otherwise vanish into the pale world and read
                           the same as a white droplet. */}
                       <Box
+                        data-rf-goal=""
                         aria-hidden={!isPaleTarget}
                         sx={{
                           position: 'relative',
@@ -729,7 +748,8 @@ const RamFarvenGame: React.FC = () => {
                   {/* The "Mål" chip labels the goal swatch, which a reverse task doesn't show — hidden,
                       not removed, so the bench geometry stays identical between the two task shapes. */}
                   <Box data-goal-chip="" sx={{
-                    px: 1.25, py: 0.25, borderRadius: 999,
+                    ...rfChipBoxSx,
+                    px: 1.25, borderRadius: 999,
                     bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.9)',
                     boxShadow: muiTheme.customShadows?.card ?? 1,
                     visibility: mode === 'reverse' ? 'hidden' : 'visible'
@@ -749,8 +769,10 @@ const RamFarvenGame: React.FC = () => {
                 </Box>
 
                 {/* Arrow — chunky, friendly badge (sized to balance the larger goal/pot circles). */}
-                <Box sx={{
+                <Box data-rf-arrow="" sx={{
                   flex: '0 0 auto',
+                  // The disc columns' below-disc stack, reserved under the arrow (see `--rf-below`).
+                  mb: 'var(--rf-below)',
                   width: { xs: 58, sm: 66, md: 76 },
                   height: { xs: 58, sm: 66, md: 76 },
                   '@media (orientation: landscape)': { width: 54, height: 54 },
@@ -767,7 +789,7 @@ const RamFarvenGame: React.FC = () => {
                 </Box>
 
                 {/* Mixing pot + Tøm */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, flex: '0 0 auto' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: `${RF_GAP_PX}px`, flex: '0 0 auto' }}>
                   {/* P2 fix: the pot must go through MUI `sx` (not a raw inline `style`) so the
                       RESPONSIVE size object (`circleSizeSx`) actually resolves — spreading it into a
                       framer-motion `style` cast `as any` silently dropped every object-valued
@@ -897,7 +919,8 @@ const RamFarvenGame: React.FC = () => {
 
                   {/* "Din blanding" label — mirrors the goal "Mål" chip so the relationship reads. */}
                   <Box sx={{
-                    px: 1.25, py: 0.25, borderRadius: 999,
+                    ...rfChipBoxSx,
+                    px: 1.25, borderRadius: 999,
                     bgcolor: muiTheme.scene.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.9)',
                     boxShadow: muiTheme.customShadows?.card ?? 1
                   }}>
@@ -938,7 +961,7 @@ const RamFarvenGame: React.FC = () => {
 
               {/* Droplet tray — pinned along the board bottom; non-growing so it never clips
                   (this is what fixes the old landscape off-screen palette). */}
-              <Box sx={{
+              <Box data-rf-tray="" sx={{
                 flex: '0 0 auto',
                 display: 'grid',
                 // Follows the LEVEL's droplet count (Let offers 4 — no black), never a hardcoded 5:
@@ -962,7 +985,10 @@ const RamFarvenGame: React.FC = () => {
                   alignContent: 'center',
                   justifyItems: 'center',
                   px: { xs: 1, md: 1.5 },
-                  py: 0
+                  pt: 0,
+                  // Beside the bench, the tray centres on the DISC line too: it reserves the same
+                  // below-disc stack the disc columns carry (see `--rf-below`).
+                  pb: 'var(--rf-below)'
                 },
                 // Phone landscape is far too narrow for a 5-wide row alongside the bench (it clipped
                 // the goal + last droplet), so keep the compact 2-column block there — the orphan the

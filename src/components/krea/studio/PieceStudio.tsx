@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box } from '@mui/material'
-import { BTN, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StudioButton } from './StudioControls'
+import { BTN, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StudioButton, studioColumns, studioPalSx, studioStageVars } from './StudioControls'
 import { gameIconImages } from '../../../assets/themes/icons/games'
 import { idlePulse } from '../../../theme/idleMotion'
 import { PHONE_PORTRAIT } from '../../../theme/phoneMedia'
@@ -25,6 +25,7 @@ export const PieceStudio: React.FC<{
   <Box
     data-krea-stage
     sx={{
+      ...studioStageVars,
       flex: 1,
       minHeight: 0,
       display: 'grid',
@@ -33,7 +34,8 @@ export const PieceStudio: React.FC<{
       gridTemplateRows: 'minmax(0, 1fr) auto auto',
       gridTemplateAreas: '"paper paper" "tools side" "pal pal"',
       '@media (orientation: landscape)': {
-        gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+        // DEFINITE side columns, so the crayon row can be centred on the paper (`studioPalSx`).
+        gridTemplateColumns: `${COLS.tools} minmax(0, 1fr) ${COLS.side}`,
         gridTemplateRows: 'minmax(0, 1fr) auto',
         gridTemplateAreas: '"tools paper side" "pal pal pal"',
       },
@@ -56,16 +58,23 @@ export const PieceStudio: React.FC<{
         justifyContent: 'space-between',
         gap: 'clamp(10px, 2.4vmin, 22px)',
         minHeight: 0,
-        minWidth: `calc(${BTN} * 1.7)`,
-        '@media (orientation: landscape)': { pt: SIDE_TOP_CLEARANCE },
-        [PHONE_PORTRAIT]: { minWidth: 0, px: 1 },
+        // A row under the paper: the way on is rightmost, its + badge ending where the name pill does.
+        pr: COLS.rowInset,
+        // A column beside it: a lane as wide as the ✓/→, set in so the + badge ends where the pill does.
+        '@media (orientation: landscape)': { pt: SIDE_TOP_CLEARANCE, pr: COLS.inset },
+        [PHONE_PORTRAIT]: { pl: 1 },
       }}
     >
       {side}
     </Box>
-    <Box sx={{ gridArea: 'pal', display: 'grid', justifyItems: 'center', alignItems: 'end', '& > *': { gridArea: '1 / 1' } }}>{palette}</Box>
+    {/* 14 = the widest crayon row (13 colours + the rainbow). */}
+    <Box sx={studioPalSx(COLS, 14)}>{palette}</Box>
   </Box>
 )
+
+/** The biggest control the side column holds: the ✓ / → (`PieceWayOn`'s `big`). */
+const BIG_BTN = `calc(${BTN} * 1.55)`
+const COLS = studioColumns(BIG_BTN)
 
 /** Back to the picture grid: the game's own tile picture ("the drawings"), so it needs no words. */
 export const PickerButton: React.FC<{ gameId: 'krea.guide' | 'krea.color' | 'krea.beads'; disabled?: boolean; onPress: () => void }> = ({ gameId, disabled, onPress }) => (
@@ -86,7 +95,7 @@ export const PieceWayOn: React.FC<{
   onDone: () => void
   onNext: () => void
 }> = ({ stage, hasInk, disabled, reduce, onNewPaper, onDone, onNext }) => {
-  const big = `calc(${BTN} * 1.55)`
+  const big = BIG_BTN
   if (stage === 'finished') {
     const pulse = idlePulse(reduce, { peak: 1.07, durationS: 1.4 })
     return (

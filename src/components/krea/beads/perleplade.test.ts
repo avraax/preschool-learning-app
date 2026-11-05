@@ -63,6 +63,28 @@ test('the drag games’ shared primitives: kidCollision, drag-only sensors, one 
   assert.doesNotMatch(board, /\.map\([^)]*\)[\s\S]{0,200}useDroppable/, 'a droppable per peg')
 })
 
+// Owner, 2026-11-04 (F5VYR): the "choose another board" button beside the board went to the same grid
+// as the back arrow. The back arrow is the one way back (`onBackWithin={toPicker}`, kreaBack.test).
+test('no second "back to the grid" button in the open board', () => {
+  assert.doesNotMatch(game, /dataId="to-picker"/, 'the redundant board picker button is back')
+  assert.doesNotMatch(game, /onPress=\{toPicker\}/, 'a control in the open board steps back to the grid')
+})
+
+// KUM2Z / Q9ZX6 (owner, iPhone 844×390, 2026-11-04): the card was a SHRINKABLE flex item, so in WebKit
+// its legend's last row hung out of its bottom, and its picture was a fixed 64 px. It now fills a box
+// the layout reserves, laid out INSIDE it (absolute), with the picture sized from what the legend leaves.
+test('the pattern card fills a reserved box and sizes its picture from it', () => {
+  const card = code('./PatternCard.tsx')
+  const at = card.indexOf('data-krea-pattern-card=')
+  assert.ok(at > 0, 're-point this guard')
+  const cardSx = card.slice(at, card.indexOf('>', card.indexOf('}}', at)))
+  assert.match(cardSx, /position: 'absolute'/, 'the card is back in flow, where its parent can squeeze it')
+  assert.doesNotMatch(cardSx, /minHeight: 0/)
+  assert.match(card, /new ResizeObserver\(measure\)/, 'the card no longer measures its box')
+  assert.match(card, /width: `\$\{fit\?\.pic \?\? 0\}px`/, 'the picture is not sized from the measured room')
+  assert.doesNotMatch(card, /--bead-card-pic/, 'a fixed picture size is back')
+})
+
 // WebKit-only defect, measured 2026-10-16: an identity transform on the bowl cell (an ANCESTOR of its
 // DraggableItem) made dnd-kit's drag offset drift from the finger, so a dragged bead never landed.
 test('nothing that transforms is an ancestor of a bowl’s draggable', () => {

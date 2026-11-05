@@ -427,13 +427,15 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
       <ThemeMascot
         attract={attractOn}
         sx={{
-          left: 'calc(env(safe-area-inset-left) + 4px)',
-          // Lifted ~10 % of its own height off the bottom edge, the same share as home's (owner, 2026-10-17).
-          bottom: 'calc(env(safe-area-inset-bottom) + 13px)',
+          // The BOX sits in the corner; ThemeMascot shifts each pose by its measured ink box so the
+          // figure stands MASCOT_INK_INSET of its size in from the left AND the bottom (mascotCorner.ts —
+          // owner, 2026-11-05: "evenly placed from left and bottom").
+          left: 'env(safe-area-inset-left)',
+          bottom: 'env(safe-area-inset-bottom)',
           width: { xs: 84, sm: 96, md: 112 },
           height: { xs: 84, sm: 96, md: 112 },
           // Phones: keep the buddy out of the tile flow.
-          [PHONE_ANY]: { width: 52, height: 52, bottom: 'calc(env(safe-area-inset-bottom) + 7px)' },
+          [PHONE_ANY]: { width: 52, height: 52 },
         }}
       />
     </Box>
