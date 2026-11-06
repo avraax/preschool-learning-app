@@ -3,8 +3,8 @@
 //
 //   node scripts/optimize-block-art.mjs
 //
-// These are TEXTURES and BACKDROPS, never keyed (no green screen): the skies are opaque DOM backdrops, the
-// rest are wrapped onto code-built 3D shapes. Several renders came back as an object on white rather than
+// These are TEXTURES, never keyed (no green screen), wrapped onto code-built 3D shapes. (The painted skies
+// and the wheel were dropped by the owner, 2026-11-06: a calm studio, no wheels.) Several renders came back as an object on white rather than
 // edge to edge (owner's batch, 2026-11-06), so each spec names a CROP inside the object's own border —
 // measured with sharp's trim against white, then pulled in past the rounded clay bevel, which would
 // otherwise print a shaded rim around every window and a seam down every island side.
@@ -22,10 +22,6 @@ const OUT = path.join(ROOT, 'src', 'assets', 'games', 'krea', 'blocks')
 
 /** crop: [left, top, width, height] in source px (1024 frames). size: output square side (or width for skies). */
 const SPECS = {
-  // Skies: 1024×572 from Gemini — shipped at their own size, the DOM scales them `cover`.
-  'sky-graes': { width: 1024 },
-  'sky-sne': { width: 1024 },
-  'sky-strand': { width: 1024 },
   // Island tops: edge to edge except sand, whose square sits on white with a bevel (trim 39 → +45).
   'top-graes': { size: 1024 },
   'top-sne': { size: 1024 },
@@ -38,8 +34,6 @@ const SPECS = {
   // Faces: window and door are tiles on white (trim ≈ 115–121, ~790²); the white frame IS the window.
   'face-window': { crop: [128, 132, 767, 761], size: 512 },
   'face-door': { crop: [140, 141, 745, 744], size: 512 },
-  // The wheel fills its square; the circle is cut out in code (a disc mesh), the corners never show.
-  'face-wheel': { crop: [43, 44, 939, 937], size: 512 },
 }
 
 await mkdir(OUT, { recursive: true })

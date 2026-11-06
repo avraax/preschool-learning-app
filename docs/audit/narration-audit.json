@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T19:27:53.301Z",
+  "updatedAt": "2026-11-06T21:55:48.742Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -28392,6 +28392,14 @@
       "text": "hjul",
       "group": "krea",
       "updatedAt": 1793993273301
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Vil du have en ny byggeplade? Dine klodser forsvinder.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Vil du have en ny byggeplade? Dine klodser forsvinder.",
+      "group": "krea",
+      "updatedAt": 1794002148742
     }
   }
 }

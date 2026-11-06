@@ -1,19 +1,18 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { BLOCK_ISLAND_IDS } from './kreaBlocks.ts'
+import { BLOCK_THEMES } from './kreaBlocks.ts'
 
 // Byggeklodser's art coverage (scene-assets.md: art replaces a stand-in → a guard, never a fallback). The
 // manifest imports .webp, which Node can't evaluate, so the guard reads it as TEXT and checks the files.
 const DIR = new URL('../assets/games/krea/blocks/', import.meta.url)
 const manifest = readFileSync(new URL('index.ts', DIR), 'utf8')
 
-test('every island has its sky, top and side render, and every special face exists', () => {
+test('every textured theme has its plate top and side render, and the window and door faces exist', () => {
   const need = [
-    ...BLOCK_ISLAND_IDS.flatMap((id) => [`sky-${id}`, `top-${id}`, `side-${id}`]),
+    ...BLOCK_THEMES.filter((t) => t.textured).flatMap((t) => [`top-${t.id}`, `side-${t.id}`]),
     'face-window',
     'face-door',
-    'face-wheel',
   ]
   for (const name of need) {
     assert.ok(existsSync(new URL(`${name}.webp`, DIR)), `${name}.webp is missing`)
@@ -21,7 +20,7 @@ test('every island has its sky, top and side render, and every special face exis
   }
   // …and no orphan render for an island that left the set.
   const shipped = readdirSync(DIR).filter((f) => f.endsWith('.webp')).map((f) => f.replace(/\.webp$/, ''))
-  assert.deepEqual(shipped.sort(), [...need].sort(), 'a render ships that no island or face uses')
+  assert.deepEqual(shipped.sort(), [...need].sort(), 'a render ships that no theme or face uses')
 })
 
 // The code-drawn stand-ins are gone: a canvas-drawn window or door must not quietly come back.

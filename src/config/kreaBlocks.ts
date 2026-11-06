@@ -1,45 +1,39 @@
 // Byggeklodser's content (Krea PRD-03 §3) — PURE data, no React, no three.js, so the game, the guards and
-// the prebake enumerator all read ONE source. W2 holds the three free islands; the 36 models join in W3.
+// the prebake enumerator all read ONE source. Themes now; the models join in W3.
+//
+// Owner, 2026-11-06 (UM5B3, RK4EG, YRFQQ): no floating island in a painted landscape. The plate rests on a
+// calm STUDIO floor, and a theme is only the PLATE's surface — plain (the default; "I almost liked the
+// earlier version with no art better"), grass, snow or sand. Themes switch INSIDE the game and keep the
+// build; there is no entry picker.
 //
 // Explicit `.ts` extension on imports: this module is in `shared-narration-clips.js`'s plain-Node graph.
 
-/** The three free islands (§2.1.3): same rules, different clay ground and sky. Islands come first. */
-export const BLOCK_ISLAND_IDS = ['graes', 'sne', 'strand'] as const
-export type BlockIslandId = (typeof BLOCK_ISLAND_IDS)[number]
+export const BLOCK_THEME_IDS = ['plain', 'graes', 'sne', 'strand'] as const
+export type BlockThemeId = (typeof BLOCK_THEME_IDS)[number]
 
-export interface BlockIslandDef {
-  id: BlockIslandId
-  /** The picker card's label (never spoken). */
+export interface BlockThemeDef {
+  id: BlockThemeId
+  /** The theme button's name for assistive tech (never spoken). */
   name: string
-  /**
-   * Colours: the picker card's code-drawn island, the island's underside and grid, and the sky gradient
-   * shown while the owner's painted sky loads (the renders: `src/assets/games/krea/blocks/`).
-   */
+  /** The plate's clay colours: the top (under a render, its tint), the side band, the underside. */
   top: string
   side: string
   soil: string
-  grid: string
-  sky: readonly [top: string, mid: string, bottom: string]
-  /**
-   * Where the painted sky is anchored when `cover` crops it (a 16:9 render on a 4:3 iPad loses its sides):
-   * the beach's sun sits in the upper-left corner and was cut in half at centre.
-   */
-  skyAnchor: 'center' | 'left'
-  /** The aiming grid's strength: the clay-tuft grass render swallowed the default 0.22 entirely. */
-  gridOpacity: number
+  /** Whether the owner's render textures the plate (plain is clay colour only). */
+  textured: boolean
+  /** The checker that shows the squares: the light tint and its strength on this surface. */
+  checker: { color: string; alpha: number }
 }
 
-export const BLOCK_ISLANDS: readonly BlockIslandDef[] = [
-  { id: 'graes', name: 'Græs', top: '#7CB85A', side: '#5E9A43', soil: '#A67C52', grid: '#E8F5D0', sky: ['#9FD6F5', '#D4EEFB', '#EAF6FD'], skyAnchor: 'center', gridOpacity: 0.5 },
-  { id: 'sne', name: 'Sne', top: '#F3F7FB', side: '#D9E4EF', soil: '#8FA3B8', grid: '#6E86A0', sky: ['#B7C9E2', '#DCE7F3', '#F2F6FB'], skyAnchor: 'center', gridOpacity: 0.22 },
-  { id: 'strand', name: 'Strand', top: '#EED7A4', side: '#DDBF85', soil: '#B08A55', grid: '#8A6A3A', sky: ['#7FCBEA', '#BFE6F5', '#FFF1D6'], skyAnchor: 'left', gridOpacity: 0.22 },
+export const BLOCK_THEMES: readonly BlockThemeDef[] = [
+  { id: 'plain', name: 'Ler', top: '#EADFCD', side: '#D8C8AE', soil: '#C9B595', textured: false, checker: { color: '#FFFFFF', alpha: 0.5 } },
+  { id: 'graes', name: 'Græs', top: '#FFFFFF', side: '#FFFFFF', soil: '#7A5A3A', textured: true, checker: { color: '#F4FFE6', alpha: 0.24 } },
+  { id: 'sne', name: 'Sne', top: '#FFFFFF', side: '#FFFFFF', soil: '#8FA3B8', textured: true, checker: { color: '#5E7FA6', alpha: 0.12 } },
+  { id: 'strand', name: 'Strand', top: '#FFFFFF', side: '#FFFFFF', soil: '#B08A55', textured: true, checker: { color: '#FFFFFF', alpha: 0.32 } },
 ]
 
-export const islandById = (id: string): BlockIslandDef | undefined => BLOCK_ISLANDS.find((i) => i.id === id)
+export const themeById = (id: string | null | undefined): BlockThemeDef =>
+  BLOCK_THEMES.find((t) => t.id === id) ?? BLOCK_THEMES[0]
 
-/** Free islands' picker/deep-link/session ids are prefixed, so they never collide with a model's (W3). */
-export const FREE_ISLAND_PREFIX = 'fri-'
-export const islandItemId = (id: BlockIslandId): string => `${FREE_ISLAND_PREFIX}${id}`
-
-/** The picker's shelf heading for the islands (read, never spoken). */
-export const FREE_ISLANDS_LABEL = 'Frie øer'
+/** The studio the plate stands in: one calm look on every theme (the floor fades into the wall). */
+export const BLOCK_STUDIO = { wall: '#F3EEE6', floor: '#EDE6DB' } as const

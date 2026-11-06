@@ -1,8 +1,9 @@
-// The special blocks' SHAPES (Krea PRD-03 §4.7) — code, never Gemini: Gemini paints flat faces only.
+// The roof's SHAPE (Krea PRD-03 §4.7) — code, never Gemini: Gemini paints flat faces only. (Window and door
+// are plain thin boxes, built in BlockScene; the wheel is gone — owner, 2026-11-06.)
 // Every shape is built for a unit cell centred on the origin, FACING +z; the scene turns each instance to
 // its block's facing (`facingAngle`).
 
-import { BufferGeometry, CircleGeometry, CylinderGeometry, Float32BufferAttribute, PlaneGeometry } from 'three'
+import { BufferGeometry, Float32BufferAttribute } from 'three'
 import type { Facing } from '../blockWorld.ts'
 
 /** Rotation about y that turns the +z-facing shape to `f`. */
@@ -36,15 +37,3 @@ export const roofGeometry = (): BufferGeometry => {
   g.computeVertexNormals()
   return g
 }
-
-/** The wheel's tyre: a squat cylinder whose axle lies along +z (along the face it sits on). */
-export const wheelGeometry = (): BufferGeometry => new CylinderGeometry(0.42, 0.42, 0.3, 28).rotateX(Math.PI / 2)
-
-/** The wheel's painted face (tyre + hub render) on the tyre's outer side, a hair proud of it. */
-export const wheelFaceGeometry = (): BufferGeometry => new CircleGeometry(0.42, 32).translate(0, 0, 0.152)
-
-/** How far a wheel sits back towards the block it hangs on, so it touches that face instead of floating. */
-export const WHEEL_SETBACK = 0.3
-
-/** A window's or door's painted face, a hair in front of the cell's +z side. */
-export const faceGeometry = (): BufferGeometry => new PlaneGeometry(0.84, 0.84).translate(0, 0, 0.506)

@@ -1,18 +1,21 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import { TAP_SLOP_DISTANCE } from '../../common/dnd/dragActivation'
-import { BlockScene } from './engine/BlockScene'
+import { BlockScene, type FaceArt, type ThemeArt } from './engine/BlockScene'
 import { CAMERA, dragTurn, pinchZoom, type Pose } from './cameraRig'
-import type { Block, BlockKind, Cell, Target } from './blockWorld'
-import type { BlockIslandDef } from '../../../config/kreaBlocks'
+import type { Block, Cell, Target } from './blockWorld'
+import type { BlockThemeDef } from '../../../config/kreaBlocks'
 
 // The 3D stage (Krea PRD-03 §4.4): one canvas, one BlockScene, and the gesture split on it.
 //
 //   - One pointer: down → once it has moved more than TAP_SLOP_DISTANCE it is a TURN for the rest of the
 //     gesture. On up, a gesture that never became a turn is a TAP — and the tap acts on POINTER-UP, never
 //     on down, or every turn would start by placing a block.
+//   - While the finger is down and still a tap, `onPreview` shows WHERE the block will land (owner,
+//     JYJ5F: "difficult to see where to put the blocks"); lifting places it, turning cancels it. A mouse
+//     previews on hover.
 //   - Two pointers → pinch zoom. The pending tap is cancelled and nothing places until every finger lifts.
-//   - Every level turns and zooms the same way (owner 2026-11-06); levels differ only by island size.
+//   - Every level turns and zooms the same way (owner 2026-11-06); levels differ only by plate size.
 //
 // `touch-action: none` + non-passive touchmove/gesture* preventDefault (iOS page zoom), as in the Krea
 // canvas. The scene is created in the EFFECT, never in render (StrictMode's double mount, §4.1).
@@ -22,7 +25,8 @@ export interface BlockStageHandle {
   pickClient: (clientX: number, clientY: number) => Target | null
   /** A cell point's CLIENT position (probe aid). */
   projectClient: (cell: Cell, fy?: number) => { x: number; y: number } | null
-  setGhost: (cell: Cell | null, block: { kind: BlockKind; color: Block['color'] } | null) => void
+  /** Show cells as a ghost in `tint`, or hide it (null). */
+  setGhost: (cells: Cell[] | null, tint: string | null) => void
   getPose: () => Pose
   setPose: (p: Pose) => void
   animateTo: (p: Pose, done?: () => void) => void
@@ -31,14 +35,17 @@ export interface BlockStageHandle {
 export interface BlockStageProps {
   islandSize: number
   heightCap: number
-  island: BlockIslandDef
-  /** The owner's renders for this island + the specials' faces (URLs). */
-  art: { top: string; side: string; window: string; door: string; wheel: string }
-  /** CSS px of the stage covered by floating controls; the island centres in what is left. */
+  /** The plate's surface — switched live, the scene is not rebuilt. */
+  theme: BlockThemeDef
+  themeArt: ThemeArt
+  faces: FaceArt
+  /** CSS px of the stage covered by floating controls; the plate centres in what is left. */
   insets: { top: number; right: number; bottom: number; left: number }
   blocks: { cell: Cell; block: Block }[]
-  /** A tap that stayed a tap. `target` is null over the sky. */
+  /** A tap that stayed a tap. `target` is null over the studio. */
   onTap: (target: Target | null) => void
+  /** What a finger (or a hovering mouse) is over right now, for the preview ghost; null = none. */
+  onPreview?: (target: Target | null) => void
   /** The camera moved by a gesture (for buttons that grey out at a clamp). */
   onPose?: (p: Pose) => void
   disabled?: boolean
@@ -47,7 +54,7 @@ export interface BlockStageProps {
 type Pt = { x: number; y: number }
 
 const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function BlockStage(
-  { islandSize, heightCap, island, art, insets, blocks, onTap, onPose, disabled },
+  { islandSize, heightCap, theme, themeArt, faces, insets, blocks, onTap, onPreview, onPose, disabled },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -57,11 +64,15 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   blocksRef.current = blocks
   const insetsRef = useRef(insets)
   insetsRef.current = insets
+  const themeRef = useRef({ theme, themeArt })
+  themeRef.current = { theme, themeArt }
   const [lost, setLost] = useState(false)
   const onPoseRef = useRef(onPose)
   onPoseRef.current = onPose
+  const onPreviewRef = useRef(onPreview)
+  onPreviewRef.current = onPreview
 
-  // ----- the scene: ONE per mount (and per island size), disposed on the way out ------------------------
+  // ----- the scene: ONE per mount (and per plate size), disposed on the way out -------------------------
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
@@ -78,8 +89,9 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
         canvas,
         islandSize,
         heightCap,
-        island,
-        art,
+        theme: themeRef.current.theme,
+        themeArt: themeRef.current.themeArt,
+        faces,
         onContextLost: () => setLost(true),
         // Rebuild from the pure world: the GPU held nothing that isn't also there.
         onContextRestored: () => {
@@ -88,7 +100,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
         },
       })
     } catch (err) {
-      // No WebGL at all (blocked, or a GPU-less browser): the sky stays, the app does not crash.
+      // No WebGL at all (blocked, or a GPU-less browser): the studio colour stays, the app does not crash.
       console.warn('[Byggeklodser] WebGL unavailable', err)
       canvas.remove()
       setLost(true)
@@ -115,7 +127,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       canvasRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [islandSize, heightCap, island.id])
+  }, [islandSize, heightCap])
 
   useEffect(() => {
     sceneRef.current?.setBlocks(blocks)
@@ -124,6 +136,10 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   useEffect(() => {
     sceneRef.current?.setInsets(insets)
   }, [insets])
+
+  useEffect(() => {
+    sceneRef.current?.setTheme(theme, themeArt)
+  }, [theme, themeArt])
 
   useImperativeHandle(ref, () => ({
     pickClient: (cx, cy) => {
@@ -142,7 +158,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       const p = scene.project(cell, fy)
       return { x: r.left + p.x, y: r.top + p.y }
     },
-    setGhost: (cell, block) => sceneRef.current?.setGhost(cell, block),
+    setGhost: (cells, tint) => sceneRef.current?.setGhost(cells, tint),
     getPose: () => sceneRef.current?.getPose() ?? { ...CAMERA.home },
     setPose: (p) => {
       sceneRef.current?.setPose(p)
@@ -159,6 +175,8 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   // ----- gestures ----------------------------------------------------------------------------------------
   const pointers = useRef(new Map<number, Pt>())
   const gesture = useRef<{ start: Pt; pose: Pose; turning: boolean; multi: boolean; pinchD: number; pinchPose: Pose } | null>(null)
+  const hoverRaf = useRef(0)
+  useEffect(() => () => cancelAnimationFrame(hoverRaf.current), [])
 
   // iOS: block page zoom/scroll while a finger is on the stage (non-passive, so preventDefault holds).
   useEffect(() => {
@@ -180,6 +198,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     return { x: e.clientX - r.left, y: e.clientY - r.top }
   }
   const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y)
+  const preview = (p: Pt | null) => onPreviewRef.current?.(p && sceneRef.current ? sceneRef.current.pick(p.x, p.y) : null)
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (disabled) return
@@ -195,18 +214,29 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     pointers.current.set(e.pointerId, p)
     if (pointers.current.size === 1) {
       gesture.current = { start: p, pose: scene.getPose(), turning: false, multi: false, pinchD: 0, pinchPose: scene.getPose() }
+      preview(p)
     } else if (gesture.current) {
       // A second finger: this is a pinch, never a tap.
       const [a, b] = [...pointers.current.values()]
       gesture.current.multi = true
       gesture.current.pinchD = Math.max(1, dist(a, b))
       gesture.current.pinchPose = scene.getPose()
+      preview(null)
     }
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
     const g = gesture.current
     const scene = sceneRef.current
+    // A mouse with no button down: hover preview, at most once a frame.
+    if (!g && e.pointerType === 'mouse' && !disabled) {
+      const p = local(e)
+      if (!hoverRaf.current) hoverRaf.current = requestAnimationFrame(() => {
+        hoverRaf.current = 0
+        preview(p)
+      })
+      return
+    }
     if (!g || !scene || !pointers.current.has(e.pointerId)) return
     const p = local(e)
     pointers.current.set(e.pointerId, p)
@@ -220,6 +250,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     }
     if (!g.turning && dist(p, g.start) > TAP_SLOP_DISTANCE) {
       g.turning = true
+      preview(null)
       // Measure the turn from HERE, so the view doesn't jump by the slop.
       g.start = p
       g.pose = scene.getPose()
@@ -237,11 +268,13 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     if (!g || !had) return
     if (pointers.current.size > 0) return
     gesture.current = null
+    if (e.pointerType !== 'mouse') preview(null)
     if (cancelled || g.multi || g.turning || disabled) return
     const scene = sceneRef.current
     if (!scene) return
     const p = local(e)
     onTap(scene.pick(p.x, p.y))
+    if (e.pointerType === 'mouse') preview(p)
   }
 
   return (
@@ -253,10 +286,12 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       onPointerMove={onPointerMove}
       onPointerUp={(e) => end(e, false)}
       onPointerCancel={(e) => end(e, true)}
+      onPointerLeave={(e) => {
+        if (e.pointerType === 'mouse' && !gesture.current) preview(null)
+      }}
       sx={{ position: 'absolute', inset: 0, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', cursor: 'grab' }}
     >
-      {/* The canvas is appended by the effect above. It is transparent: the sky is the DOM backdrop
-          behind it (§4.7), so a lost context shows the sky (the canvas is cleared on loss). */}
+      {/* The canvas is appended by the effect above. If the GPU is lost, the stage's studio colour shows. */}
     </Box>
   )
 })

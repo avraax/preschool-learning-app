@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync } from 'node:fs'
-import { allKreaLines, BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, KREA_RAINBOW_NAME, KREA_WELCOME_TITLES, NEW_BOARD_LINE, NEW_ISLAND_LINE, NEW_PAPER_LINE } from './kreaPhrases.ts'
+import { allKreaLines, BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, KREA_RAINBOW_NAME, KREA_WELCOME_TITLES, NEW_BOARD_LINE, NEW_BUILD_LINE, NEW_PAPER_LINE } from './kreaPhrases.ts'
 import { PALETTE_13 } from './kreaPalette.ts'
 
 // Pinned as LITERALS: the app and the enumerator call the same builder, so "they agree" would pass
@@ -10,10 +10,10 @@ test('the Krea lines say exactly this', () => {
   assert.equal(KREA_RAINBOW_NAME, 'regnbue')
   assert.equal(NEW_PAPER_LINE, 'Vil du have et nyt papir? Din tegning forsvinder.')
   assert.equal(NEW_BOARD_LINE, 'Vil du have en ny plade? Dine perler forsvinder.')
-  assert.equal(NEW_ISLAND_LINE, 'Vil du have en ny ø? Dine klodser forsvinder.')
-  assert.deepEqual(BLOCK_SPECIAL_NAME, { roof: 'tag', window: 'vindue', door: 'dør', wheel: 'hjul' })
+  assert.equal(NEW_BUILD_LINE, 'Vil du have en ny byggeplade? Dine klodser forsvinder.')
+  assert.deepEqual(BLOCK_SPECIAL_NAME, { roof: 'tag', window: 'vindue', door: 'dør' })
   assert.ok(KREA_WELCOME_TITLES.includes('Byggeklodser'))
-  for (const l of [NEW_ISLAND_LINE, ...Object.values(BLOCK_SPECIAL_NAME), 'Byggeklodser']) assert.ok(allKreaLines().includes(l), l)
+  for (const l of [NEW_BUILD_LINE, ...Object.values(BLOCK_SPECIAL_NAME), 'Byggeklodser']) assert.ok(allKreaLines().includes(l), l)
   assert.deepEqual(PALETTE_13.map((c) => KREA_COLOR_NAME[c]), [
     'rød', 'orange', 'gul', 'lysegrøn', 'grøn', 'lyseblå', 'blå', 'lilla', 'lyserød', 'beige', 'brun', 'sort', 'hvid',
   ])

@@ -4,15 +4,19 @@
 // The rules this file exists to keep:
 //   - ONE WebGLRenderer per game mount (several contexts on iOS is the memory-crash path).
 //   - RENDER ON DEMAND. Nothing here runs a continuous requestAnimationFrame loop: a state change, a
-//     camera move or a resize asks for ONE frame (`requestRender`), and an animation (a 90° step) runs
-//     frames only until it ends. The app at rest costs ~0 (`animation-and-performance.md`), measured by
-//     the frame counter this class publishes on the canvas (`data-blocks-frames`).
+//     camera move or a resize asks for ONE frame (`requestRender`), and an animation runs frames only
+//     until it ends. The app at rest costs ~0 (`animation-and-performance.md`), measured by the frame
+//     counter this class publishes on the canvas (`data-blocks-frames`).
 //   - DPR capped (`DPR_CAP`), the one tuning constant for heat on the A10X.
 //   - dispose() releases everything, and the canvas goes 0×0 — the renderer is created in an effect,
 //     never in render (StrictMode's dev double-mount, the trap Farvelæg hit).
 //
+// The look (owner, 2026-11-06): the plate rests on a calm STUDIO floor that fades into the wall — no
+// floating island, no painted landscape. A theme is only the plate's surface. Doors (1×2) and windows are
+// thin panels, set into a wall or standing on their own; there are no wheels.
+//
 // Imports name `three` core classes one by one — never `import * as THREE`, never the addons barrel —
-// and the whole module is reached only through the lazy `/krea/klodser` route (`blocksBundle.test.ts`).
+// and the whole module is reached only through the lazy `/krea/klodser` route (`blocks.test.ts`).
 
 import {
   WebGLRenderer,
@@ -25,25 +29,28 @@ import {
   Mesh,
   MeshStandardMaterial,
   MeshBasicMaterial,
+  BoxGeometry,
+  PlaneGeometry,
   BufferGeometry,
-  Float32BufferAttribute,
-  LineSegments,
-  LineBasicMaterial,
+  CanvasTexture,
   Matrix4,
   Color,
+  Fog,
   Raycaster,
   Vector2,
   Vector3,
+  NearestFilter,
   PCFSoftShadowMap,
   SRGBColorSpace,
   DynamicDrawUsage,
+  type Material,
   type Texture,
   type Object3D,
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import type { Block, BlockKind, Cell, Target } from '../blockWorld.ts'
-import type { BlockIslandDef } from '../../../../config/kreaBlocks.ts'
-import { facingAngle, faceGeometry, roofGeometry, WHEEL_SETBACK, wheelFaceGeometry, wheelGeometry } from './geometry.ts'
+import { BLOCK_STUDIO, type BlockThemeDef } from '../../../../config/kreaBlocks.ts'
+import { facingAngle, roofGeometry } from './geometry.ts'
 import { clayNormalMap, loadTexture } from './textures.ts'
 import { CAMERA, cameraPosition, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
 import { CRAYON_HEX } from '../../canvas/brushes.ts'
@@ -52,20 +59,27 @@ import { CRAYON_HEX } from '../../canvas/brushes.ts'
 export const DPR_CAP = 2
 /** Edge rounding as a share of a cell (§4.7: ≈ 0.08). */
 const RADIUS = 0.08
-/** The island's clay slab: thick enough that its side render (a grass/snow/sand band over earth) reads. */
-const SLAB_DEPTH = 1.2
-/** The camera always looks here: the island's centre, a little above its top (§2.3: no panning). */
+/** The plate's clay slab, resting on the studio floor. */
+const SLAB_DEPTH = 0.6
+/** The camera always looks here: the plate's centre, a little above its top (§2.3: no panning). */
 const TARGET = { x: 0, y: 0.5, z: 0 }
-/** The fixed-look specials' bodies (§2.2.7): a white window frame, a brown door, a black tyre. */
-const WINDOW_BODY = '#F2EEE6'
-const DOOR_BODY = '#8A5A33'
-const TYRE = '#2E2B2A'
+/** Window and door panels: thin slabs, framed in these colours on their edges. */
+const PANEL_DEPTH = 0.16
+/** Panels sit FLUSH with the cell's outward face: centred, a door set into a wall was recessed half a
+ * block and the next wall block hid it from any angle but straight on (WebKit shot, 2026-11-06). */
+const PANEL_OUT = 0.5 - PANEL_DEPTH / 2 - 0.01
+const WINDOW_FRAME = '#F2EEE6'
+const DOOR_FRAME = '#6B4423'
 /** How strongly the seeded clay grain bends the light. Subtle (owner: "subtle clay"). */
 const CLAY_GRAIN = 0.18
 
+/** What a renders-by-URL theme needs (the plain theme needs none). */
+export type ThemeArt = { top: string; side: string } | null
+export type FaceArt = { window: string; door: string }
+
 /**
  * One instanced mesh and the cells its instances draw, so a raycast hit (mesh + instanceId) maps back to
- * the world. Each block KIND lives in one or two of these; a whole island of blocks is a handful of draws.
+ * the world. Each block shape lives in one of these; a whole plate of blocks is a handful of draws.
  */
 class Layer {
   cells: Cell[] = []
@@ -74,7 +88,7 @@ class Layer {
     mesh.count = 0
     mesh.castShadow = true
     mesh.receiveShadow = true
-    // Instances move inside the island's box, so the mesh's own bounds never decide culling.
+    // Instances move inside the plate's box, so the mesh's own bounds never decide culling.
     mesh.frustumCulled = false
   }
   begin(): void {
@@ -88,7 +102,7 @@ class Layer {
   }
   commit(): void {
     this.mesh.count = this.cells.length
-    // three CACHES an instanced mesh's bounds on its first raycast — with an empty island that is an
+    // three CACHES an instanced mesh's bounds on its first raycast — with an empty plate that is an
     // empty sphere, and every later tap misses every block (measured: the eraser could hit nothing).
     this.mesh.computeBoundingSphere()
     this.mesh.computeBoundingBox()
@@ -97,15 +111,31 @@ class Layer {
   }
 }
 
+/** The squares as a checker (owner JYJ5F: the thin lines were hard to see). One texel per cell, crisp. */
+function checkerTexture(n: number): Texture {
+  const c = document.createElement('canvas')
+  c.width = c.height = n
+  const g = c.getContext('2d')!
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    g.fillStyle = (x + y) % 2 ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0)'
+    g.fillRect(x, y, 1, 1)
+  }
+  const t = new CanvasTexture(c)
+  t.magFilter = t.minFilter = NearestFilter
+  t.generateMipmaps = false
+  return t
+}
+
 export interface BlockSceneOptions {
   canvas: HTMLCanvasElement
   islandSize: number
   heightCap: number
-  /** Which island's clay and grid (the sky is the DOM behind the canvas). */
-  island: BlockIslandDef
-  /** The owner's renders (URLs): this island's top and side, and the specials' painted faces. */
-  art: { top: string; side: string; window: string; door: string; wheel: string }
-  /** The GPU went away: show the static sky; the world state is untouched. */
+  /** The plate's surface; switch later with `setTheme` (no rebuild). */
+  theme: BlockThemeDef
+  themeArt: ThemeArt
+  /** The owner's window and door renders (URLs). */
+  faces: FaceArt
+  /** The GPU went away: show the static studio; the world state is untouched. */
   onContextLost?: () => void
   /** The GPU came back: the caller re-applies the world (`setBlocks`) and the pose. */
   onContextRestored?: () => void
@@ -114,22 +144,24 @@ export interface BlockSceneOptions {
 export class BlockScene {
   readonly renderer: WebGLRenderer
   private readonly scene = new Scene()
-  private readonly camera = new PerspectiveCamera(CAMERA.fovDeg, 1, 0.1, 200)
+  private readonly camera = new PerspectiveCamera(CAMERA.fovDeg, 1, 0.1, 400)
   private readonly raycaster = new Raycaster()
   private readonly cubeGeo: RoundedBoxGeometry
   private readonly cubeMat: MeshStandardMaterial
-  /** Cubes AND the window/door bodies (one shape, colour per instance). */
   private readonly cubes: Layer
   private readonly roofs: Layer
-  private readonly tyres: Layer
-  private readonly wheelFaces: Layer
-  private readonly windowFaces: Layer
-  private readonly doorFaces: Layer
+  private readonly windows: Layer
+  private readonly doors: Layer
   private readonly layers: Layer[]
   private readonly textures: Texture[] = []
+  /** Theme renders, loaded on first use and kept for the session's switches. */
+  private readonly themeTextures = new Map<string, Texture>()
   private readonly island: Mesh
-  private readonly grid: LineSegments
-  private readonly ghost: Mesh
+  private readonly topMat: MeshStandardMaterial
+  private readonly sideMat: MeshStandardMaterial
+  private readonly bottomMat: MeshStandardMaterial
+  private readonly checker: Mesh
+  private readonly ghosts: Mesh[]
   private readonly key: DirectionalLight
   private readonly half: number
   private readonly canvas: HTMLCanvasElement
@@ -137,7 +169,7 @@ export class BlockScene {
   private fit = 10
   private width = 1
   private height = 1
-  /** CSS px of the stage covered by floating controls (header, panel): the island centres in the rest. */
+  /** CSS px of the stage covered by floating controls (header, panel): the plate centres in the rest. */
   private insets = { top: 0, right: 0, bottom: 0, left: 0 }
   private pending = 0
   private animation = 0
@@ -149,15 +181,14 @@ export class BlockScene {
   private readonly onRestored: () => void
 
   constructor(private readonly opts: BlockSceneOptions) {
-    const { canvas, islandSize, heightCap, island, art } = opts
+    const { canvas, islandSize, heightCap } = opts
     this.canvas = canvas
     this.half = (islandSize - 1) / 2
     // preserveDrawingBuffer: the feedback screenshot (snapdom) copies this canvas LATER than the frame,
     // and a cleared buffer came out as empty sky (owner's report F6FB9). Rendering only on demand, the
     // extra copy it costs happens only when a frame is drawn at all.
-    this.renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'default' })
+    this.renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'default' })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, DPR_CAP))
-    this.renderer.setClearColor(0x000000, 0)
     this.renderer.outputColorSpace = SRGBColorSpace
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = PCFSoftShadowMap
@@ -166,82 +197,95 @@ export class BlockScene {
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
 
+    // ----- the studio: a plain wall colour, and a floor that fades into it (fog), so there is no horizon
+    this.scene.background = new Color(BLOCK_STUDIO.wall)
+    this.scene.fog = new Fog(BLOCK_STUDIO.wall, 40, 120)
+    const floor = new Mesh(new PlaneGeometry(600, 600).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_STUDIO.floor, roughness: 1, metalness: 0 }))
+    floor.position.y = -SLAB_DEPTH
+    floor.receiveShadow = true
+    floor.name = 'floor'
+    this.scene.add(floor)
+
     // ----- light: hemisphere + one key from the top-left (the art style's key light) + one soft shadow
-    this.scene.add(new HemisphereLight(0xfffaf0, 0x8a7a66, 1.6))
-    this.scene.add(new AmbientLight(0xffffff, 0.25))
-    this.key = new DirectionalLight(0xffffff, 1.6)
-    const reach = islandSize * 0.75 + heightCap * 0.3
+    this.scene.add(new HemisphereLight(0xfffaf0, 0x9a8a76, 1.5))
+    this.scene.add(new AmbientLight(0xffffff, 0.3))
+    this.key = new DirectionalLight(0xffffff, 1.5)
+    const reach = islandSize * 0.95 + heightCap * 0.4
     this.key.position.set(-islandSize * 0.6, islandSize * 1.3 + heightCap, islandSize * 0.5)
     this.key.castShadow = true
     this.key.shadow.mapSize.set(1024, 1024)
-    this.key.shadow.radius = 4
+    this.key.shadow.radius = 5
     this.key.shadow.bias = -0.0006
     this.key.shadow.normalBias = 0.02
     Object.assign(this.key.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 0.5, far: islandSize * 4 + heightCap * 2 })
     this.key.shadow.camera.updateProjectionMatrix()
     this.scene.add(this.key)
 
-    // ----- the island: a floating clay slab. The owner's top render is stretched once over the top (an
-    // island is at most 16 a side, §4.7: no tiling), the side render's band runs round the edge, repeated
-    // so its pebbles keep their shape. Per-face materials: [+x, −x, +y top, −y bottom, +z, −z].
-    const redraw = () => this.requestRender()
+    // ----- the plate: a clay slab resting on the floor (it casts its own soft shadow onto it). Per-face
+    // materials: [+x, −x, +y top, −y bottom, +z, −z]; `setTheme` swaps their colour/map.
     const span = islandSize + 0.4
-    const top = loadTexture(art.top, redraw)
-    const side = loadTexture(art.side, redraw, { x: Math.max(1, Math.round(span / SLAB_DEPTH)), y: 1 })
-    this.textures.push(top, side)
-    const topMat = new MeshStandardMaterial({ map: top, roughness: 0.95, metalness: 0 })
-    const sideMat = new MeshStandardMaterial({ map: side, roughness: 0.95, metalness: 0 })
-    const bottomMat = new MeshStandardMaterial({ color: island.soil, roughness: 1 })
-    const slabGeo = new RoundedBoxGeometry(span, SLAB_DEPTH, span, 3, 0.25)
-    this.island = new Mesh(slabGeo, [sideMat, sideMat, topMat, bottomMat, sideMat, sideMat])
+    this.topMat = new MeshStandardMaterial({ roughness: 0.95, metalness: 0 })
+    this.sideMat = new MeshStandardMaterial({ roughness: 0.95, metalness: 0 })
+    this.bottomMat = new MeshStandardMaterial({ roughness: 1, metalness: 0 })
+    const s = this.sideMat
+    this.island = new Mesh(new RoundedBoxGeometry(span, SLAB_DEPTH, span, 3, 0.18), [s, s, this.topMat, this.bottomMat, s, s])
     this.island.position.y = -SLAB_DEPTH / 2
     this.island.receiveShadow = true
+    this.island.castShadow = true
     this.island.name = 'island'
     this.scene.add(this.island)
 
-    // ----- faint grid lines to aim by (§2.8), drawn in code, a hair above the top
-    const pts: number[] = []
-    const e = islandSize / 2
-    for (let i = 0; i <= islandSize; i++) {
-      const p = i - e
-      pts.push(p, 0.004, -e, p, 0.004, e, -e, 0.004, p, e, 0.004, p)
-    }
-    const gridGeo = new BufferGeometry()
-    gridGeo.setAttribute('position', new Float32BufferAttribute(pts, 3))
-    this.grid = new LineSegments(gridGeo, new LineBasicMaterial({ color: island.grid, transparent: true, opacity: island.gridOpacity }))
-    this.scene.add(this.grid)
+    // ----- the squares: a checker a hair above the top (tint and strength per theme)
+    const chk = checkerTexture(islandSize)
+    this.textures.push(chk)
+    this.checker = new Mesh(
+      new PlaneGeometry(islandSize, islandSize).rotateX(-Math.PI / 2).translate(0, 0.006, 0),
+      new MeshBasicMaterial({ map: chk, transparent: true, depthWrite: false }),
+    )
+    this.checker.name = 'checker'
+    this.scene.add(this.checker)
 
     // ----- the blocks: one instanced mesh per SHAPE, colour per instance, a shared seeded clay grain
+    const redraw = () => this.requestRender()
     const grain = clayNormalMap()
-    const wTex = loadTexture(art.window, redraw)
-    const dTex = loadTexture(art.door, redraw)
-    const wheelTex = loadTexture(art.wheel, redraw)
-    this.textures.push(grain, wTex, dTex, wheelTex)
+    const wTex = loadTexture(opts.faces.window, redraw)
+    const dTex = loadTexture(opts.faces.door, redraw)
+    this.textures.push(grain, wTex, dTex)
     const clay = (extra: Partial<ConstructorParameters<typeof MeshStandardMaterial>[0]> = {}) =>
       new MeshStandardMaterial({ roughness: 0.88, metalness: 0, normalMap: grain, normalScale: new Vector2(CLAY_GRAIN, CLAY_GRAIN), ...extra })
     this.cubeGeo = new RoundedBoxGeometry(1, 1, 1, 2, RADIUS)
     this.cubeMat = clay()
     const capacity = islandSize * islandSize * heightCap
-    const inst = (geo: BufferGeometry, mat: MeshStandardMaterial, colored: boolean) => {
+    const inst = (geo: BufferGeometry, mat: Material | Material[], colored: boolean) => {
       const m = new InstancedMesh(geo, mat, capacity)
       if (colored) m.setColorAt(0, new Color(1, 1, 1))
       return m
     }
+    // Panels: the render on the two big faces, a clay frame colour on the edges. Box groups are
+    // [+x, −x, +y, −y, +z, −z], so the faces are the last two.
+    const panel = (frame: string, face: Texture) => {
+      const edge = clay({ color: frame })
+      const front = new MeshStandardMaterial({ map: face, roughness: 0.8, metalness: 0 })
+      return [edge, edge, edge, edge, front, front]
+    }
     this.cubes = new Layer(inst(this.cubeGeo, this.cubeMat, true), true)
     this.roofs = new Layer(inst(roofGeometry(), clay(), true), true)
-    this.tyres = new Layer(inst(wheelGeometry(), clay({ color: TYRE, roughness: 0.95 }), false), true)
-    this.wheelFaces = new Layer(inst(wheelFaceGeometry(), new MeshStandardMaterial({ map: wheelTex, roughness: 0.9, metalness: 0 }), false), true)
-    // The painted faces sit on the bodies: not picked (a tap there hits the body behind, the same cell).
-    this.windowFaces = new Layer(inst(faceGeometry(), new MeshStandardMaterial({ map: wTex, roughness: 0.6, metalness: 0 }), false), false)
-    this.doorFaces = new Layer(inst(faceGeometry(), new MeshStandardMaterial({ map: dTex, roughness: 0.9, metalness: 0 }), false), false)
-    this.windowFaces.mesh.castShadow = this.doorFaces.mesh.castShadow = false
-    this.layers = [this.cubes, this.roofs, this.tyres, this.wheelFaces, this.windowFaces, this.doorFaces]
+    this.windows = new Layer(inst(new BoxGeometry(0.98, 0.98, PANEL_DEPTH).translate(0, 0, PANEL_OUT), panel(WINDOW_FRAME, wTex), false), true)
+    // A door spans its cell and the one above: drawn once from the bottom cell, centred a cell higher.
+    this.doors = new Layer(inst(new BoxGeometry(0.9, 1.96, PANEL_DEPTH).translate(0, 0.5, PANEL_OUT), panel(DOOR_FRAME, dTex), false), true)
+    this.layers = [this.cubes, this.roofs, this.windows, this.doors]
     for (const l of this.layers) this.scene.add(l.mesh)
 
-    // ----- the ghost: where a dragged block would land
-    this.ghost = new Mesh(this.cubeGeo, new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, depthWrite: false }))
-    this.ghost.visible = false
-    this.scene.add(this.ghost)
+    // ----- the ghosts: where a block would land (a door needs two), or what the eraser would take
+    this.ghosts = [0, 1].map(() => {
+      const g = new Mesh(this.cubeGeo, new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false }))
+      g.visible = false
+      g.renderOrder = 2
+      this.scene.add(g)
+      return g
+    })
+
+    this.setTheme(opts.theme, opts.themeArt)
 
     // ----- context loss (§4.1): preventDefault so it CAN come back; truth stays in the pure world
     this.onLost = (ev: Event) => {
@@ -264,13 +308,44 @@ export class BlockScene {
     return new Vector3(c.x - this.half, c.y + 0.5, c.z - this.half)
   }
 
+  private themeTexture(url: string, repeat?: { x: number; y: number }): Texture {
+    const key = `${url}|${repeat?.x ?? 0}`
+    let t = this.themeTextures.get(key)
+    if (!t) {
+      t = loadTexture(url, () => this.requestRender(), repeat)
+      this.themeTextures.set(key, t)
+    }
+    return t
+  }
+
+  /** The plate's surface (owner: themes switch inside the game and keep the build). No rebuild. */
+  setTheme(theme: BlockThemeDef, art: ThemeArt): void {
+    const span = this.opts.islandSize + 0.4
+    if (art && theme.textured) {
+      this.topMat.map = this.themeTexture(art.top)
+      this.sideMat.map = this.themeTexture(art.side, { x: Math.max(1, Math.round(span / (SLAB_DEPTH * 2))), y: 1 })
+    } else {
+      this.topMat.map = null
+      this.sideMat.map = null
+    }
+    this.topMat.color.set(theme.top)
+    this.sideMat.color.set(theme.side)
+    this.bottomMat.color.set(theme.soil)
+    this.topMat.needsUpdate = this.sideMat.needsUpdate = true
+    const chk = this.checker.material as MeshBasicMaterial
+    chk.color.set(theme.checker.color)
+    chk.opacity = theme.checker.alpha
+    this.renderer.shadowMap.needsUpdate = true
+    this.requestRender()
+  }
+
   /** Redraw the blocks from the world. */
   setBlocks(list: { cell: Cell; block: Block }[]): void {
     const m = new Matrix4()
-    const r = new Matrix4()
     const col = new Color()
     for (const l of this.layers) l.begin()
     for (const { cell, block } of list) {
+      if (block.part === 'top') continue // a door is drawn once, from its bottom cell
       const p = this.centre(cell)
       // Turn the +z-facing shape to the block's facing, then move it to its cell.
       m.makeRotationY(facingAngle(block.facing)).setPosition(p.x, p.y, p.z)
@@ -282,21 +357,11 @@ export class BlockScene {
           this.roofs.add(cell, m, col.set(CRAYON_HEX[block.color]))
           break
         case 'window':
-          this.cubes.add(cell, m, col.set(WINDOW_BODY))
-          this.windowFaces.add(cell, m)
+          this.windows.add(cell, m)
           break
         case 'door':
-          this.cubes.add(cell, m, col.set(DOOR_BODY))
-          this.doorFaces.add(cell, m)
+          this.doors.add(cell, m)
           break
-        case 'wheel': {
-          // Pulled back towards the block it hangs on, so it touches that face (§4.6: axle along it).
-          r.makeTranslation(0, 0, -WHEEL_SETBACK)
-          const w = m.clone().multiply(r)
-          this.tyres.add(cell, w)
-          this.wheelFaces.add(cell, w)
-          break
-        }
       }
     }
     for (const l of this.layers) l.commit()
@@ -304,21 +369,27 @@ export class BlockScene {
     this.requestRender()
   }
 
-  /** Show where a block would land, or hide the ghost (null). */
-  setGhost(cell: Cell | null, block: { kind: BlockKind; color: Block['color'] } | null): void {
-    const was = this.ghost.visible
-    if (!cell || !block) {
-      this.ghost.visible = false
-      if (was) this.requestRender()
-      return
-    }
-    const p = this.centre(cell)
-    if (was && this.ghost.position.equals(p)) return
-    this.ghost.position.copy(p)
-    const look = block.kind === 'cube' || block.kind === 'roof' ? CRAYON_HEX[block.color] : block.kind === 'window' ? WINDOW_BODY : block.kind === 'door' ? DOOR_BODY : TYRE
-    ;(this.ghost.material as MeshBasicMaterial).color.set(look)
-    this.ghost.visible = true
-    this.requestRender()
+  /**
+   * Show where a block would land (one cell, or a door's two), or what the eraser would take — or hide
+   * it (null). `tint` is the colour the ghost wears.
+   */
+  setGhost(cells: Cell[] | null, tint: string | null): void {
+    let changed = false
+    this.ghosts.forEach((g, i) => {
+      const c = cells?.[i]
+      if (!c || !tint) {
+        if (g.visible) changed = true
+        g.visible = false
+        return
+      }
+      const p = this.centre(c)
+      const mat = g.material as MeshBasicMaterial
+      if (!g.visible || !g.position.equals(p) || mat.color.getHexString() !== new Color(tint).getHexString()) changed = true
+      g.position.copy(p)
+      mat.color.set(tint)
+      g.visible = true
+    })
+    if (changed) this.requestRender()
   }
 
   getPose(): Pose {
@@ -339,7 +410,7 @@ export class BlockScene {
     this.requestRender()
   }
 
-  /** Ease to a pose over `ms` (Let's 90° steps) — frames run only for the length of the move. */
+  /** Ease to a pose over `ms` — frames run only for the length of the move. */
   animateTo(to: Pose, ms: number = CAMERA.stepMs, done?: () => void): void {
     this.stopAnimation()
     const from = this.getPose()
@@ -368,7 +439,7 @@ export class BlockScene {
     this.animation = 0
   }
 
-  /** The stage's CSS size changed: buffer = CSS × DPR (≤ cap), the camera re-fits the island (§4.13). */
+  /** The stage's CSS size changed: buffer = CSS × DPR (≤ cap), the camera re-fits the plate (§4.13). */
   resize(cssW: number, cssH: number): void {
     this.width = Math.max(1, Math.round(cssW))
     this.height = Math.max(1, Math.round(cssH))
@@ -379,7 +450,7 @@ export class BlockScene {
 
   /**
    * The stage is the whole screen with controls floating over it (owner 2026-11-06). Tell the scene
-   * which edges they cover: the island is fitted to, and centred in, the free rectangle — the canvas still
+   * which edges they cover: the plate is fitted to, and centred in, the free rectangle — the canvas still
    * draws (and picks) under the controls, so a turned or zoomed build never ends at a hard edge.
    */
   setInsets(i: { top: number; right: number; bottom: number; left: number }): void {
@@ -398,16 +469,16 @@ export class BlockScene {
     this.camera.setViewOffset(w, h, (i.right - i.left) / 2, (i.bottom - i.top) / 2, w, h)
     this.camera.updateProjectionMatrix()
     const fill = { x: 0.92 * Math.max(0.2, (w - i.left - i.right) / w), y: 0.92 * Math.max(0.2, (h - i.top - i.bottom) / h) }
-    // The island (its slab, plus two layers of building) fills the free area at zoom 1, judged from the
-    // starting angle — so the fit never changes while the child turns (no pulsing island).
+    // The plate (its slab, plus two layers of building) fills the free area at zoom 1, judged from the
+    // starting angle — so the fit never changes while the child turns (no pulsing plate).
     this.fit = fitBox(CAMERA.home, { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }, TARGET, aspect, fill)
+    // The floor fades into the wall well beyond the plate at every zoom, so there is no horizon line.
+    const fog = this.scene.fog as Fog
+    fog.near = this.fit * (CAMERA.zoomMax + 0.4)
+    fog.far = this.fit * (CAMERA.zoomMax + 2.2)
     this.applyPose(this.pose)
   }
 
-  /**
-   * What a stage point (CSS px inside the canvas) lands on: a block's face, or the island's top. Null over
-   * the sky, the island's sides or nothing at all.
-   */
   /**
    * Where a point of a cell lands on the stage, in CSS px (probe aid: rung 1/2 drivers aim at real squares
    * instead of guessing). `fy` 0 = the cell's floor, 1 = its top; x/z are the cell's centre.
@@ -419,6 +490,10 @@ export class BlockScene {
     return { x: ((p.x + 1) / 2) * this.width, y: ((1 - p.y) / 2) * this.height }
   }
 
+  /**
+   * What a stage point (CSS px inside the canvas) lands on: a block's face, or the plate's top. Null over
+   * the studio, the plate's sides or nothing at all.
+   */
   pick(x: number, y: number): Target | null {
     const ndc = new Vector2((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1)
     this.raycaster.setFromCamera(ndc, this.camera)
@@ -428,8 +503,10 @@ export class BlockScene {
     for (const h of hits) {
       const layer = pickable.find((l) => l.mesh === h.object)
       if (layer && h.instanceId !== undefined && h.face) {
-        const cell = layer.cells[h.instanceId]
+        let cell = layer.cells[h.instanceId]
         if (!cell) continue
+        // A door is ONE mesh over two cells: a hit on its upper half is its upper cell.
+        if (layer === this.doors && h.point.y > cell.y + 1) cell = { x: cell.x, y: cell.y + 1, z: cell.z }
         // The face normal is in the SHAPE's frame: turn it by the instance's rotation (a roof facing west
         // is a rotated wedge). The resolver still rounds it to one axis (rounded edges skew it).
         layer.mesh.getMatrixAt(h.instanceId, m)
@@ -485,8 +562,9 @@ export class BlockScene {
       else mat?.dispose()
     })
     for (const l of this.layers) l.mesh.dispose()
-    // Materials don't own their maps: the grain and the face textures go explicitly.
+    // Materials don't own their maps: the grain, the faces, the checker and the theme renders go explicitly.
     for (const t of this.textures) t.dispose()
+    for (const t of this.themeTextures.values()) t.dispose()
     this.key.shadow.map?.dispose()
     this.renderer.dispose()
     this.renderer.forceContextLoss()

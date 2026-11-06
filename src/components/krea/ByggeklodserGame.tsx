@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Box, ButtonBase } from '@mui/material'
-import { useSearchParams } from 'react-router-dom'
 import { DndContext, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import GameShell from '../common/GameShell'
 import { useOccludeWorld } from '../common/scene/worldOcclusion'
@@ -15,44 +14,47 @@ import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
 import { KREA_BLOCKS } from '../../config/difficulty'
 import { PALETTE_13, type CrayonColor } from '../../config/kreaPalette'
-import { BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, NEW_ISLAND_LINE, NEW_ISLAND_TITLE } from '../../config/kreaPhrases'
-import { BLOCK_ISLANDS, FREE_ISLAND_PREFIX, FREE_ISLANDS_LABEL, islandById, islandItemId, type BlockIslandDef } from '../../config/kreaBlocks'
+import { BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, NEW_BUILD_LINE, NEW_BUILD_TITLE } from '../../config/kreaPhrases'
+import { BLOCK_STUDIO, BLOCK_THEMES, themeById, type BlockThemeDef, type BlockThemeId } from '../../config/kreaBlocks'
 import { KREA_ART } from '../../assets/games/krea'
-import { BLOCK_FACE_ART, BLOCK_ISLAND_ART } from '../../assets/games/krea/blocks'
+import { BLOCK_FACE_ART, BLOCK_THEME_ART } from '../../assets/games/krea/blocks'
 import { CRAYON_HEX } from './canvas/brushes'
 import { PlusBadge, pressHandlers, StudioButton } from './studio/StudioControls'
-import { StudioBackdrop } from './studio/StudioScene'
-import { KreaPicker } from './studio/KreaPicker'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { DEV } from '../../utils/devHarness'
 import BlockStage, { type BlockStageHandle } from './blocks/BlockStage'
 import {
+  blockAt,
   blockCount,
   blockList,
   emptyWorld,
+  previewCells,
   removeBlock,
   resolvePlacement,
   restoreWorld,
   serialiseWorld,
   SPECIAL_KINDS,
-  targetCell,
   undo,
-  whyNot,
   type BlockKind,
   type BlockWorld,
+  type Cell,
   type Held,
   type Target,
 } from './blocks/blockWorld'
 import { CAMERA, canZoom, towardsCamera, zoomBy, type Pose } from './blocks/cameraRig'
 
-// Byggeklodser (`krea.blocks`, Krea PRD-03), staging-only behind `blocksGate.ts`. W2: free build is
-// complete — three islands (græs, sne, strand) on a picker, cubes in the 13 crayon colours plus the four
-// specials (tag, vindue, dør, hjul), eraser, undo, "Ny ø?". The look is CODE-DRAWN until the owner's
-// Gemini art lands (sky, island textures, special faces); models and narration-led hints come in W3–W4.
+// Byggeklodser (`krea.blocks`, Krea PRD-03), staging-only behind `blocksGate.ts`. Free build: cubes in
+// the 13 crayon colours plus tag, vindue and dør; eraser, undo, "Ny byggeplade?". Models come in W3–W4.
 //
-// Owner, 2026-11-06, after the first iPad look: the island fills the WHOLE screen with the controls
-// floating on top; every level turns and zooms the same way (only the island size differs).
+// Owner, 2026-11-06, after two iPad looks:
+//   - the plate fills the WHOLE screen in a calm STUDIO, with the controls floating on top (GameShell
+//     `fullBleed`); no floating island in a painted landscape, no entry picker — tapping the tile builds
+//     at once, and the four themes (plain, grass, snow, sand) are plate pictures in the panel that switch
+//     the plate's surface and KEEP the build;
+//   - every level turns and zooms the same way (only the plate size differs);
+//   - a door is 1×2 and a window a pane, both set INTO a wall when tapped onto one; no wheels;
+//   - while a finger is down, a ghost shows where the block will land; lifting places it.
 //
 // ONE RESOLVER, TWO GESTURES (§4.3): a tap on a face with the held block, and a drag of a tray chip onto
 // the stage, both land in `place()` — the only caller of `resolvePlacement` (`blocks.test.ts`). A drop
@@ -62,26 +64,30 @@ import { CAMERA, canZoom, towardsCamera, zoomBy, type Pose } from './blocks/came
 // the model mode (W4) brings XP, for a finished model only.
 
 const GAME_ID = 'krea.blocks'
+/** The session's one free build (a theme is only a look, so switching it keeps the build). */
+const ITEM_ID = 'fri'
+/** The theme in use, remembered for the session like the build itself. */
+const THEME_ITEM = 'tema'
 const SAVE_DEBOUNCE_MS = 500
 /** On touch the drop aims this far ABOVE the finger, so the fingertip doesn't hide the cell (§4.3). */
 const TOUCH_AIM_LIFT_PX = 56
 const CHIP = 'clamp(44px, 6.4vmin, 58px)'
 const SIDE_BTN = 'clamp(44px, 7.6vmin, 68px)'
-/** Air between the floating panel and the island's free area / the header. */
+const THEME_BTN = 'clamp(40px, 6vmin, 52px)'
+/** Air between the floating panel and the plate's free area / the header. */
 const PANEL_GAP_PX = 8
+/** What the ghost wears for the fixed-look specials and for the eraser's pick. */
+const GHOST_LOOK: Record<'window' | 'door' | 'erase', string> = { window: '#BFE3F7', door: '#9A5E2E', erase: '#FFFFFF' }
 
 type Tool = 'block' | 'eraser'
 
-/** A picker/deep-link id → the island it opens (W2: only the free islands exist). */
-const islandOfItem = (id: string | null): BlockIslandDef | null =>
-  id?.startsWith(FREE_ISLAND_PREFIX) ? islandById(id.slice(FREE_ISLAND_PREFIX.length)) ?? null : null
+const themeArtOf = (t: BlockThemeDef) => (t.id === 'plain' ? null : BLOCK_THEME_ART[t.id as Exclude<BlockThemeId, 'plain'>])
 
 const ByggeklodserGame: React.FC = () => {
   useOccludeWorld()
   const audio = useSimplifiedAudioHook({ componentId: 'ByggeklodserGame', autoInitialize: false })
-  const [params, setParams] = useSearchParams()
-  const [itemId, setItemId] = useState<string | null>(() => (islandOfItem(params.get('motiv')) ? params.get('motiv') : null))
-  const island = islandOfItem(itemId)
+  const level = useDifficulty('krea')
+  const tuning = KREA_BLOCKS[level]
 
   // The welcome, once, as soon as audio can speak (the Krea games' shape).
   const welcomed = useRef(false)
@@ -91,66 +97,23 @@ const ByggeklodserGame: React.FC = () => {
     void audio.playGameWelcome('kreablocks').catch(() => {})
   }, [audio, audio.isAudioReady])
 
-  const setMotiv = (id: string | null) =>
-    setParams((prev) => {
-      const n = new URLSearchParams(prev)
-      if (id) n.set('motiv', id)
-      else n.delete('motiv')
-      return n
-    }, { replace: true })
-
-  const openItem = (id: string) => {
-    welcomed.current = true
-    audio.updateUserInteraction()
-    audio.cancelCurrentAudio()
-    sfx.play('krea-paper')
-    setItemId(id)
-    setMotiv(id)
-  }
-  const toPicker = () => {
-    sfx.play('tap')
-    audio.cancelCurrentAudio()
-    setItemId(null)
-    setMotiv(null)
-  }
-
-  if (!island || !itemId) {
-    const cards = BLOCK_ISLANDS.map((def) => ({
-      id: islandItemId(def.id),
-      label: def.name,
-      group: FREE_ISLANDS_LABEL,
-      picture: <IslandPicture island={def} />,
-    }))
-    return (
-      <GameShell categoryId="krea" title="Byggeklodser" dense guide={false} lightScene>
-        <StudioBackdrop />
-        <KreaPicker scrollKey={GAME_ID} items={cards} onPick={openItem} />
-      </GameShell>
-    )
-  }
-  return <BlockStudio key={itemId} itemId={itemId} island={island} onBack={toPicker} audio={audio} />
-}
-
-/** The open island: the full-screen 3D stage and the floating panel. */
-const BlockStudio: React.FC<{
-  itemId: string
-  island: BlockIslandDef
-  onBack: () => void
-  audio: ReturnType<typeof useSimplifiedAudioHook>
-}> = ({ itemId, island, onBack, audio }) => {
-  const level = useDifficulty('krea')
-  const tuning = KREA_BLOCKS[level]
-
   const fresh = useCallback(() => emptyWorld(tuning.island, tuning.heightCap), [tuning.island, tuning.heightCap])
-  const [world, setWorldState] = useState<BlockWorld>(() => restoreWorld(fresh(), kreaSession.load(GAME_ID, itemId)))
+  const [world, setWorldState] = useState<BlockWorld>(() => restoreWorld(fresh(), kreaSession.load(GAME_ID, ITEM_ID)))
   // The handlers judge against the world as it is NOW — two taps in one render must not both see the old one.
   const worldRef = useRef(world)
   const setWorld = (w: BlockWorld) => {
     worldRef.current = w
     setWorldState(w)
   }
+  const [themeId, setThemeId] = useState<BlockThemeId>(() => themeById(kreaSession.load(GAME_ID, THEME_ITEM)).id)
+  const theme = themeById(themeId)
+  const themeArt = themeArtOf(theme)
   const [held, setHeld] = useState<Held>({ kind: 'cube', color: 'roed' })
+  const heldRef = useRef(held)
+  heldRef.current = held
   const [tool, setTool] = useState<Tool>('block')
+  const toolRef = useRef(tool)
+  toolRef.current = tool
   const [confirmOpen, setConfirmOpen] = useState(false)
   // Only what the buttons need, as PRIMITIVES: a turn reports its pose ~60×/s, and React bails out on an
   // unchanged boolean — a pose object here re-rendered the whole game every frame of a turn (measured:
@@ -174,9 +137,9 @@ const BlockStudio: React.FC<{
     }
   }, [tuning.island])
 
-  // A level change reshapes the island (12 / 14 / 16): replay what still fits.
+  // A level change reshapes the plate (12 / 14 / 16): replay what still fits.
   useEffect(() => {
-    setWorld(restoreWorld(fresh(), kreaSession.load(GAME_ID, itemId)))
+    setWorld(restoreWorld(fresh(), kreaSession.load(GAME_ID, ITEM_ID)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level])
 
@@ -185,19 +148,19 @@ const BlockStudio: React.FC<{
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      if (world.actions.length) kreaSession.save(GAME_ID, itemId, serialiseWorld(world))
-      else kreaSession.clearItem(GAME_ID, itemId)
+      if (world.actions.length) kreaSession.save(GAME_ID, ITEM_ID, serialiseWorld(world))
+      else kreaSession.clearItem(GAME_ID, ITEM_ID)
     }, SAVE_DEBOUNCE_MS)
-  }, [world, itemId])
+  }, [world])
   useEffect(() => () => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     // Leaving mid-debounce must not lose the last block.
     const w = worldRef.current
-    if (w.actions.length) kreaSession.save(GAME_ID, itemId, serialiseWorld(w))
-  }, [itemId])
+    if (w.actions.length) kreaSession.save(GAME_ID, ITEM_ID, serialiseWorld(w))
+  }, [])
 
   const touched = () => audio.updateUserInteraction()
-  /** The camera's nearest horizontal axis: a special placed on top or on the island faces it (§4.6). */
+  /** The camera's nearest horizontal axis: a special placed on top or on the plate faces it (§4.6). */
   const facingNow = () => towardsCamera(stage.current?.getPose() ?? CAMERA.home)
 
   // ----- THE resolver: every block a gesture adds comes through here ------------------------------------
@@ -227,6 +190,29 @@ const BlockStudio: React.FC<{
     if (confirmOpen) return
     if (tool === 'eraser') erase(target)
     else place(target, held)
+  }
+
+  // ----- the preview: where the block will land while the finger is down (owner, JYJ5F) -----------------
+  const lookOf = (h: Held): string => (h.kind === 'cube' || h.kind === 'roof' ? CRAYON_HEX[h.color] : GHOST_LOOK[h.kind])
+  const showPreview = (target: Target | null, item: Held | null, erasing: boolean) => {
+    const s = stage.current
+    if (!s) return
+    if (!target || (!item && !erasing)) return s.setGhost(null, null)
+    if (erasing) {
+      if (target.on !== 'block') return s.setGhost(null, null)
+      const b = blockAt(worldRef.current, target.cell)
+      if (!b) return s.setGhost(null, null)
+      // A door goes whole: show both halves.
+      const cells: Cell[] = [target.cell]
+      if (b.kind === 'door') cells.push({ ...target.cell, y: target.cell.y + (b.part === 'top' ? -1 : 1) })
+      return s.setGhost(cells, GHOST_LOOK.erase)
+    }
+    const cells = previewCells(worldRef.current, target, item!, facingNow())
+    s.setGhost(cells, cells ? lookOf(item!) : null)
+  }
+  const onStagePreview = (target: Target | null) => {
+    if (confirmOpen) return showPreview(null, null, false)
+    showPreview(target, heldRef.current, toolRef.current === 'eraser')
   }
 
   // Picking speaks its name (§2.2.8), fire-and-forget: a fast picker cancels the earlier name, correctly.
@@ -264,18 +250,27 @@ const BlockStudio: React.FC<{
     sfx.play('krea-undo')
   }
 
-  // ----- "Ny ø?" (§2.2.12): spoken, asked only when there is something to lose ---------------------------
-  const askNewIsland = () => {
+  /** A theme is the plate's surface only: the build stays (owner, YRFQQ: "a theme selector" in the game). */
+  const pickTheme = (id: BlockThemeId) => {
     touched()
     sfx.play('tap')
+    setThemeId(id)
+    kreaSession.save(GAME_ID, THEME_ITEM, id)
+  }
+
+  // ----- "Ny byggeplade?" (§2.2.12): spoken, asked only when there is something to lose ------------------
+  const askNewBuild = () => {
+    touched()
+    sfx.play('tap')
+    stage.current?.setGhost(null, null)
     setConfirmOpen(true)
-    say(NEW_ISLAND_LINE)
+    say(NEW_BUILD_LINE)
   }
   const confirmFresh = () => {
     audio.cancelCurrentAudio()
     setConfirmOpen(false)
     sfx.play('krea-paper')
-    kreaSession.clearItem(GAME_ID, itemId)
+    kreaSession.clearItem(GAME_ID, ITEM_ID)
     setWorld(fresh())
   }
   const confirmKeep = () => {
@@ -295,7 +290,7 @@ const BlockStudio: React.FC<{
   }
 
   // ----- the floating controls (owner 2026-11-06: the building area fullscreen, controls on top) --------
-  // The island is fitted to the screen MINUS the header and the panel, measured, never a tuned percentage:
+  // The plate is fitted to the screen MINUS the header and the panel, measured, never a tuned percentage:
   // the panel's rect says which edge it covers (right in landscape, bottom in portrait).
   const panelRef = useRef<HTMLDivElement>(null)
   const [insets, setInsets] = useState({ top: 0, right: 0, bottom: 0, left: 0 })
@@ -368,9 +363,7 @@ const BlockStudio: React.FC<{
       if (raf.current) return
       raf.current = requestAnimationFrame(() => {
         raf.current = 0
-        const t = aimTarget()
-        const ok = t && !whyNot(worldRef.current, t, item)
-        stage.current?.setGhost(ok ? targetCell(t) : null, item)
+        showPreview(aimTarget(), item, false)
       })
     }
     document.addEventListener('pointermove', track, { capture: true, passive: true })
@@ -407,35 +400,34 @@ const BlockStudio: React.FC<{
 
   // ----- render -----------------------------------------------------------------------------------------
   const blocks = useMemo(() => blockList(world), [world])
-  const islandArt = BLOCK_ISLAND_ART[island.id]
-  const art = useMemo(() => ({ top: islandArt.top, side: islandArt.side, ...BLOCK_FACE_ART }), [islandArt])
   const canUndo = world.actions.length > 0
   const hasBlocks = blockCount(world) > 0
-  const newIslandPicture = (
+  const newBuildPicture = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       <Box sx={{ position: 'absolute', inset: '6%' }}>
-        <IslandPicture island={island} />
+        <PlatePicture theme={theme} />
       </Box>
       <PlusBadge />
     </Box>
   )
 
   return (
-    <GameShell categoryId="krea" title="Byggeklodser" guide={false} lightScene fullBleed onBackWithin={onBack}>
+    <GameShell categoryId="krea" title="Byggeklodser" guide={false} lightScene fullBleed>
       <DndContext sensors={sensors} collisionDetection={kidCollision} autoScroll={false} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={endDrag}>
-        {/* THE STAGE IS THE WHOLE SCREEN (owner 2026-11-06). The header floats over it (GameShell
-            `fullBleed`) and the controls float in the panel below; the island centres in what they leave. */}
+        {/* THE STAGE IS THE WHOLE SCREEN (owner 2026-11-06), a calm studio. The header floats over it
+            (GameShell `fullBleed`) and the controls float in the panel below; the plate centres in what
+            they leave. Its colour is the studio wall, so a lost GPU context shows the same calm room. */}
         <Box
           data-krea-stage
-          data-krea-item={itemId}
+          data-krea-item={ITEM_ID}
           data-blocks-count={blockCount(world)}
           // Probe hook: the world as sorted `x,y,z:colour` (rung 1/2 drivers read it; a few hundred bytes).
           data-blocks-cells={Object.entries(world.cells).map(([k, b]) => `${k}:${b.color}`).sort().join(' ')}
-          data-blocks-kinds={Object.entries(world.cells).map(([k, b]) => `${k}:${b.kind}:${b.facing}`).sort().join(' ')}
+          data-blocks-kinds={Object.entries(world.cells).map(([k, b]) => `${k}:${b.kind}:${b.facing}${b.part ? ':top' : ''}`).sort().join(' ')}
           data-blocks-level={level}
           data-blocks-held={`${held.kind}:${held.color}`}
-          // The owner's painted sky behind the transparent canvas (§4.7); the island's own sky colours show while it loads.
-          sx={{ position: 'fixed', inset: 0, zIndex: 1, background: `url(${islandArt.sky}) ${island.skyAnchor} / cover no-repeat, linear-gradient(180deg, ${island.sky[0]} 0%, ${island.sky[1]} 70%, ${island.sky[2]} 100%)` }}
+          data-blocks-theme={theme.id}
+          sx={{ position: 'fixed', inset: 0, zIndex: 1, background: BLOCK_STUDIO.wall }}
         >
           {/* ONE droppable: the whole stage. The cell comes from the raycast, not from dnd-kit. */}
           <DroppableZone id="stage" overColor="transparent" style={{ position: 'absolute', inset: 0 }}>
@@ -443,17 +435,19 @@ const BlockStudio: React.FC<{
               ref={stage}
               islandSize={tuning.island}
               heightCap={tuning.heightCap}
-              island={island}
-              art={art}
+              theme={theme}
+              themeArt={themeArt}
+              faces={BLOCK_FACE_ART}
               insets={insets}
               blocks={blocks}
               onTap={onStageTap}
+              onPreview={onStagePreview}
               onPose={onPose}
             />
           </DroppableZone>
         </Box>
         {/* The panel's lane: fixed down the right edge (along the bottom in portrait). The lane lets
-            touches through to the island; only the panel catches them. NO transform on any ancestor of a
+            touches through to the plate; only the panel catches them. NO transform on any ancestor of a
             DraggableItem (WebKit drag drift, drag-and-drop.md). */}
         <Box
           sx={{
@@ -487,14 +481,14 @@ const BlockStudio: React.FC<{
               maxWidth: '100%',
               maxHeight: '100%',
               borderRadius: '24px',
-              // A soft see-through card: the island stays readable under it. No backdrop-filter (cost).
-              background: 'rgba(255, 250, 242, 0.78)',
-              boxShadow: '0 6px 18px rgba(60, 40, 20, 0.18)',
+              // A soft card on the studio wall. No backdrop-filter (cost).
+              background: 'rgba(255, 252, 247, 0.92)',
+              boxShadow: '0 6px 18px rgba(60, 40, 20, 0.14)',
               '@media (orientation: landscape)': { flexDirection: 'column', flexWrap: 'nowrap' },
               [PHONE_LANDSCAPE]: { gap: '6px', p: '8px' },
             }}
           >
-            {/* The 13 colours, then the 4 specials on their own row (held tools on the right, owner rule).
+            {/* The 13 colours, then the 3 specials on their own row (held tools on the right, owner rule).
                 Tap = the sticky pick; drag = one block. */}
             <Box data-blocks-tray sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CHIP})`, gap: '6px', '@media (orientation: landscape)': { gridTemplateColumns: `repeat(3, ${CHIP})` }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(4, ${CHIP})`, gap: '4px' } }}>
               {PALETTE_13.map((c) => (
@@ -510,7 +504,7 @@ const BlockStudio: React.FC<{
                 </Box>
               ))}
             </Box>
-            {/* Eraser, undo, zoom in, zoom out: a 2x2 block (ONE row on a phone in landscape), then "Ny ø". */}
+            {/* Eraser, undo, zoom in, zoom out: a 2x2 block (ONE row on a phone in landscape), then "Ny". */}
             <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '6px' } }}>
               <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
                 <Img src={KREA_ART.eraser} />
@@ -525,20 +519,43 @@ const BlockStudio: React.FC<{
                 <PlusMinus plus={false} />
               </IconPress>
               <Box sx={{ gridColumn: '1 / -1', visibility: hasBlocks ? 'visible' : 'hidden', [PHONE_LANDSCAPE]: { gridColumn: 'auto' } }}>
-                <StudioButton dataId="new-island" label="Ny ø" size={SIDE_BTN} disabled={!hasBlocks || confirmOpen} onPress={askNewIsland}>
-                  {newIslandPicture}
+                <StudioButton dataId="new-build" label="Ny byggeplade" size={SIDE_BTN} disabled={!hasBlocks || confirmOpen} onPress={askNewBuild}>
+                  {newBuildPicture}
                 </StudioButton>
               </Box>
+            </Box>
+            {/* The themes: the plate's surface, picked by its picture (owner, YRFQQ). The build stays. */}
+            <Box data-blocks-themes sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${THEME_BTN})`, gap: '8px', [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(4, ${THEME_BTN})`, gap: '4px' }, '@media (orientation: portrait)': { gridTemplateColumns: `repeat(4, ${THEME_BTN})` } }}>
+              {BLOCK_THEMES.map((t) => (
+                <ButtonBase
+                  key={t.id}
+                  aria-label={t.name}
+                  aria-pressed={t.id === theme.id}
+                  data-blocks-theme-pick={t.id}
+                  {...pressHandlers(() => pickTheme(t.id))}
+                  sx={{
+                    width: THEME_BTN,
+                    height: THEME_BTN,
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    touchAction: 'manipulation',
+                    boxShadow: t.id === theme.id ? '0 0 0 3px #fff, 0 0 0 6px rgba(255,190,60,0.95)' : '0 2px 4px rgba(60,40,20,0.25)',
+                  }}
+                >
+                  <PlatePicture theme={t} />
+                </ButtonBase>
+              ))}
             </Box>
           </Box>
         </Box>
       </DndContext>
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.blocks" title={NEW_ISLAND_TITLE} freshPicture={newIslandPicture} freshLabel="Ja, ny ø" keepLabel="Nej, behold mine klodser" />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.blocks" title={NEW_BUILD_TITLE} freshPicture={newBuildPicture} freshLabel="Ja, ny byggeplade" keepLabel="Nej, behold mine klodser" />
     </GameShell>
   )
 }
 
-// ----- small pieces (code-drawn stand-ins until the art pass) -------------------------------------------
+// ----- small pieces -------------------------------------------------------------------------------------
 
 const Img: React.FC<{ src: string }> = ({ src }) => (
   <Box component="img" src={src} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
@@ -572,40 +589,43 @@ const SpecialChip: React.FC<{ kind: Exclude<BlockKind, 'cube'>; color: CrayonCol
       {kind === 'roof' ? <path d="M4 40 L24 8 L44 40 Z" fill={CRAYON_HEX[color]} stroke="rgba(0,0,0,0.25)" strokeWidth="2" strokeLinejoin="round" /> : null}
       {kind === 'window' ? (
         <g>
-          <rect x="6" y="6" width="36" height="36" rx="5" fill="#F2EEE6" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
-          <rect x="10" y="10" width="28" height="28" rx="3" fill="#6BB6E6" />
-          <rect x="22.5" y="10" width="3" height="28" fill="#F2EEE6" />
-          <rect x="10" y="22.5" width="28" height="3" fill="#F2EEE6" />
+          <rect x="8" y="8" width="32" height="32" rx="4" fill="#F2EEE6" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
+          <rect x="12" y="12" width="24" height="24" rx="2" fill="#6BB6E6" />
+          <rect x="22.5" y="12" width="3" height="24" fill="#F2EEE6" />
+          <rect x="12" y="22.5" width="24" height="3" fill="#F2EEE6" />
         </g>
       ) : null}
       {kind === 'door' ? (
+        // Tall: a door is two blocks high.
         <g>
-          <path d="M10 44 V14 a14 10 0 0 1 28 0 V44 Z" fill="#9A5E2E" stroke="rgba(0,0,0,0.25)" strokeWidth="2" />
-          <circle cx="32" cy="30" r="2.6" fill="#E8C060" />
-        </g>
-      ) : null}
-      {kind === 'wheel' ? (
-        <g>
-          <circle cx="24" cy="24" r="19" fill="#2E2B2A" />
-          <circle cx="24" cy="24" r="8" fill="#C9C4BC" />
+          <path d="M14 46 V12 a10 8 0 0 1 20 0 V46 Z" fill="#9A5E2E" stroke="rgba(0,0,0,0.25)" strokeWidth="2" />
+          <circle cx="29" cy="30" r="2.2" fill="#E8C060" />
         </g>
       ) : null}
     </svg>
   </Box>
 )
 
-/** An island as a picker card / "Ny ø" picture: its sky with a flattened clay diamond — drawn in code. */
-const IslandPicture: React.FC<{ island: BlockIslandDef }> = ({ island }) => (
-  // No radius of its own: the picker card (and the "Ny ø" button) already round and clip it — a second,
-  // larger radius inside left the card's white showing in the corners (owner, GYD6K).
-  <Box sx={{ position: 'absolute', inset: 0, borderRadius: 'inherit', overflow: 'hidden', background: `url(${BLOCK_ISLAND_ART[island.id].sky}) center / cover no-repeat, linear-gradient(180deg, ${island.sky[0]}, ${island.sky[2]})` }}>
-    <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden style={{ display: 'block' }}>
-      <path d="M50 38 L88 58 L50 78 L12 58 Z" transform="translate(0 7)" fill={island.soil} />
-      <path d="M50 38 L88 58 L50 78 L12 58 Z" transform="translate(0 3)" fill={island.side} />
-      <path d="M50 38 L88 58 L50 78 L12 58 Z" fill={island.top} />
-    </svg>
-  </Box>
-)
+/** A theme's plate as a little picture (the theme buttons, the "Ny byggeplade" button) — drawn in code. */
+const PlatePicture: React.FC<{ theme: BlockThemeDef }> = ({ theme }) => {
+  const art = themeArtOf(theme)
+  return (
+    <Box sx={{ position: 'absolute', inset: 0, borderRadius: 'inherit', overflow: 'hidden', background: BLOCK_STUDIO.wall }}>
+      <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden style={{ display: 'block' }}>
+        <defs>
+          {art ? (
+            <pattern id={`plate-${theme.id}`} patternUnits="userSpaceOnUse" width="100" height="100">
+              <image href={art.top} x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice" />
+            </pattern>
+          ) : null}
+        </defs>
+        <ellipse cx="50" cy="80" rx="40" ry="7" fill="rgba(80,60,40,0.12)" />
+        <path d="M50 34 L92 56 L50 78 L8 56 Z" transform="translate(0 6)" fill={theme.soil} />
+        <path d="M50 34 L92 56 L50 78 L8 56 Z" fill={art ? `url(#plate-${theme.id})` : theme.top} stroke="rgba(0,0,0,0.08)" />
+      </svg>
+    </Box>
+  )
+}
 
 const IconPress: React.FC<{ label: string; dataId: string; disabled?: boolean; onPress: () => void; children: React.ReactNode }> = ({ label, dataId, disabled, onPress, children }) => (
   <ButtonBase
