@@ -93,6 +93,25 @@ test('the app is universal, and iPhone is locked to landscape', () => {
   assert.match(iphone[1], /LandscapeRight/)
 })
 
+// Owner, 2026-11-06: the iPad app is landscape-only too, turning only between the two landscape sides.
+// Apple accepts an orientation-restricted iPad app ONLY with UIRequiresFullScreen (no Split View / Slide
+// Over — the owner chose that trade); without it, upload validation demands all four orientations. The
+// website/PWA is deliberately NOT locked (owner: keep portrait there; Safari ignores lock requests anyway).
+test('the iPad app is landscape-only and full screen', () => {
+  const plist = stripXml(read(...INFO_PLIST))
+  const list = (key: string) => plist.match(new RegExp(String.raw`<key>${key}</key>\s*<array>([\s\S]*?)</array>`))?.[1]
+  for (const key of ['UISupportedInterfaceOrientations~ipad', 'UISupportedInterfaceOrientations']) {
+    const l = list(key)
+    assert.ok(l, `${key} is missing`)
+    assert.ok(!/Portrait/.test(l), `${key} still allows portrait`)
+    assert.match(l, /LandscapeLeft/)
+    assert.match(l, /LandscapeRight/)
+  }
+  assert.match(plist, /<key>UIRequiresFullScreen<\/key>\s*<true\/>/, 'without UIRequiresFullScreen Apple rejects a landscape-only iPad app')
+  // …and the web stays free to rotate.
+  assert.match(read('public', 'manifest.json'), /"orientation":\s*"any"/)
+})
+
 test('the app declares NO microphone or camera use anywhere in the native project', () => {
   // The app has no speech input and no camera. A purpose string is not harmless boilerplate: iOS shows
   // it to the adult, App Review reads it as a feature claim, and the privacy policy
