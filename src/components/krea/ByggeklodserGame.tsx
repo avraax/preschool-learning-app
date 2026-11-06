@@ -10,6 +10,7 @@ import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useDifficulty } from '../../hooks/useDifficulty'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
 import { KREA_BLOCKS } from '../../config/difficulty'
@@ -18,6 +19,7 @@ import { KREA_COLOR_NAME } from '../../config/kreaPhrases'
 import { KREA_ART } from '../../assets/games/krea'
 import { CRAYON_HEX } from './canvas/brushes'
 import { pressHandlers, SIDE_TOP_CLEARANCE, StudioButton } from './studio/StudioControls'
+import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import BlockStage, { type BlockStageHandle } from './blocks/BlockStage'
 import {
   blockCount,
@@ -55,7 +57,7 @@ const SAVE_DEBOUNCE_MS = 500
 /** On touch the drop aims this far ABOVE the finger, so the fingertip doesn't hide the cell (§4.3). */
 const TOUCH_AIM_LIFT_PX = 56
 const CHIP = 'clamp(44px, 6.4vmin, 58px)'
-const SIDE_BTN = 'clamp(48px, 7.6vmin, 68px)'
+const SIDE_BTN = 'clamp(44px, 7.6vmin, 68px)'
 
 type Tool = 'block' | 'eraser'
 
@@ -63,6 +65,7 @@ const ByggeklodserGame: React.FC = () => {
   useOccludeWorld()
   const audio = useSimplifiedAudioHook({ componentId: 'ByggeklodserGame', autoInitialize: false })
   const level = useDifficulty('krea')
+  const reduce = useReducedMotion()
   const tuning = KREA_BLOCKS[level]
 
   const fresh = useCallback(() => emptyWorld(tuning.island, tuning.heightCap), [tuning.island, tuning.heightCap])
@@ -169,9 +172,15 @@ const ByggeklodserGame: React.FC = () => {
     const s = stage.current
     if (!s || turning.current) return
     touched()
-    turning.current = true
     sfx.play('tap')
-    s.animateTo(stepAzimuth(s.getPose(), dir), () => {
+    const to = stepAzimuth(s.getPose(), dir)
+    // Reduced motion: the view snaps to the next side instead of swinging round.
+    if (reduce) {
+      s.setPose(to)
+      return
+    }
+    turning.current = true
+    s.animateTo(to, () => {
       turning.current = false
     })
   }
@@ -324,17 +333,21 @@ const ByggeklodserGame: React.FC = () => {
               gap: '10px',
               minHeight: 0,
               '@media (orientation: landscape)': { flexDirection: 'column', flexWrap: 'nowrap', justifyContent: 'flex-start', pt: SIDE_TOP_CLEARANCE },
+              [PHONE_LANDSCAPE]: { pt: '8px', gap: '8px' },
             }}
           >
             {/* The 13 colours (held tools on the right, owner rule). Tap = the sticky pick; drag = one block. */}
-            <Box data-blocks-tray sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CHIP})`, gap: '6px', '@media (orientation: landscape)': { gridTemplateColumns: `repeat(3, ${CHIP})` } }}>
+            <Box data-blocks-tray sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CHIP})`, gap: '6px', '@media (orientation: landscape)': { gridTemplateColumns: `repeat(3, ${CHIP})` }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(4, ${CHIP})`, gap: '4px' } }}>
               {PALETTE_13.map((c) => (
                 <DraggableItem key={c} id={`chip:${c}`} inline onActivate={() => pickColor(c)} lift={{ scale: 1.12, rotate: 0 }}>
                   <ClayChip color={c} selected={tool === 'block' && held.color === c} />
                 </DraggableItem>
               ))}
             </Box>
-            <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {/* A phone in landscape has ~310 px of height: 13 chips in 3 columns plus two tool rows overflowed
+                it (measured, WebKit 667×375). There the chips take 4 columns and the tools share ONE row. */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', '@media (orientation: portrait)': { flexDirection: 'row' }, [PHONE_LANDSCAPE]: { flexDirection: 'row', gap: '6px' } }}>
+            <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', [PHONE_LANDSCAPE]: { gap: '6px' } }}>
               <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
                 <Img src={KREA_ART.eraser} />
               </StudioButton>
@@ -342,7 +355,8 @@ const ByggeklodserGame: React.FC = () => {
                 <Img src={KREA_ART.undo} />
               </StudioButton>
             </Box>
-            <Box sx={{ display: 'flex', gap: '10px' }}>{sideButtons}</Box>
+            <Box sx={{ display: 'flex', gap: '10px', [PHONE_LANDSCAPE]: { gap: '6px' } }}>{sideButtons}</Box>
+            </Box>
           </Box>
         </Box>
       </DndContext>
