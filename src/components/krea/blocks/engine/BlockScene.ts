@@ -43,7 +43,7 @@ import {
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import type { Block, Cell, Target } from '../blockWorld.ts'
-import { CAMERA, cameraPosition, fitDistance, lerpPose, type Pose } from '../cameraRig.ts'
+import { CAMERA, cameraPosition, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
 import { CRAYON_HEX } from '../../canvas/brushes.ts'
 
 /** Device-pixel cap (§4.1). 2 is the iPad's own; the spike may lower it to 1.5 if the A10X runs hot. */
@@ -51,6 +51,8 @@ export const DPR_CAP = 2
 /** Edge rounding as a share of a cell (§4.7: ≈ 0.08). */
 const RADIUS = 0.08
 const SLAB_DEPTH = 0.9
+/** The camera always looks here: the island's centre, a little above its top (§2.3: no panning). */
+const TARGET = { x: 0, y: 0.5, z: 0 }
 const GRASS = '#7CB85A'
 const SOIL = '#A67C52'
 
@@ -237,7 +239,7 @@ export class BlockScene {
 
   private applyPose(p: Pose): void {
     this.pose = { ...p }
-    const target = { x: 0, y: 0.6, z: 0 }
+    const target = TARGET
     const c = cameraPosition(p, target, this.fit)
     this.camera.position.set(c.x, c.y, c.z)
     this.camera.lookAt(target.x, target.y, target.z)
@@ -282,10 +284,9 @@ export class BlockScene {
     const aspect = this.width / this.height
     this.camera.aspect = aspect
     this.camera.updateProjectionMatrix()
-    // The island's bounding sphere, plus a few layers of building, must fit the stage at zoom 1.
-    const s = this.opts.islandSize + 0.4
-    const radius = Math.hypot(s / 2, s / 2, 2)
-    this.fit = fitDistance(radius, aspect)
+    // The island (its slab, plus two layers of building) fills the stage at zoom 1, judged from the
+    // starting angle — so the fit never changes while the child turns (no pulsing island).
+    this.fit = fitBox(CAMERA.home, { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }, TARGET, aspect)
     this.applyPose(this.pose)
   }
 

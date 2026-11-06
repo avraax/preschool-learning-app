@@ -21,9 +21,13 @@ export const CAMERA = {
   fovDeg: 35,
   tiltMin: 18 * DEG,
   tiltMax: 70 * DEG,
-  /** Closest and farthest, as multiples of the fit distance. */
-  zoomMin: 0.55,
-  zoomMax: 1.5,
+  /**
+   * Closest and farthest, as multiples of the fit distance (the whole island filling the stage). The
+   * islands grew to 12/14/16 (owner, 2026-11-06), so a fitted cell is small: zooming in to 0.4 brings a
+   * 16×16 island's cells back to finger size.
+   */
+  zoomMin: 0.4,
+  zoomMax: 1.3,
   /** One + / − press. */
   zoomStep: 1.25,
   /** One-finger drag: radians per CSS px. A full stage width ≈ one half-turn. */
@@ -67,6 +71,38 @@ export const fitDistance = (radius: number, aspect: number, fovDeg: number = CAM
   const vHalf = (fovDeg * DEG) / 2
   const hHalf = Math.atan(Math.tan(vHalf) * Math.max(0.05, aspect))
   return (radius * margin) / Math.sin(Math.min(vHalf, hHalf))
+}
+
+/**
+ * The distance at which a BOX (the island: `half` cells either side of the centre, from `bottom` to `top`
+ * in y, around `target`) just fills the view seen from `p`'s angle, with `fill` of the stage used on the
+ * binding axis. Exact for the box's eight corners — a bounding sphere wasted ~40% of the stage on the
+ * flattened diamond an angled island really is (owner 2026-11-06: bigger islands, so the room matters).
+ */
+export const fitBox = (
+  p: Pose,
+  box: { half: number; bottom: number; top: number },
+  target: { x: number; y: number; z: number },
+  aspect: number,
+  fill = 0.92,
+  fovDeg: number = CAMERA.fovDeg,
+): number => {
+  const tv = Math.tan(((fovDeg * Math.PI) / 180) / 2) * fill
+  const th = tv * Math.max(0.05, aspect)
+  // Camera basis: `fwd` points from the camera to the target; right and up span the image.
+  const fwd = { x: -Math.cos(p.tilt) * Math.sin(p.azimuth), y: -Math.sin(p.tilt), z: -Math.cos(p.tilt) * Math.cos(p.azimuth) }
+  const right = { x: Math.cos(p.azimuth), y: 0, z: -Math.sin(p.azimuth) }
+  const up = { x: right.y * fwd.z - right.z * fwd.y, y: right.z * fwd.x - right.x * fwd.z, z: right.x * fwd.y - right.y * fwd.x }
+  let d = 0
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) for (const y of [box.bottom, box.top]) {
+    const q = { x: sx * box.half - target.x, y: y - target.y, z: sz * box.half - target.z }
+    const depth = q.x * fwd.x + q.y * fwd.y + q.z * fwd.z // along the view, + = beyond the target
+    const px = Math.abs(q.x * right.x + q.y * right.y + q.z * right.z)
+    const py = Math.abs(q.x * up.x + q.y * up.y + q.z * up.z)
+    // The corner sits at camera depth (d + depth); it fits when px ≤ th·(d + depth), likewise for y.
+    d = Math.max(d, px / th - depth, py / tv - depth)
+  }
+  return d
 }
 
 /** World position of the camera for a pose around `target`, at `fit` × zoom. */

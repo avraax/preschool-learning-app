@@ -260,26 +260,27 @@ const ByggeklodserGame: React.FC = () => {
   // ----- render -----------------------------------------------------------------------------------------
   const blocks = useMemo(() => blockList(world), [world])
   const canUndo = world.actions.length > 0
-  const sideButtons =
-    tuning.camera === 'steps' ? (
-      <>
-        <IconPress label="Drej til venstre" dataId="turn-left" onPress={() => step(-1)}>
-          <Arrow dir="left" />
-        </IconPress>
-        <IconPress label="Drej til højre" dataId="turn-right" onPress={() => step(1)}>
-          <Arrow dir="right" />
-        </IconPress>
-      </>
-    ) : (
-      <>
-        <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canIn} onPress={() => zoom(1)}>
-          <PlusMinus plus />
-        </IconPress>
-        <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
-          <PlusMinus plus={false} />
-        </IconPress>
-      </>
-    )
+  // Every level zooms (the islands are 12–16 a side); only Let turns by the 90° arrows instead of a finger.
+  const sideButtons = (
+    <>
+      {tuning.camera === 'steps' ? (
+        <>
+          <IconPress label="Drej til venstre" dataId="turn-left" onPress={() => step(-1)}>
+            <Arrow dir="left" />
+          </IconPress>
+          <IconPress label="Drej til højre" dataId="turn-right" onPress={() => step(1)}>
+            <Arrow dir="right" />
+          </IconPress>
+        </>
+      ) : null}
+      <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canIn} onPress={() => zoom(1)}>
+        <PlusMinus plus />
+      </IconPress>
+      <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
+        <PlusMinus plus={false} />
+      </IconPress>
+    </>
+  )
 
   return (
     <GameShell categoryId="krea" title="Byggeklodser" dense guide={false} lightScene>
@@ -355,7 +356,7 @@ const ByggeklodserGame: React.FC = () => {
                 <Img src={KREA_ART.undo} />
               </StudioButton>
             </Box>
-            <Box sx={{ display: 'flex', gap: '10px', [PHONE_LANDSCAPE]: { gap: '6px' } }}>{sideButtons}</Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', [PHONE_LANDSCAPE]: { gap: '6px' } }}>{sideButtons}</Box>
             </Box>
           </Box>
         </Box>

@@ -621,13 +621,17 @@ export interface KreaBlocksTuning {
   /** Free island, cells per side. */
   island: number
   heightCap: number
-  /** `steps`: fixed view, 90° arrows in free build. `orbit`: one-finger turn + zoom. */
+  /**
+   * `steps`: fixed view, turned only by the 90° arrows (free build). `orbit`: one-finger turn. Every level
+   * ZOOMS with the + / − buttons: the islands are big enough that Let needs it too.
+   */
   camera: 'steps' | 'orbit'
 }
+/** Owner, 2026-11-06, after the first iPad look: "bigger plates with more tiles, on all levels" (was 6/8/10). */
 export const KREA_BLOCKS: Record<DifficultyLevel, KreaBlocksTuning> = {
-  let: { island: 6, heightCap: 8, camera: 'steps' },
-  normal: { island: 8, heightCap: 8, camera: 'orbit' },
-  svaer: { island: 10, heightCap: 8, camera: 'orbit' },
+  let: { island: 12, heightCap: 8, camera: 'steps' },
+  normal: { island: 14, heightCap: 8, camera: 'orbit' },
+  svaer: { island: 16, heightCap: 8, camera: 'orbit' },
 }
 
 // ================================================================================================
