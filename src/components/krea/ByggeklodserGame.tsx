@@ -25,6 +25,7 @@ import { StudioBackdrop } from './studio/StudioScene'
 import { KreaPicker } from './studio/KreaPicker'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
+import { DEV } from '../../utils/devHarness'
 import BlockStage, { type BlockStageHandle } from './blocks/BlockStage'
 import {
   blockCount,
@@ -162,6 +163,16 @@ const BlockStudio: React.FC<{
   }, [])
   const [drag, setDrag] = useState<Held | null>(null)
   const stage = useRef<BlockStageHandle>(null)
+  // DEV/harness probe hook: where a cell is on screen, so rung 1/2 drivers aim at real squares on every
+  // viewport (a guessed aim point measured the probe, not the game). Absent from a deploy build.
+  useEffect(() => {
+    if (!DEV) return
+    const w = window as unknown as { __blocks?: unknown }
+    w.__blocks = { project: (x: number, y: number, z: number, fy = 0) => stage.current?.projectClient({ x, y, z }, fy) ?? null, size: tuning.island }
+    return () => {
+      delete w.__blocks
+    }
+  }, [tuning.island])
 
   // A level change reshapes the island (12 / 14 / 16): replay what still fits.
   useEffect(() => {
@@ -522,7 +533,7 @@ const BlockStudio: React.FC<{
           </Box>
         </Box>
       </DndContext>
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.blocks" title={NEW_ISLAND_TITLE} freshPicture={newIslandPicture} />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.blocks" title={NEW_ISLAND_TITLE} freshPicture={newIslandPicture} freshLabel="Ja, ny ø" keepLabel="Nej, behold mine klodser" />
     </GameShell>
   )
 }

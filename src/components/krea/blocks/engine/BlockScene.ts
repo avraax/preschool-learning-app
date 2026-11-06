@@ -408,6 +408,17 @@ export class BlockScene {
    * What a stage point (CSS px inside the canvas) lands on: a block's face, or the island's top. Null over
    * the sky, the island's sides or nothing at all.
    */
+  /**
+   * Where a point of a cell lands on the stage, in CSS px (probe aid: rung 1/2 drivers aim at real squares
+   * instead of guessing). `fy` 0 = the cell's floor, 1 = its top; x/z are the cell's centre.
+   */
+  project(c: Cell, fy = 0): { x: number; y: number } {
+    const p = this.centre(c)
+    p.y += fy - 0.5
+    p.project(this.camera)
+    return { x: ((p.x + 1) / 2) * this.width, y: ((1 - p.y) / 2) * this.height }
+  }
+
   pick(x: number, y: number): Target | null {
     const ndc = new Vector2((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1)
     this.raycaster.setFromCamera(ndc, this.camera)

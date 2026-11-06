@@ -29,9 +29,12 @@ export interface NewPaperConfirmProps {
   keepContent?: React.ReactNode
   /** A drawing needs its paper under it; a bead board is its own object, so Perleplade passes false. */
   keepOnSheet?: boolean
+  /** The two buttons' names for assistive tech (pictures only on screen); default the drawing games'. */
+  freshLabel?: string
+  keepLabel?: string
 }
 
-const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw', title = NEW_PAPER_TITLE, freshPicture, keepContent, keepOnSheet = true }) => {
+const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep, keepPicture = 'krea.draw', title = NEW_PAPER_TITLE, freshPicture, keepContent, keepOnSheet = true, freshLabel = 'Ja, nyt papir', keepLabel = 'Nej, behold min tegning' }) => {
   const theme = useTheme()
   if (!open) return null
   const big = 'clamp(88px, 18vmin, 150px)'
@@ -59,10 +62,10 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onKeep
         {title}
       </Typography>
       <Box sx={{ display: 'flex', gap: 'clamp(24px, 6vmin, 64px)' }}>
-        <StudioButton dataId="confirm-fresh" label="Ja, nyt papir" size={big} activateOn="click" onPress={onFresh}>
+        <StudioButton dataId="confirm-fresh" label={freshLabel} size={big} activateOn="click" onPress={onFresh}>
           {freshPicture ?? <PICTURES.NewPaper />}
         </StudioButton>
-        <StudioButton dataId="confirm-keep" label="Nej, behold min tegning" size={big} activateOn="click" onPress={onKeep}>
+        <StudioButton dataId="confirm-keep" label={keepLabel} size={big} activateOn="click" onPress={onKeep}>
           {keepContent && !keepOnSheet ? (
             <Box data-krea-confirm-keep-piece sx={{ position: 'relative', width: '100%', height: '100%', pointerEvents: 'none' }}>
               {keepContent}

@@ -20,6 +20,8 @@ import type { BlockIslandDef } from '../../../config/kreaBlocks'
 export interface BlockStageHandle {
   /** What a CLIENT point lands on (for the drag drop), or null. */
   pickClient: (clientX: number, clientY: number) => Target | null
+  /** A cell point's CLIENT position (probe aid). */
+  projectClient: (cell: Cell, fy?: number) => { x: number; y: number } | null
   setGhost: (cell: Cell | null, block: { kind: BlockKind; color: Block['color'] } | null) => void
   getPose: () => Pose
   setPose: (p: Pose) => void
@@ -131,6 +133,14 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       const r = host.getBoundingClientRect()
       if (cx < r.left || cy < r.top || cx > r.right || cy > r.bottom) return null
       return scene.pick(cx - r.left, cy - r.top)
+    },
+    projectClient: (cell, fy) => {
+      const host = hostRef.current
+      const scene = sceneRef.current
+      if (!host || !scene) return null
+      const r = host.getBoundingClientRect()
+      const p = scene.project(cell, fy)
+      return { x: r.left + p.x, y: r.top + p.y }
     },
     setGhost: (cell, block) => sceneRef.current?.setGhost(cell, block),
     getPose: () => sceneRef.current?.getPose() ?? { ...CAMERA.home },
