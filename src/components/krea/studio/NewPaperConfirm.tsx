@@ -17,7 +17,7 @@ export interface NewPaperConfirmProps {
   onFresh: () => void
   onKeep: () => void
   /** "Keep my picture" shows the game's own tile picture. */
-  keepPicture?: 'krea.draw' | 'krea.guide' | 'krea.color' | 'krea.beads'
+  keepPicture?: 'krea.draw' | 'krea.guide' | 'krea.color' | 'krea.beads' | 'krea.blocks'
   /** Perleplade asks "Ny plade?" (PRD-02 §2.6); the drawing games keep the default. */
   title?: string
   /** The "fresh" button's picture (Perleplade: an empty board); default the new sheet. */

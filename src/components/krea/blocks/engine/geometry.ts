@@ -1,0 +1,50 @@
+// The special blocks' SHAPES (Krea PRD-03 §4.7) — code, never Gemini: Gemini paints flat faces only.
+// Every shape is built for a unit cell centred on the origin, FACING +z; the scene turns each instance to
+// its block's facing (`facingAngle`).
+
+import { BufferGeometry, CylinderGeometry, Float32BufferAttribute, PlaneGeometry } from 'three'
+import type { Facing } from '../blockWorld.ts'
+
+/** Rotation about y that turns the +z-facing shape to `f`. */
+export const facingAngle = (f: Facing): number => (f === 'pz' ? 0 : f === 'px' ? Math.PI / 2 : f === 'nz' ? Math.PI : -Math.PI / 2)
+
+/**
+ * The roof: a wedge, tall at the back (−z) and sloping DOWN towards the front (+z) — "the roof slopes down
+ * outward" (§4.6). A hair inset from the cell so a row of roofs reads as tiles, not one slab.
+ */
+export const roofGeometry = (): BufferGeometry => {
+  const e = 0.49
+  const lo = -0.5
+  const hi = 0.46
+  // Corners: bottom square b0..b3, ridge r0 (back-left) r1 (back-right).
+  const b0 = [-e, lo, -e], b1 = [e, lo, -e], b2 = [e, lo, e], b3 = [-e, lo, e]
+  const r0 = [-e, hi, -e], r1 = [e, hi, -e]
+  const tris = [
+    // slope (front, facing up/forward)
+    r0, b3, b2, r0, b2, r1,
+    // back wall
+    b0, r0, r1, b0, r1, b1,
+    // bottom
+    b0, b1, b2, b0, b2, b3,
+    // left triangle
+    b0, b3, r0,
+    // right triangle
+    b1, r1, b2,
+  ]
+  const g = new BufferGeometry()
+  g.setAttribute('position', new Float32BufferAttribute(tris.flat(), 3))
+  g.computeVertexNormals()
+  return g
+}
+
+/** The wheel's tyre: a squat cylinder whose axle lies along +z (along the face it sits on). */
+export const wheelGeometry = (): BufferGeometry => new CylinderGeometry(0.42, 0.42, 0.3, 28).rotateX(Math.PI / 2)
+
+/** The hub on the tyre's outer side. */
+export const hubGeometry = (): BufferGeometry => new CylinderGeometry(0.2, 0.2, 0.32, 20).rotateX(Math.PI / 2)
+
+/** How far a wheel sits back towards the block it hangs on, so it touches that face instead of floating. */
+export const WHEEL_SETBACK = 0.3
+
+/** A window's or door's painted face, a hair in front of the cell's +z side. */
+export const faceGeometry = (): BufferGeometry => new PlaneGeometry(0.84, 0.84).translate(0, 0, 0.506)

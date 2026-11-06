@@ -34,7 +34,7 @@ test('ONE resolver: resolvePlacement is called exactly once in the whole app, in
   const game = read(GAME)
   const place = game.match(/const place = \(target: Target \| null, item: Held\): boolean => \{([\s\S]*?)\n {2}\}\n/)
   assert.ok(place, 'the game has no place() resolver function')
-  assert.match(place[1], /resolvePlacement\(worldRef\.current, target, item\)/)
+  assert.match(place[1], /resolvePlacement\(worldRef\.current, target, item, facingNow\(\)\)/)
   // Nobody writes a block into the world by hand: the world's internals stay inside blockWorld.ts.
   for (const s of SOURCES) {
     if (s.rel === 'components/krea/blocks/blockWorld.ts') continue
@@ -42,7 +42,7 @@ test('ONE resolver: resolvePlacement is called exactly once in the whole app, in
   }
   // Both gestures reach it: the stage tap and the chip drop.
   assert.match(game, /else place\(target, held\)/, 'the tap does not go through place()')
-  assert.match(game, /place\(aimTarget\(\), \{ kind: 'cube', color: c \}\)/, 'the drop does not go through place()')
+  assert.match(game, /place\(aimTarget\(\), item\)/, 'the drop does not go through place()')
 })
 
 // §5 / games-krea.md (Lepper 1973): free build earns NOTHING. W1 IS free build only; W4's model mode will

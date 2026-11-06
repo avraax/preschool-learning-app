@@ -3,7 +3,8 @@ import { Box } from '@mui/material'
 import { TAP_SLOP_DISTANCE } from '../../common/dnd/dragActivation'
 import { BlockScene } from './engine/BlockScene'
 import { CAMERA, dragTurn, pinchZoom, type Pose } from './cameraRig'
-import type { Block, Cell, Target } from './blockWorld'
+import type { Block, BlockKind, Cell, Target } from './blockWorld'
+import type { BlockIslandDef } from '../../../config/kreaBlocks'
 
 // The 3D stage (Krea PRD-03 §4.4): one canvas, one BlockScene, and the gesture split on it.
 //
@@ -19,7 +20,7 @@ import type { Block, Cell, Target } from './blockWorld'
 export interface BlockStageHandle {
   /** What a CLIENT point lands on (for the drag drop), or null. */
   pickClient: (clientX: number, clientY: number) => Target | null
-  setGhost: (cell: Cell | null, block: Block | null) => void
+  setGhost: (cell: Cell | null, block: { kind: BlockKind; color: Block['color'] } | null) => void
   getPose: () => Pose
   setPose: (p: Pose) => void
   animateTo: (p: Pose, done?: () => void) => void
@@ -28,6 +29,7 @@ export interface BlockStageHandle {
 export interface BlockStageProps {
   islandSize: number
   heightCap: number
+  island: BlockIslandDef
   /** CSS px of the stage covered by floating controls; the island centres in what is left. */
   insets: { top: number; right: number; bottom: number; left: number }
   blocks: { cell: Cell; block: Block }[]
@@ -41,7 +43,7 @@ export interface BlockStageProps {
 type Pt = { x: number; y: number }
 
 const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function BlockStage(
-  { islandSize, heightCap, insets, blocks, onTap, onPose, disabled },
+  { islandSize, heightCap, island, insets, blocks, onTap, onPose, disabled },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -72,6 +74,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
         canvas,
         islandSize,
         heightCap,
+        island,
         onContextLost: () => setLost(true),
         // Rebuild from the pure world: the GPU held nothing that isn't also there.
         onContextRestored: () => {
@@ -106,7 +109,8 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       sceneRef.current = null
       canvasRef.current = null
     }
-  }, [islandSize, heightCap])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [islandSize, heightCap, island.id])
 
   useEffect(() => {
     sceneRef.current?.setBlocks(blocks)

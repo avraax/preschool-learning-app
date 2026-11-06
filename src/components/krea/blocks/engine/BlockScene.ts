@@ -42,7 +42,10 @@ import {
   type Object3D,
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
-import type { Block, Cell, Target } from '../blockWorld.ts'
+import type { Block, BlockKind, Cell, Target } from '../blockWorld.ts'
+import type { BlockIslandDef } from '../../../../config/kreaBlocks.ts'
+import { facingAngle, faceGeometry, hubGeometry, roofGeometry, WHEEL_SETBACK, wheelGeometry } from './geometry.ts'
+import { clayNormalMap, doorFace, windowFace } from './textures.ts'
 import { CAMERA, cameraPosition, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
 import { CRAYON_HEX } from '../../canvas/brushes.ts'
 
@@ -53,13 +56,54 @@ const RADIUS = 0.08
 const SLAB_DEPTH = 0.9
 /** The camera always looks here: the island's centre, a little above its top (§2.3: no panning). */
 const TARGET = { x: 0, y: 0.5, z: 0 }
-const GRASS = '#7CB85A'
-const SOIL = '#A67C52'
+/** The fixed-look specials' bodies (§2.2.7): a white window frame, a brown door, a black tyre. */
+const WINDOW_BODY = '#F2EEE6'
+const DOOR_BODY = '#8A5A33'
+const TYRE = '#2E2B2A'
+const HUB = '#C9C4BC'
+/** How strongly the seeded clay grain bends the light. Subtle (owner: "subtle clay"). */
+const CLAY_GRAIN = 0.18
+
+/**
+ * One instanced mesh and the cells its instances draw, so a raycast hit (mesh + instanceId) maps back to
+ * the world. Each block KIND lives in one or two of these; a whole island of blocks is a handful of draws.
+ */
+class Layer {
+  cells: Cell[] = []
+  constructor(readonly mesh: InstancedMesh, readonly pickable: boolean) {
+    mesh.instanceMatrix.setUsage(DynamicDrawUsage)
+    mesh.count = 0
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    // Instances move inside the island's box, so the mesh's own bounds never decide culling.
+    mesh.frustumCulled = false
+  }
+  begin(): void {
+    this.cells = []
+  }
+  add(cell: Cell, m: Matrix4, color?: Color): void {
+    const i = this.cells.length
+    this.mesh.setMatrixAt(i, m)
+    if (color) this.mesh.setColorAt(i, color)
+    this.cells.push(cell)
+  }
+  commit(): void {
+    this.mesh.count = this.cells.length
+    // three CACHES an instanced mesh's bounds on its first raycast — with an empty island that is an
+    // empty sphere, and every later tap misses every block (measured: the eraser could hit nothing).
+    this.mesh.computeBoundingSphere()
+    this.mesh.computeBoundingBox()
+    this.mesh.instanceMatrix.needsUpdate = true
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true
+  }
+}
 
 export interface BlockSceneOptions {
   canvas: HTMLCanvasElement
   islandSize: number
   heightCap: number
+  /** Which island's clay and grid (the sky is the DOM behind the canvas). */
+  island: BlockIslandDef
   /** The GPU went away: show the static sky; the world state is untouched. */
   onContextLost?: () => void
   /** The GPU came back: the caller re-applies the world (`setBlocks`) and the pose. */
@@ -73,13 +117,19 @@ export class BlockScene {
   private readonly raycaster = new Raycaster()
   private readonly cubeGeo: RoundedBoxGeometry
   private readonly cubeMat: MeshStandardMaterial
-  private readonly cubes: InstancedMesh
+  /** Cubes AND the window/door bodies (one shape, colour per instance). */
+  private readonly cubes: Layer
+  private readonly roofs: Layer
+  private readonly tyres: Layer
+  private readonly hubs: Layer
+  private readonly windowFaces: Layer
+  private readonly doorFaces: Layer
+  private readonly layers: Layer[]
+  private readonly textures: Texture[] = []
   private readonly island: Mesh
   private readonly grid: LineSegments
   private readonly ghost: Mesh
   private readonly key: DirectionalLight
-  /** instanceId → the cell it draws, so a raycast hit maps back to the world. */
-  private instanceCells: Cell[] = []
   private readonly half: number
   private readonly canvas: HTMLCanvasElement
   private pose: Pose = { ...CAMERA.home }
@@ -98,7 +148,7 @@ export class BlockScene {
   private readonly onRestored: () => void
 
   constructor(private readonly opts: BlockSceneOptions) {
-    const { canvas, islandSize, heightCap } = opts
+    const { canvas, islandSize, heightCap, island } = opts
     this.canvas = canvas
     this.half = (islandSize - 1) / 2
     // preserveDrawingBuffer: the feedback screenshot (snapdom) copies this canvas LATER than the frame,
@@ -132,12 +182,12 @@ export class BlockScene {
 
     // ----- the island: a plain clay slab (placeholder for W2's textured island)
     const slabGeo = new RoundedBoxGeometry(islandSize + 0.4, SLAB_DEPTH, islandSize + 0.4, 3, 0.25)
-    this.island = new Mesh(slabGeo, new MeshStandardMaterial({ color: GRASS, roughness: 0.95, metalness: 0 }))
+    this.island = new Mesh(slabGeo, new MeshStandardMaterial({ color: island.top, roughness: 0.95, metalness: 0 }))
     this.island.position.y = -SLAB_DEPTH / 2
     this.island.receiveShadow = true
     this.island.name = 'island'
     this.scene.add(this.island)
-    const soil = new Mesh(new BoxGeometry(islandSize + 0.1, SLAB_DEPTH * 0.9, islandSize + 0.1), new MeshStandardMaterial({ color: SOIL, roughness: 1 }))
+    const soil = new Mesh(new BoxGeometry(islandSize + 0.1, SLAB_DEPTH * 0.9, islandSize + 0.1), new MeshStandardMaterial({ color: island.soil, roughness: 1 }))
     soil.position.y = -SLAB_DEPTH * 0.75
     soil.name = 'soil'
     this.scene.add(soil)
@@ -151,22 +201,34 @@ export class BlockScene {
     }
     const gridGeo = new BufferGeometry()
     gridGeo.setAttribute('position', new Float32BufferAttribute(pts, 3))
-    this.grid = new LineSegments(gridGeo, new LineBasicMaterial({ color: 0x2f5a1f, transparent: true, opacity: 0.22 }))
+    this.grid = new LineSegments(gridGeo, new LineBasicMaterial({ color: island.grid, transparent: true, opacity: 0.22 }))
     this.scene.add(this.grid)
 
-    // ----- the blocks: ONE instanced mesh, colour per instance
+    // ----- the blocks: one instanced mesh per SHAPE, colour per instance, a shared seeded clay grain
+    const grain = clayNormalMap()
+    const wTex = windowFace()
+    const dTex = doorFace()
+    this.textures.push(grain, wTex, dTex)
+    const clay = (extra: Partial<ConstructorParameters<typeof MeshStandardMaterial>[0]> = {}) =>
+      new MeshStandardMaterial({ roughness: 0.88, metalness: 0, normalMap: grain, normalScale: new Vector2(CLAY_GRAIN, CLAY_GRAIN), ...extra })
     this.cubeGeo = new RoundedBoxGeometry(1, 1, 1, 2, RADIUS)
-    this.cubeMat = new MeshStandardMaterial({ roughness: 0.88, metalness: 0 })
+    this.cubeMat = clay()
     const capacity = islandSize * islandSize * heightCap
-    this.cubes = new InstancedMesh(this.cubeGeo, this.cubeMat, capacity)
-    this.cubes.instanceMatrix.setUsage(DynamicDrawUsage)
-    this.cubes.count = 0
-    this.cubes.castShadow = true
-    this.cubes.receiveShadow = true
-    // Instances move inside the island's box, so the mesh's own bounds are the island, never culled.
-    this.cubes.frustumCulled = false
-    this.cubes.setColorAt(0, new Color(1, 1, 1))
-    this.scene.add(this.cubes)
+    const inst = (geo: BufferGeometry, mat: MeshStandardMaterial, colored: boolean) => {
+      const m = new InstancedMesh(geo, mat, capacity)
+      if (colored) m.setColorAt(0, new Color(1, 1, 1))
+      return m
+    }
+    this.cubes = new Layer(inst(this.cubeGeo, this.cubeMat, true), true)
+    this.roofs = new Layer(inst(roofGeometry(), clay(), true), true)
+    this.tyres = new Layer(inst(wheelGeometry(), clay({ color: TYRE, roughness: 0.95 }), false), true)
+    this.hubs = new Layer(inst(hubGeometry(), clay({ color: HUB }), false), true)
+    // The painted faces sit on the bodies: not picked (a tap there hits the body behind, the same cell).
+    this.windowFaces = new Layer(inst(faceGeometry(), new MeshStandardMaterial({ map: wTex, roughness: 0.6, metalness: 0 }), false), false)
+    this.doorFaces = new Layer(inst(faceGeometry(), new MeshStandardMaterial({ map: dTex, roughness: 0.9, metalness: 0 }), false), false)
+    this.windowFaces.mesh.castShadow = this.doorFaces.mesh.castShadow = false
+    this.layers = [this.cubes, this.roofs, this.tyres, this.hubs, this.windowFaces, this.doorFaces]
+    for (const l of this.layers) this.scene.add(l.mesh)
 
     // ----- the ghost: where a dragged block would land
     this.ghost = new Mesh(this.cubeGeo, new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, depthWrite: false }))
@@ -197,28 +259,45 @@ export class BlockScene {
   /** Redraw the blocks from the world. */
   setBlocks(list: { cell: Cell; block: Block }[]): void {
     const m = new Matrix4()
+    const r = new Matrix4()
     const col = new Color()
-    this.instanceCells = []
-    list.forEach(({ cell, block }, i) => {
+    for (const l of this.layers) l.begin()
+    for (const { cell, block } of list) {
       const p = this.centre(cell)
-      m.makeTranslation(p.x, p.y, p.z)
-      this.cubes.setMatrixAt(i, m)
-      this.cubes.setColorAt(i, col.set(CRAYON_HEX[block.color]))
-      this.instanceCells.push(cell)
-    })
-    this.cubes.count = list.length
-    // three CACHES an instanced mesh's bounds on its first raycast — with an empty island that is an
-    // empty sphere, and every later tap misses every block (measured: the eraser could hit nothing).
-    this.cubes.computeBoundingSphere()
-    this.cubes.computeBoundingBox()
-    this.cubes.instanceMatrix.needsUpdate = true
+      // Turn the +z-facing shape to the block's facing, then move it to its cell.
+      m.makeRotationY(facingAngle(block.facing)).setPosition(p.x, p.y, p.z)
+      switch (block.kind as BlockKind) {
+        case 'cube':
+          this.cubes.add(cell, m, col.set(CRAYON_HEX[block.color]))
+          break
+        case 'roof':
+          this.roofs.add(cell, m, col.set(CRAYON_HEX[block.color]))
+          break
+        case 'window':
+          this.cubes.add(cell, m, col.set(WINDOW_BODY))
+          this.windowFaces.add(cell, m)
+          break
+        case 'door':
+          this.cubes.add(cell, m, col.set(DOOR_BODY))
+          this.doorFaces.add(cell, m)
+          break
+        case 'wheel': {
+          // Pulled back towards the block it hangs on, so it touches that face (§4.6: axle along it).
+          r.makeTranslation(0, 0, -WHEEL_SETBACK)
+          const w = m.clone().multiply(r)
+          this.tyres.add(cell, w)
+          this.hubs.add(cell, w)
+          break
+        }
+      }
+    }
+    for (const l of this.layers) l.commit()
     this.renderer.shadowMap.needsUpdate = true
-    if (this.cubes.instanceColor) this.cubes.instanceColor.needsUpdate = true
     this.requestRender()
   }
 
   /** Show where a block would land, or hide the ghost (null). */
-  setGhost(cell: Cell | null, block: Block | null): void {
+  setGhost(cell: Cell | null, block: { kind: BlockKind; color: Block['color'] } | null): void {
     const was = this.ghost.visible
     if (!cell || !block) {
       this.ghost.visible = false
@@ -228,7 +307,8 @@ export class BlockScene {
     const p = this.centre(cell)
     if (was && this.ghost.position.equals(p)) return
     this.ghost.position.copy(p)
-    ;(this.ghost.material as MeshBasicMaterial).color.set(CRAYON_HEX[block.color])
+    const look = block.kind === 'cube' || block.kind === 'roof' ? CRAYON_HEX[block.color] : block.kind === 'window' ? WINDOW_BODY : block.kind === 'door' ? DOOR_BODY : TYRE
+    ;(this.ghost.material as MeshBasicMaterial).color.set(look)
     this.ghost.visible = true
     this.requestRender()
   }
@@ -323,14 +403,18 @@ export class BlockScene {
   pick(x: number, y: number): Target | null {
     const ndc = new Vector2((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1)
     this.raycaster.setFromCamera(ndc, this.camera)
-    const hits = this.raycaster.intersectObjects([this.cubes, this.island] as Object3D[], false)
+    const pickable = this.layers.filter((l) => l.pickable)
+    const hits = this.raycaster.intersectObjects([...pickable.map((l) => l.mesh), this.island] as Object3D[], false)
+    const m = new Matrix4()
     for (const h of hits) {
-      if (h.object === this.cubes && h.instanceId !== undefined && h.face) {
-        const cell = this.instanceCells[h.instanceId]
+      const layer = pickable.find((l) => l.mesh === h.object)
+      if (layer && h.instanceId !== undefined && h.face) {
+        const cell = layer.cells[h.instanceId]
         if (!cell) continue
-        // Instances are translations only, so the geometry's normal IS the world normal; the resolver
-        // still rounds it to one axis (rounded edges skew it).
-        const n = h.face.normal
+        // The face normal is in the SHAPE's frame: turn it by the instance's rotation (a roof facing west
+        // is a rotated wedge). The resolver still rounds it to one axis (rounded edges skew it).
+        layer.mesh.getMatrixAt(h.instanceId, m)
+        const n = h.face.normal.clone().transformDirection(m)
         return { on: 'block', cell, normal: { x: n.x, y: n.y, z: n.z } }
       }
       if (h.object === this.island) {
@@ -381,7 +465,9 @@ export class BlockScene {
       if (Array.isArray(mat)) mat.forEach((x) => x.dispose())
       else mat?.dispose()
     })
-    this.cubes.dispose()
+    for (const l of this.layers) l.mesh.dispose()
+    // Materials don't own their maps: the grain and the face textures go explicitly.
+    for (const t of this.textures) t.dispose()
     this.key.shadow.map?.dispose()
     this.renderer.dispose()
     this.renderer.forceContextLoss()

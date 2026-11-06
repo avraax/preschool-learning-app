@@ -59,7 +59,7 @@ export const WELCOME_TITLES = [
   'Bogstav Quiz', 'Lær Alfabetet', 'Tal Quiz', 'Lær Tal', 'Plus Opgaver', 'Minus Opgaver',
   'Stav Ordet', 'Sammenlign Tal', 'Vendespil', 'Farver', 'Farvejagt', 'Ram Farven',
   'Lær Farver', 'Hvilken Farve?', 'Nuancer', 'Lyt og Find', 'Find det Engelske Ord',
-  'Læs Ordet', 'Hvad Mangler?', 'Fyld Båden', 'Fri Tegning', 'Tegn med Mig', 'Farvelæg', 'Perleplade',
+  'Læs Ordet', 'Hvad Mangler?', 'Fyld Båden', 'Fri Tegning', 'Tegn med Mig', 'Farvelæg', 'Perleplade', 'Byggeklodser',
 ]
 
 /**
