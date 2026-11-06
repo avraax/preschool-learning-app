@@ -6,6 +6,7 @@ One line per shipped cue that came from outside the repo (Harbour PRD-01: licenc
 |---|---|---|---|
 | `public/sounds/ui/fish-land.mp3` | Kenney "Impact Sounds" — https://kenney.nl/assets/impact-sounds | `impactSoft_medium_002.ogg` | CC0 |
 | `public/sounds/ui/box-land.mp3` | Kenney "Impact Sounds" — https://kenney.nl/assets/impact-sounds | `impactWood_heavy_001.ogg` | CC0 |
+| `public/sounds/ui/block-place.mp3` | the same Kenney file as `box-land.mp3`, copied by `scripts/bake-block-sounds.mjs` (owner's pick by ear, 2026-11-06) | `impactWood_heavy_001.ogg` | CC0 |
 | `public/sounds/ui/nav-forward.mp3` | Kenney "Interface Sounds" — https://kenney.nl/assets/interface-sounds — source kept as `art-src/sfx/kenney-maximize_008.ogg` | `maximize_008.ogg` | CC0 |
 | `public/sounds/ui/nav-back.mp3` | Kenney "Interface Sounds" — https://kenney.nl/assets/interface-sounds — source kept as `art-src/sfx/kenney-minimize_008.ogg` | `minimize_008.ogg` | CC0 |
 | `public/sounds/ui/harbour-ambience.mp3` | owner's download (Pixabay, uploader "freesound_community") — source kept as `art-src/sfx/harbour-seagulls-day-src.mp3` | `freesound_community-harbour_seagulls_day_2-22341.mp3` | Pixabay Content License — confirmed on the page 2026-10-17 (artist ivolipa via Freesound) |
@@ -30,3 +31,6 @@ by ear, 2026-10-17). Nothing to license for the synthesised three.
 **Krea's studio cues** (`public/sounds/ui/krea-*.mp3`) have no external source: they are synthesised
 by `node scripts/bake-krea-sounds.mjs` (ffmpeg noise + sines), so there is nothing to license. A
 recorded replacement gets a row in the table above.
+
+**Byggeklodser's** `block-back.mp3` is synthesised (two soft clay knocks) and `block-remove.mp3` is a copy of
+`krea-undo.mp3` (synthesised); both come out of `node scripts/bake-block-sounds.mjs`, nothing to license.

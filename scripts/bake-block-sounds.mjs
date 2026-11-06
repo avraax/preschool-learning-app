@@ -128,8 +128,12 @@ const CANDIDATES = {
   ],
 }
 
-/** The owner's picks (filled in after the audition). Until then the game keeps its borrowed cues. */
-const PICKS = {}
+/** The owner's picks, by ear on the iPad, 2026-11-06. */
+const PICKS = {
+  'block-place': 'place-6-kasse',
+  'block-remove': 'remove-4-viskelaeder',
+  'block-back': 'back-1-hop',
+}
 
 // ----- level + encode (the bake-ui-sounds shape) --------------------------------------------------------
 const level = (x, targetDb) => {

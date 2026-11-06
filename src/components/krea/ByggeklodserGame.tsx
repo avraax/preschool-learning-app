@@ -194,11 +194,11 @@ const BlockStudio: React.FC<{
     const r = resolvePlacement(worldRef.current, target, item, facingNow())
     if ('placed' in r) {
       setWorld(r.placed)
-      sfx.play('bead-place')
+      sfx.play('block-place')
       return true
     }
     // A bounce: a soft sound, the world untouched — never a buzzer (§5).
-    sfx.play('bead-back')
+    sfx.play('block-back')
     return false
   }
 
@@ -207,7 +207,7 @@ const BlockStudio: React.FC<{
     const next = removeBlock(worldRef.current, target.cell)
     if (!next) return
     setWorld(next)
-    sfx.play('krea-undo')
+    sfx.play('block-remove')
   }
 
   const onStageTap = (target: Target | null) => {
@@ -387,7 +387,7 @@ const BlockStudio: React.FC<{
       return
     }
     if (e.over?.id !== 'stage') {
-      sfx.play('bead-back')
+      sfx.play('block-back')
       return
     }
     place(aimTarget(), item)

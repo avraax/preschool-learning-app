@@ -71,6 +71,9 @@ export type SfxCue =
   | 'bead-place'
   | 'bead-back'
   | 'bead-popoff'
+  | 'block-place'
+  | 'block-remove'
+  | 'block-back'
 
 // New drag/game cues (pick-up/spring-back/chomp/match) reuse curated files for now (real sound,
 // distinct cue names); swap to dedicated files when available — missing files degrade to silence.
@@ -118,6 +121,9 @@ const CUE_FILES: Record<SfxCue, string> = {
   'bead-place': '/sounds/ui/bead-place.mp3',
   'bead-back': '/sounds/ui/bead-back.mp3',
   'bead-popoff': '/sounds/ui/bead-popoff.mp3',
+  'block-place': '/sounds/ui/block-place.mp3',
+  'block-remove': '/sounds/ui/block-remove.mp3',
+  'block-back': '/sounds/ui/block-back.mp3',
 }
 
 // Not part of the first-gesture preload: a 40 s bed is ~320 KB and ~5 MB decoded, and only Fyld Båden
@@ -170,6 +176,11 @@ const CUE_VOLUME: Partial<Record<SfxCue, number>> = {
   'bead-place': 0.45,
   'bead-back': 0.4,
   'bead-popoff': 0.55,
+  // Byggeklodser (owner picked by ear, 2026-11-06, all heard at one level in the audition, so they share
+  // one volume here and keep the balance he chose). Baked by scripts/bake-block-sounds.mjs.
+  'block-place': 0.5,
+  'block-remove': 0.5,
+  'block-back': 0.5,
 }
 
 interface PlayOptions {
