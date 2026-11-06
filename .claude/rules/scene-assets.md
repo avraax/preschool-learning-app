@@ -54,12 +54,15 @@ manifest/subject choices with the owner first, and save it in the relevant plan 
   16-subject batch is 4 messages instead of 16, and four subjects rendered in one pass share identical
   lighting, which makes a chapter/set look like a set. Use exactly this opener, then a numbered list:
 
-  > Generate 4 SEPARATE images, one per subject below — not a collage.
-  > Each: single centered subject, soft-3D claymation style, Pixar-lite, rounded matte clay, soft
+  > I need FOUR SEPARATE IMAGES — four individual image files, one per subject below. Do NOT combine
+  > them into one picture. Do NOT make a grid, collage, panel or contact sheet.
+  > Each: single centered subject on its OWN full background, soft-3D claymation style, Pixar-lite, rounded matte clay, soft
   > top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down
   > angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution.
 
-  Keep a batch in **one chat thread** so the style carries. Google's docs say the model won't reliably
+  Close with the rule again: "…and four separate image files, not one picture containing four." The
+  shorter "4 SEPARATE images — not a collage" returned ONE picture holding every variation (Byggeklodser,
+  2026-11-06); the long form above is what worked for Krea and Perleplade. Keep a batch in **one chat thread** so the style carries. Google's docs say the model won't reliably
   honour an exact requested count, so if a message ever returns a collage instead, fall back to asking
   for one 2×2 grid on a single green background and split it into quadrants before keying (1024 ÷ 2 =
   512 per subject, still well above the 256 the art needs). Don't go to 3×3.
