@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-04T17:39:21.903Z",
+  "updatedAt": "2026-11-06T19:27:53.301Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -28352,6 +28352,46 @@
       "text": "Se, dragen flyver!",
       "group": "krea",
       "updatedAt": 1793813961903
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Byggeklodser": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Byggeklodser",
+      "group": "phrases",
+      "updatedAt": 1793993273301
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|Vil du have en ny ø? Dine klodser forsvinder.": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "Vil du have en ny ø? Dine klodser forsvinder.",
+      "group": "krea",
+      "updatedAt": 1793993273301
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|tag": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "tag",
+      "group": "krea",
+      "updatedAt": 1793993273301
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|vindue": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "vindue",
+      "group": "krea",
+      "updatedAt": 1793993273301
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|hjul": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "hjul",
+      "group": "krea",
+      "updatedAt": 1793993273301
     }
   }
 }

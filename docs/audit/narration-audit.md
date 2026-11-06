@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-11-04T17:39:21.903Z
+Last updated: 2026-11-06T19:27:53.301Z
 
-**3543 OK · 1 wrong · 0 unaudited** (of 3544 clips)
+**3548 OK · 1 wrong · 0 unaudited** (of 3549 clips)
 
 ## Bogstaver
 
@@ -905,6 +905,7 @@ Last updated: 2026-11-04T17:39:21.903Z
 | ✅ | Bliv ved! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Bogstav Quiz | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Bravo! | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Byggeklodser | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Dansk til Engelsk | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Dejligt! | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Det er okay. Prøv en gang til! | Bulk-approved (PRD-11 owner listen pass) |  |
