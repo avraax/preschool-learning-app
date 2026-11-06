@@ -38,6 +38,7 @@ import {
   PCFSoftShadowMap,
   SRGBColorSpace,
   DynamicDrawUsage,
+  type Texture,
   type Object3D,
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
@@ -102,8 +103,10 @@ export class BlockScene {
     this.renderer.outputColorSpace = SRGBColorSpace
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = PCFSoftShadowMap
-    // On demand: the shadow map is only re-rendered when we draw a frame, which is exactly when it changes.
-    this.renderer.shadowMap.autoUpdate = true
+    // The key light never moves with the camera, so the shadow map changes ONLY when the blocks do:
+    // `setBlocks` re-arms it. Redrawing it every frame of a turn doubled the per-frame draw work.
+    this.renderer.shadowMap.autoUpdate = false
+    this.renderer.shadowMap.needsUpdate = true
 
     // ----- light: hemisphere + one key from the top-left (the art style's key light) + one soft shadow
     this.scene.add(new HemisphereLight(0xfffaf0, 0x8a7a66, 1.6))
@@ -202,6 +205,7 @@ export class BlockScene {
     this.cubes.computeBoundingSphere()
     this.cubes.computeBoundingBox()
     this.cubes.instanceMatrix.needsUpdate = true
+    this.renderer.shadowMap.needsUpdate = true
     if (this.cubes.instanceColor) this.cubes.instanceColor.needsUpdate = true
     this.requestRender()
   }
@@ -336,6 +340,13 @@ export class BlockScene {
     this.stopAnimation()
     this.canvas.removeEventListener('webglcontextlost', this.onLost, false)
     this.canvas.removeEventListener('webglcontextrestored', this.onRestored, false)
+    // three (r186) keeps ONE module-level texture, the DFG lookup table every MeshStandardMaterial
+    // samples. Each renderer that uploads it adds a `dispose` listener to it, and renderer.dispose() never
+    // removes that — so every closed game (renderer, programs, GL context) stayed reachable from the
+    // module (heap snapshot: one WebGL2 context + two shader strings per open). Dispatching its dispose
+    // makes every renderer drop it; the next renderer simply uploads it again.
+    const props = this.renderer.properties.get(this.cubeMat) as { uniforms?: { dfgLUT?: { value?: Texture | null } } }
+    props.uniforms?.dfgLUT?.value?.dispose()
     this.scene.traverse((o) => {
       const mesh = o as Mesh
       mesh.geometry?.dispose()

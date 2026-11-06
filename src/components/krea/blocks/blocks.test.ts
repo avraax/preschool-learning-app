@@ -63,10 +63,26 @@ test('render on demand: no animation loop, and every requestAnimationFrame is a 
   assert.ok(rr)
   assert.match(rr[1], /if \(this\.pending \|\| this\.disposed \|\| this\.lost\) return/)
   assert.doesNotMatch(rr[1].replace(/^[\s\S]*?=> \{/, ''), /requestRender|requestAnimationFrame/, 'requestRender schedules itself again')
+  // …and the frame it draws asks for no next one (that is a loop by another name).
+  const render = scene.match(/private render\(\): void \{([\s\S]*?)\n {2}\}/)
+  assert.ok(render, 'BlockScene has no render()')
+  assert.doesNotMatch(render[1], /requestRender|requestAnimationFrame|setAnimationLoop/, 'render() schedules the next frame')
   // animateTo: re-arms only while t < 1.
   assert.match(scene, /if \(t < 1\) this\.animation = requestAnimationFrame\(tick\)/)
   // The game's drag ghost: one raycast a frame, never a loop.
   assert.match(read(GAME), /if \(raf\.current\) return\s+raf\.current = requestAnimationFrame\(/)
+})
+
+// Measured 2026-11-06 (perf.mjs, 158 blocks, 4× CPU): turning cost 85% busy until these two went in, 21% after.
+test('a turn costs one draw: no React render per camera move, no shadow pass per frame', () => {
+  const game = read(GAME)
+  assert.doesNotMatch(game, /useState<Pose>/, 'the camera pose is React state — every turn move re-renders the game')
+  assert.match(game, /const onPose = useCallback\(\(p: Pose\) => \{\s+setCanIn\(canZoom\(p, 1\)\)\s+setCanOut\(canZoom\(p, -1\)\)/)
+  assert.match(game, /onPose=\{onPose\}/)
+  const scene = read(SCENE)
+  assert.match(scene, /this\.renderer\.shadowMap\.autoUpdate = false/, 'the shadow map re-renders on every frame of a turn')
+  const setBlocks = scene.slice(scene.indexOf('  setBlocks('), scene.indexOf('  setGhost('))
+  assert.match(setBlocks, /this\.renderer\.shadowMap\.needsUpdate = true/, 'a block change no longer refreshes the shadow')
 })
 
 // §4.1: exactly one WebGLRenderer, created in an effect on a fresh canvas, disposed with its context.
@@ -80,6 +96,13 @@ test('one renderer, made in the effect on a fresh canvas, and fully disposed', (
   for (const call of ['this.renderer.dispose()', 'this.renderer.forceContextLoss()', 'this.canvas.width = 0']) {
     assert.ok(scene.includes(call), `dispose() lost ${call}`)
   }
+  // three's module-level DFG lookup texture keeps a listener per renderer; without this every closed game
+  // stayed reachable (heap snapshot, 2026-11-06). It must run BEFORE the materials are disposed, which
+  // drops the properties it is read from.
+  const dispose = scene.slice(scene.indexOf('  dispose(): void {'))
+  const lut = dispose.indexOf('dfgLUT?.value?.dispose()')
+  assert.ok(lut > 0, 'dispose() no longer releases three\'s shared DFG lookup texture — a closed game leaks')
+  assert.ok(lut < dispose.indexOf('this.scene.traverse('), 'the DFG texture is released after the materials are gone')
   assert.match(scene, /this\.onLost = \(ev: Event\) => \{\s+ev\.preventDefault\(\)/, 'context loss is not prevented, so it can never be restored')
   assert.match(scene, /addEventListener\('webglcontextlost', this\.onLost/)
   assert.match(scene, /addEventListener\('webglcontextrestored', this\.onRestored/)

@@ -108,6 +108,8 @@ const chrome = spawn(CHROME, [
   // format), so Byggeklodser renders nothing. SwiftShader gives a software WebGL2 — correct pixels, slow
   // frames: frame TIMES under it are not the iPad's.
   ...(has('--webgl') ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--disable-gpu']),
+  // `--expose-gc`: `window.gc()` + precise `performance.memory`, for leak checks over open/close cycles.
+  ...(has('--expose-gc') ? ['--js-flags=--expose-gc', '--enable-precise-memory-info'] : []),
   `--window-size=${W},${H}`,
   `--user-data-dir=${mkdtempSync(join(tmpdir(), 'cdp-'))}`, 'about:blank',
 ], { stdio: 'ignore' })

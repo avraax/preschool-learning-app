@@ -75,7 +75,15 @@ const ByggeklodserGame: React.FC = () => {
   }
   const [held, setHeld] = useState<Held>({ kind: 'cube', color: 'roed' })
   const [tool, setTool] = useState<Tool>('block')
-  const [pose, setPose] = useState<Pose>({ ...CAMERA.home })
+  // Only what the buttons need, as PRIMITIVES: a turn reports its pose ~60×/s, and React bails out on an
+  // unchanged boolean — a pose object here re-rendered the whole game every frame of a turn (measured:
+  // 85% busy at a 4× CPU throttle).
+  const [canIn, setCanIn] = useState(() => canZoom(CAMERA.home, 1))
+  const [canOut, setCanOut] = useState(() => canZoom(CAMERA.home, -1))
+  const onPose = useCallback((p: Pose) => {
+    setCanIn(canZoom(p, 1))
+    setCanOut(canZoom(p, -1))
+  }, [])
   const [dragColor, setDragColor] = useState<CrayonColor | null>(null)
   const stage = useRef<BlockStageHandle>(null)
   const turning = useRef(false)
@@ -255,10 +263,10 @@ const ByggeklodserGame: React.FC = () => {
       </>
     ) : (
       <>
-        <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canZoom(pose, 1)} onPress={() => zoom(1)}>
+        <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canIn} onPress={() => zoom(1)}>
           <PlusMinus plus />
         </IconPress>
-        <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canZoom(pose, -1)} onPress={() => zoom(-1)}>
+        <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
           <PlusMinus plus={false} />
         </IconPress>
       </>
@@ -301,7 +309,7 @@ const ByggeklodserGame: React.FC = () => {
                 camera={tuning.camera}
                 blocks={blocks}
                 onTap={onStageTap}
-                onPose={setPose}
+                onPose={onPose}
               />
             </DroppableZone>
           </Box>
