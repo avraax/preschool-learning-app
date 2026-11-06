@@ -86,6 +86,8 @@ export class BlockScene {
   private fit = 10
   private width = 1
   private height = 1
+  /** CSS px of the stage covered by floating controls (header, panel): the island centres in the rest. */
+  private insets = { top: 0, right: 0, bottom: 0, left: 0 }
   private pending = 0
   private animation = 0
   private disposed = false
@@ -99,7 +101,10 @@ export class BlockScene {
     const { canvas, islandSize, heightCap } = opts
     this.canvas = canvas
     this.half = (islandSize - 1) / 2
-    this.renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'default' })
+    // preserveDrawingBuffer: the feedback screenshot (snapdom) copies this canvas LATER than the frame,
+    // and a cleared buffer came out as empty sky (owner's report F6FB9). Rendering only on demand, the
+    // extra copy it costs happens only when a frame is drawn at all.
+    this.renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, powerPreference: 'default' })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, DPR_CAP))
     this.renderer.setClearColor(0x000000, 0)
     this.renderer.outputColorSpace = SRGBColorSpace
@@ -281,12 +286,33 @@ export class BlockScene {
     this.height = Math.max(1, Math.round(cssH))
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, DPR_CAP))
     this.renderer.setSize(this.width, this.height, false)
-    const aspect = this.width / this.height
+    this.refit()
+  }
+
+  /**
+   * The stage is the whole screen with controls floating over it (owner 2026-11-06). Tell the scene
+   * which edges they cover: the island is fitted to, and centred in, the free rectangle — the canvas still
+   * draws (and picks) under the controls, so a turned or zoomed build never ends at a hard edge.
+   */
+  setInsets(i: { top: number; right: number; bottom: number; left: number }): void {
+    const n = { top: Math.max(0, i.top), right: Math.max(0, i.right), bottom: Math.max(0, i.bottom), left: Math.max(0, i.left) }
+    if (n.top === this.insets.top && n.right === this.insets.right && n.bottom === this.insets.bottom && n.left === this.insets.left) return
+    this.insets = n
+    this.refit()
+  }
+
+  private refit(): void {
+    const { width: w, height: h, insets: i } = this
+    const aspect = w / h
     this.camera.aspect = aspect
+    // Shift the image so the look-at point lands on the free rectangle's centre (setViewOffset with a
+    // full-size window is a pure translation of the projection; raycasting honours it).
+    this.camera.setViewOffset(w, h, (i.right - i.left) / 2, (i.bottom - i.top) / 2, w, h)
     this.camera.updateProjectionMatrix()
-    // The island (its slab, plus two layers of building) fills the stage at zoom 1, judged from the
+    const fill = { x: 0.92 * Math.max(0.2, (w - i.left - i.right) / w), y: 0.92 * Math.max(0.2, (h - i.top - i.bottom) / h) }
+    // The island (its slab, plus two layers of building) fills the free area at zoom 1, judged from the
     // starting angle — so the fit never changes while the child turns (no pulsing island).
-    this.fit = fitBox(CAMERA.home, { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }, TARGET, aspect)
+    this.fit = fitBox(CAMERA.home, { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }, TARGET, aspect, fill)
     this.applyPose(this.pose)
   }
 

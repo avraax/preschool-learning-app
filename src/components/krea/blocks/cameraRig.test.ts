@@ -10,7 +10,6 @@ import {
   horizontalRelation,
   lerpPose,
   pinchZoom,
-  stepAzimuth,
   towardsCamera,
   zoomBy,
   type Pose,
@@ -36,13 +35,6 @@ test('zoom is clamped between a fixed min and max, by buttons and by pinch alike
   assert.equal(pinchZoom(home, 50).zoom, CAMERA.zoomMin)
   assert.equal(pinchZoom(home, 0.01).zoom, CAMERA.zoomMax)
   assert.ok(Math.abs(pinchZoom(home, 1).zoom - home.zoom) < 1e-9, 'fingers still = no change')
-})
-
-test("Let's arrows turn exactly 90° a step and four steps come home", () => {
-  let p = home
-  for (let i = 0; i < 4; i++) p = stepAzimuth(p, 1)
-  assert.ok(Math.abs(Math.cos(p.azimuth - home.azimuth) - 1) < 1e-9)
-  assert.ok(Math.abs(stepAzimuth(home, -1).azimuth - (home.azimuth - Math.PI / 2)) < 1e-9)
 })
 
 test('a step eases the short way round and ends exactly on the target', () => {
@@ -102,7 +94,7 @@ test('"foran" is always the side nearest the camera, whichever way the build is 
   assert.equal(horizontalRelation(p, { x: 0, z: 1 }), 'foran')
   assert.equal(horizontalRelation(p, { x: 0, z: -1 }), 'bagved')
   assert.equal(horizontalRelation(p, { x: 1, z: 0 }), 'ved siden af')
-  p = stepAzimuth(p, 1) // camera on +x
+  p = { ...p, azimuth: p.azimuth + Math.PI / 2 } // camera on +x
   assert.equal(horizontalRelation(p, { x: 1, z: 0 }), 'foran')
   assert.equal(horizontalRelation(p, { x: 0, z: 1 }), 'ved siden af')
 })

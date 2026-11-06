@@ -104,6 +104,9 @@ test('one renderer, made in the effect on a fresh canvas, and fully disposed', (
   assert.ok(lut > 0, 'dispose() no longer releases three\'s shared DFG lookup texture — a closed game leaks')
   assert.ok(lut < dispose.indexOf('this.scene.traverse('), 'the DFG texture is released after the materials are gone')
   assert.match(scene, /this\.onLost = \(ev: Event\) => \{\s+ev\.preventDefault\(\)/, 'context loss is not prevented, so it can never be restored')
+  // The feedback screenshot copies the canvas after the frame; a cleared buffer sent the owner an empty
+  // sky (F6FB9, 2026-11-06).
+  assert.match(scene, /new WebGLRenderer\(\{[^}]*preserveDrawingBuffer: true/, 'the feedback screenshot would capture an empty sky')
   assert.match(scene, /addEventListener\('webglcontextlost', this\.onLost/)
   assert.match(scene, /addEventListener\('webglcontextrestored', this\.onRestored/)
 })

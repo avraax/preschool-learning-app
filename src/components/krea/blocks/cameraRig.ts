@@ -33,10 +33,13 @@ export const CAMERA = {
   /** One-finger drag: radians per CSS px. A full stage width ≈ one half-turn. */
   turnPerPx: 0.008,
   tiltPerPx: 0.006,
-  /** Let's 90° arrows, animated (§4.4). */
+  /** An eased camera move (the model-mode hint's reveal, W4). */
   stepMs: 300,
-  /** The angled 3D view Let's models use, and every level's starting pose. */
-  home: { azimuth: 45 * DEG, tilt: 32 * DEG, zoom: 1 } as Pose,
+  /**
+   * Every level's starting pose. 38° up (was 32°): looking a little more DOWN onto the island hides fewer
+   * squares behind blocks (owner 2026-11-06, F6FB9: "not possible to add blocks behind blocks").
+   */
+  home: { azimuth: 45 * DEG, tilt: 38 * DEG, zoom: 1 } as Pose,
 } as const
 
 export const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v))
@@ -60,9 +63,6 @@ export const pinchZoom = (start: Pose, ratio: number): Pose => clampPose({ ...st
 export const canZoom = (p: Pose, dir: 1 | -1): boolean =>
   dir > 0 ? p.zoom > CAMERA.zoomMin + 1e-6 : p.zoom < CAMERA.zoomMax - 1e-6
 
-/** Let's arrows: exactly 90° a step from wherever it stands, so it always lands on a home-like corner view. */
-export const stepAzimuth = (p: Pose, dir: 1 | -1): Pose => ({ ...p, azimuth: p.azimuth + dir * (Math.PI / 2) })
-
 /**
  * Distance at which a sphere of `radius` fits the view on BOTH axes (the narrower one binds), with a
  * margin so the island never touches the stage's edge.
@@ -84,11 +84,15 @@ export const fitBox = (
   box: { half: number; bottom: number; top: number },
   target: { x: number; y: number; z: number },
   aspect: number,
-  fill = 0.92,
+  /** Share of the view the island may use, per axis — less than 1 where a panel or the header covers it. */
+  fill: number | { x: number; y: number } = 0.92,
   fovDeg: number = CAMERA.fovDeg,
 ): number => {
-  const tv = Math.tan(((fovDeg * Math.PI) / 180) / 2) * fill
-  const th = tv * Math.max(0.05, aspect)
+  const fx = typeof fill === 'number' ? fill : fill.x
+  const fy = typeof fill === 'number' ? fill : fill.y
+  const tan = Math.tan(((fovDeg * Math.PI) / 180) / 2)
+  const tv = tan * fy
+  const th = tan * Math.max(0.05, aspect) * fx
   // Camera basis: `fwd` points from the camera to the target; right and up span the image.
   const fwd = { x: -Math.cos(p.tilt) * Math.sin(p.azimuth), y: -Math.sin(p.tilt), z: -Math.cos(p.tilt) * Math.cos(p.azimuth) }
   const right = { x: Math.cos(p.azimuth), y: 0, z: -Math.sin(p.azimuth) }

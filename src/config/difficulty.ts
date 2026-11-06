@@ -610,28 +610,23 @@ export const KREA_BEADS: Record<DifficultyLevel, KreaBeadsTuning> = {
 }
 
 /**
- * Byggeklodser (`krea.blocks`, Krea PRD-03 §2.3) — the axis is the VIEW and the build's size, never the
- * colours (all 13 at every level). Let's camera is a fixed angled view (free build turns it only by
- * 90° arrows); Normal and Svær turn with one finger and zoom. XP is the same at every level.
+ * Byggeklodser (`krea.blocks`, Krea PRD-03 §2.3). Free build: the axis is the ISLAND SIZE and nothing else
+ * — every level turns with one finger and zooms the same way (owner, 2026-11-06, after the first iPad
+ * look: "Let is no different from Normal and Svær except amount of tiles"; this REVERSES PRD-03's fixed
+ * Let view and its 90° arrows). Owner, same day: "bigger plates with more tiles, on all levels" (was
+ * 6/8/10). The colours are all 13 at every level; XP is the same at every level.
  *
- * W1 (the spike) carries only the free-build half: island size, height cap and camera. The model half
- * (model size range, model plate, plate help, card) joins in W3/W4.
+ * The model half (model size range, model plate, plate help, card) joins in W3/W4.
  */
 export interface KreaBlocksTuning {
   /** Free island, cells per side. */
   island: number
   heightCap: number
-  /**
-   * `steps`: fixed view, turned only by the 90° arrows (free build). `orbit`: one-finger turn. Every level
-   * ZOOMS with the + / − buttons: the islands are big enough that Let needs it too.
-   */
-  camera: 'steps' | 'orbit'
 }
-/** Owner, 2026-11-06, after the first iPad look: "bigger plates with more tiles, on all levels" (was 6/8/10). */
 export const KREA_BLOCKS: Record<DifficultyLevel, KreaBlocksTuning> = {
-  let: { island: 12, heightCap: 8, camera: 'steps' },
-  normal: { island: 14, heightCap: 8, camera: 'orbit' },
-  svaer: { island: 16, heightCap: 8, camera: 'orbit' },
+  let: { island: 12, heightCap: 8 },
+  normal: { island: 14, heightCap: 8 },
+  svaer: { island: 16, heightCap: 8 },
 }
 
 // ================================================================================================
@@ -695,7 +690,7 @@ export const TILE_AXIS_EXEMPT: Record<string, string> = {
   'colors.ramfarven': 'drag bench — the axis is the target pool',
   'colors.nuancer': 'drag tray — the axis is slots + a decoy',
   'krea.beads': 'pegboard — the axis is board size',
-  'krea.blocks': 'block building — the axis is the view and the build size',
+  'krea.blocks': 'block building — the axis is the island size',
   'memory.letters': 'card board — the axis is pairs',
   'memory.numbers': 'card board — the axis is pairs',
 }

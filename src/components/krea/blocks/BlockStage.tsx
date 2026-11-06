@@ -11,7 +11,7 @@ import type { Block, Cell, Target } from './blockWorld'
 //     gesture. On up, a gesture that never became a turn is a TAP — and the tap acts on POINTER-UP, never
 //     on down, or every turn would start by placing a block.
 //   - Two pointers → pinch zoom. The pending tap is cancelled and nothing places until every finger lifts.
-//   - `steps` (Let): the stage ignores turn and pinch gestures entirely; only the 90° arrows turn it.
+//   - Every level turns and zooms the same way (owner 2026-11-06); levels differ only by island size.
 //
 // `touch-action: none` + non-passive touchmove/gesture* preventDefault (iOS page zoom), as in the Krea
 // canvas. The scene is created in the EFFECT, never in render (StrictMode's double mount, §4.1).
@@ -28,7 +28,8 @@ export interface BlockStageHandle {
 export interface BlockStageProps {
   islandSize: number
   heightCap: number
-  camera: 'steps' | 'orbit'
+  /** CSS px of the stage covered by floating controls; the island centres in what is left. */
+  insets: { top: number; right: number; bottom: number; left: number }
   blocks: { cell: Cell; block: Block }[]
   /** A tap that stayed a tap. `target` is null over the sky. */
   onTap: (target: Target | null) => void
@@ -40,7 +41,7 @@ export interface BlockStageProps {
 type Pt = { x: number; y: number }
 
 const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function BlockStage(
-  { islandSize, heightCap, camera, blocks, onTap, onPose, disabled },
+  { islandSize, heightCap, insets, blocks, onTap, onPose, disabled },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -48,6 +49,8 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   const sceneRef = useRef<BlockScene | null>(null)
   const blocksRef = useRef(blocks)
   blocksRef.current = blocks
+  const insetsRef = useRef(insets)
+  insetsRef.current = insets
   const [lost, setLost] = useState(false)
   const onPoseRef = useRef(onPose)
   onPoseRef.current = onPose
@@ -87,6 +90,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     sceneRef.current = scene
     const r = host.getBoundingClientRect()
     scene.resize(r.width, r.height)
+    scene.setInsets(insetsRef.current)
     scene.setPose({ ...CAMERA.home })
     scene.setBlocks(blocksRef.current)
     onPoseRef.current?.(scene.getPose())
@@ -107,6 +111,10 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   useEffect(() => {
     sceneRef.current?.setBlocks(blocks)
   }, [blocks])
+
+  useEffect(() => {
+    sceneRef.current?.setInsets(insets)
+  }, [insets])
 
   useImperativeHandle(ref, () => ({
     pickClient: (cx, cy) => {
@@ -186,7 +194,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     const p = local(e)
     pointers.current.set(e.pointerId, p)
     if (g.multi) {
-      if (camera !== 'orbit' || pointers.current.size < 2) return
+      if (pointers.current.size < 2) return
       const [a, b] = [...pointers.current.values()]
       const next = pinchZoom(g.pinchPose, dist(a, b) / g.pinchD)
       scene.setPose(next)
@@ -199,7 +207,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       g.start = p
       g.pose = scene.getPose()
     }
-    if (g.turning && camera === 'orbit') {
+    if (g.turning) {
       const next = dragTurn(g.pose, p.x - g.start.x, p.y - g.start.y)
       scene.setPose(next)
       onPoseRef.current?.(next)
@@ -228,7 +236,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       onPointerMove={onPointerMove}
       onPointerUp={(e) => end(e, false)}
       onPointerCancel={(e) => end(e, true)}
-      sx={{ position: 'absolute', inset: 0, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', cursor: camera === 'orbit' ? 'grab' : 'pointer' }}
+      sx={{ position: 'absolute', inset: 0, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', cursor: 'grab' }}
     >
       {/* The canvas is appended by the effect above. It is transparent: the sky is the DOM backdrop
           behind it (§4.7), so a lost context shows the sky (the canvas is cleared on loss). */}

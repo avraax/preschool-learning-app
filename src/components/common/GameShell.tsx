@@ -79,6 +79,10 @@ interface GameShellProps {
   // not clip at its own box — whose edge is the safe-area inset + padding, 47px+ into an iPhone in
   // landscape (owner 2026-11-05, PWWCX) — but at the shell's, which is the screen.
   bleedLeft?: boolean
+  // The game's own surface fills the WHOLE screen and the header floats over it (Byggeklodser, owner
+  // 2026-11-06: "the building area fullscreen and elements layered on top"). No title is drawn, and the
+  // header's empty middle lets touches through to the game; only its own controls catch them.
+  fullBleed?: boolean
   children: React.ReactNode
 }
 
@@ -96,6 +100,7 @@ const GameShell: React.FC<GameShellProps> = ({
   inlineTitle = false,
   onBackWithin,
   bleedLeft = false,
+  fullBleed = false,
   children,
 }) => {
   const theme = useTheme()
@@ -142,7 +147,13 @@ const GameShell: React.FC<GameShellProps> = ({
       <GameMotif categoryId={categoryId} />
 
       {/* Header: back (left) + the reward ring (right). The themed title sits below, centred. */}
-      <AppBar position="static" color="transparent" elevation={0}>
+      <AppBar
+        position="static"
+        color="transparent"
+        elevation={0}
+        data-game-header
+        sx={fullBleed ? { position: 'relative', zIndex: 2, pointerEvents: 'none', '& .MuiToolbar-root > *': { pointerEvents: 'auto' } } : undefined}
+      >
         <Toolbar
           sx={{
             // THREE equal-sided columns, not `space-between`: the right cluster (ring + pill) is wider
@@ -161,7 +172,7 @@ const GameShell: React.FC<GameShellProps> = ({
             <BackButton to={backRoute} variant="game" onBack={onBackWithin} />
           </Box>
 
-          {titleInHeader && (
+          {titleInHeader && !fullBleed && (
             <Typography
               data-game-title
               sx={{
@@ -236,7 +247,7 @@ const GameShell: React.FC<GameShellProps> = ({
       >
         {/* Themed title (dark worlds → light text + glow; light → accent + soft shadow).
             Phone landscape renders it inline in the toolbar instead — no title row at all. */}
-        {!titleInHeader && (
+        {!titleInHeader && !fullBleed && (
           <Box
             sx={{
               textAlign: 'center',

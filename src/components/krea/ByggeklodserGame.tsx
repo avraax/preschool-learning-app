@@ -10,7 +10,6 @@ import { DraggableItem } from '../common/dnd/DraggableItem'
 import { DroppableZone } from '../common/dnd/DroppableZone'
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
 import { useDifficulty } from '../../hooks/useDifficulty'
-import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
 import { KREA_BLOCKS } from '../../config/difficulty'
@@ -18,7 +17,7 @@ import { PALETTE_13, type CrayonColor } from '../../config/kreaPalette'
 import { KREA_COLOR_NAME } from '../../config/kreaPhrases'
 import { KREA_ART } from '../../assets/games/krea'
 import { CRAYON_HEX } from './canvas/brushes'
-import { pressHandlers, SIDE_TOP_CLEARANCE, StudioButton } from './studio/StudioControls'
+import { pressHandlers, StudioButton } from './studio/StudioControls'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import BlockStage, { type BlockStageHandle } from './blocks/BlockStage'
 import {
@@ -36,12 +35,14 @@ import {
   type Held,
   type Target,
 } from './blocks/blockWorld'
-import { CAMERA, canZoom, stepAzimuth, zoomBy, type Pose } from './blocks/cameraRig'
+import { CAMERA, canZoom, zoomBy, type Pose } from './blocks/cameraRig'
 
 // Byggeklodser (`krea.blocks`, Krea PRD-03) — W1, THE SPIKE: free build on one placeholder island (a plain
 // green clay slab, plain rounded cubes in the 13 crayon colours), staging-only behind `blocksGate.ts`.
-// It stops here for the owner's iPad: does it run smoothly and cool, can a 5-year-old aim a block and
-// turn the view. Specials, the islands, the look, models and narration come in W2–W4.
+// Specials, the islands, the look, models and narration come in W2–W4.
+//
+// Owner, 2026-11-06, after the first iPad look: the island fills the WHOLE screen with the controls
+// floating on top; every level turns and zooms the same way (only the island size differs).
 //
 // ONE RESOLVER, TWO GESTURES (§4.3): a tap on a face with the held colour, and a drag of a tray chip onto
 // the stage, both land in `place()` — the only caller of `resolvePlacement` (`blocks.test.ts`). A drop
@@ -58,6 +59,8 @@ const SAVE_DEBOUNCE_MS = 500
 const TOUCH_AIM_LIFT_PX = 56
 const CHIP = 'clamp(44px, 6.4vmin, 58px)'
 const SIDE_BTN = 'clamp(44px, 7.6vmin, 68px)'
+/** Air between the floating panel and the island's free area / the header. */
+const PANEL_GAP_PX = 8
 
 type Tool = 'block' | 'eraser'
 
@@ -65,7 +68,6 @@ const ByggeklodserGame: React.FC = () => {
   useOccludeWorld()
   const audio = useSimplifiedAudioHook({ componentId: 'ByggeklodserGame', autoInitialize: false })
   const level = useDifficulty('krea')
-  const reduce = useReducedMotion()
   const tuning = KREA_BLOCKS[level]
 
   const fresh = useCallback(() => emptyWorld(tuning.island, tuning.heightCap), [tuning.island, tuning.heightCap])
@@ -89,9 +91,8 @@ const ByggeklodserGame: React.FC = () => {
   }, [])
   const [dragColor, setDragColor] = useState<CrayonColor | null>(null)
   const stage = useRef<BlockStageHandle>(null)
-  const turning = useRef(false)
 
-  // A level change reshapes the island (6 / 8 / 10): replay what still fits.
+  // A level change reshapes the island (12 / 14 / 16): replay what still fits.
   useEffect(() => {
     setWorld(restoreWorld(fresh(), kreaSession.load(GAME_ID, ITEM_ID)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -167,23 +168,7 @@ const ByggeklodserGame: React.FC = () => {
     sfx.play('krea-undo')
   }
 
-  // ----- camera buttons ---------------------------------------------------------------------------------
-  const step = (dir: 1 | -1) => {
-    const s = stage.current
-    if (!s || turning.current) return
-    touched()
-    sfx.play('tap')
-    const to = stepAzimuth(s.getPose(), dir)
-    // Reduced motion: the view snaps to the next side instead of swinging round.
-    if (reduce) {
-      s.setPose(to)
-      return
-    }
-    turning.current = true
-    s.animateTo(to, () => {
-      turning.current = false
-    })
-  }
+  // ----- zoom buttons (every level turns with a finger; the buttons zoom) --------------------------------
   const zoom = (dir: 1 | -1) => {
     const s = stage.current
     if (!s) return
@@ -192,6 +177,38 @@ const ByggeklodserGame: React.FC = () => {
     s.setPose(next)
     sfx.play('tap')
   }
+
+  // ----- the floating controls (owner 2026-11-06: the building area fullscreen, controls on top) --------
+  // The island is fitted to the screen MINUS the header and the panel, measured, never a tuned percentage:
+  // the panel's rect says which edge it covers (right in landscape, bottom in portrait).
+  const panelRef = useRef<HTMLDivElement>(null)
+  const [insets, setInsets] = useState({ top: 0, right: 0, bottom: 0, left: 0 })
+  const [headerBottom, setHeaderBottom] = useState(0)
+  useEffect(() => {
+    const measure = () => {
+      const header = document.querySelector('[data-game-header]')
+      const top = header ? Math.round(header.getBoundingClientRect().bottom) : 0
+      setHeaderBottom(top)
+      const panel = panelRef.current?.getBoundingClientRect()
+      if (!panel) return
+      const sideways = panel.height >= panel.width
+      const next = {
+        top,
+        right: sideways ? Math.round(window.innerWidth - panel.left + PANEL_GAP_PX) : 0,
+        bottom: sideways ? 0 : Math.round(window.innerHeight - panel.top + PANEL_GAP_PX),
+        left: 0,
+      }
+      setInsets((p) => (p.top === next.top && p.right === next.right && p.bottom === next.bottom ? p : next))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    if (panelRef.current) ro.observe(panelRef.current)
+    window.addEventListener('resize', measure)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [])
 
   // ----- drag a chip onto the stage (§4.3): the cell comes from a raycast at the REAL pointer -----------
   const sensors = useDragOnlySensors()
@@ -260,31 +277,12 @@ const ByggeklodserGame: React.FC = () => {
   // ----- render -----------------------------------------------------------------------------------------
   const blocks = useMemo(() => blockList(world), [world])
   const canUndo = world.actions.length > 0
-  // Every level zooms (the islands are 12–16 a side); only Let turns by the 90° arrows instead of a finger.
-  const sideButtons = (
-    <>
-      {tuning.camera === 'steps' ? (
-        <>
-          <IconPress label="Drej til venstre" dataId="turn-left" onPress={() => step(-1)}>
-            <Arrow dir="left" />
-          </IconPress>
-          <IconPress label="Drej til højre" dataId="turn-right" onPress={() => step(1)}>
-            <Arrow dir="right" />
-          </IconPress>
-        </>
-      ) : null}
-      <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canIn} onPress={() => zoom(1)}>
-        <PlusMinus plus />
-      </IconPress>
-      <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
-        <PlusMinus plus={false} />
-      </IconPress>
-    </>
-  )
 
   return (
-    <GameShell categoryId="krea" title="Byggeklodser" dense guide={false} lightScene>
+    <GameShell categoryId="krea" title="Byggeklodser" guide={false} lightScene fullBleed>
       <DndContext sensors={sensors} collisionDetection={kidCollision} autoScroll={false} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={endDrag}>
+        {/* THE STAGE IS THE WHOLE SCREEN (owner 2026-11-06). The header floats over it (GameShell
+            `fullBleed`) and the controls float in the panel below; the island centres in what they leave. */}
         <Box
           data-krea-stage
           data-krea-item={ITEM_ID}
@@ -292,49 +290,61 @@ const ByggeklodserGame: React.FC = () => {
           // Probe hook: the world as sorted `x,y,z:colour` (rung 1/2 drivers read it; a few hundred bytes).
           data-blocks-cells={Object.entries(world.cells).map(([k, b]) => `${k}:${b.color}`).sort().join(' ')}
           data-blocks-level={level}
+          sx={{ position: 'fixed', inset: 0, zIndex: 1, background: 'linear-gradient(180deg, #9FD6F5 0%, #D4EEFB 70%, #EAF6FD 100%)' }}
+        >
+          {/* ONE droppable: the whole stage. The cell comes from the raycast, not from dnd-kit. */}
+          <DroppableZone id="stage" overColor="transparent" style={{ position: 'absolute', inset: 0 }}>
+            <BlockStage
+              ref={stage}
+              islandSize={tuning.island}
+              heightCap={tuning.heightCap}
+              insets={insets}
+              blocks={blocks}
+              onTap={onStageTap}
+              onPose={onPose}
+            />
+          </DroppableZone>
+        </Box>
+        {/* The panel's lane: fixed down the right edge (along the bottom in portrait). The lane lets
+            touches through to the island; only the panel catches them. NO transform on any ancestor of a
+            DraggableItem (WebKit drag drift, drag-and-drop.md). */}
+        <Box
           sx={{
-            flex: 1,
-            minHeight: 0,
-            display: 'grid',
-            gap: '10px',
-            // The stage is the FLEX REMAINDER after the tray (§4.13): reserved, never a tuned percentage.
-            gridTemplateColumns: 'minmax(0, 1fr)',
-            gridTemplateRows: 'minmax(0, 1fr) auto',
-            gridTemplateAreas: '"stage" "tray"',
+            position: 'fixed',
+            zIndex: 3,
+            pointerEvents: 'none',
+            display: 'flex',
+            left: 'calc(env(safe-area-inset-left) + 12px)',
+            right: 'calc(env(safe-area-inset-right) + 12px)',
+            bottom: 'calc(env(safe-area-inset-bottom) + 12px)',
+            justifyContent: 'center',
             '@media (orientation: landscape)': {
-              gridTemplateColumns: 'minmax(0, 1fr) auto',
-              gridTemplateRows: 'minmax(0, 1fr)',
-              gridTemplateAreas: '"stage tray"',
+              left: 'auto',
+              top: `${headerBottom + PANEL_GAP_PX}px`,
+              alignItems: 'center',
             },
-            pb: 'env(safe-area-inset-bottom)',
           }}
         >
-          <Box sx={{ gridArea: 'stage', position: 'relative', minWidth: 0, minHeight: 0, borderRadius: '24px', overflow: 'hidden', background: 'linear-gradient(180deg, #9FD6F5 0%, #D4EEFB 70%, #EAF6FD 100%)' }}>
-            {/* ONE droppable: the whole stage. The cell comes from the raycast, not from dnd-kit. */}
-            <DroppableZone id="stage" overColor="transparent" style={{ position: 'absolute', inset: 0 }}>
-              <BlockStage
-                ref={stage}
-                islandSize={tuning.island}
-                heightCap={tuning.heightCap}
-                camera={tuning.camera}
-                blocks={blocks}
-                onTap={onStageTap}
-                onPose={onPose}
-              />
-            </DroppableZone>
-          </Box>
           <Box
+            ref={panelRef}
+            data-blocks-panel
             sx={{
-              gridArea: 'tray',
+              pointerEvents: 'auto',
               display: 'flex',
               flexDirection: 'row',
               flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
-              minHeight: 0,
-              '@media (orientation: landscape)': { flexDirection: 'column', flexWrap: 'nowrap', justifyContent: 'flex-start', pt: SIDE_TOP_CLEARANCE },
-              [PHONE_LANDSCAPE]: { pt: '8px', gap: '8px' },
+              p: '10px',
+              maxWidth: '100%',
+              maxHeight: '100%',
+              borderRadius: '24px',
+              // A soft see-through card: the island stays readable under it. No backdrop-filter (cost).
+              background: 'rgba(255, 250, 242, 0.78)',
+              boxShadow: '0 6px 18px rgba(60, 40, 20, 0.18)',
+              '@media (orientation: landscape)': { flexDirection: 'column', flexWrap: 'nowrap' },
+              [PHONE_LANDSCAPE]: { gap: '6px', p: '8px' },
             }}
           >
             {/* The 13 colours (held tools on the right, owner rule). Tap = the sticky pick; drag = one block. */}
@@ -345,18 +355,20 @@ const ByggeklodserGame: React.FC = () => {
                 </DraggableItem>
               ))}
             </Box>
-            {/* A phone in landscape has ~310 px of height: 13 chips in 3 columns plus two tool rows overflowed
-                it (measured, WebKit 667×375). There the chips take 4 columns and the tools share ONE row. */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', '@media (orientation: portrait)': { flexDirection: 'row' }, [PHONE_LANDSCAPE]: { flexDirection: 'row', gap: '6px' } }}>
-            <Box sx={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', [PHONE_LANDSCAPE]: { gap: '6px' } }}>
+            {/* Eraser, undo, zoom in, zoom out: a 2x2 block; ONE row of four on a phone in landscape. */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(4, ${SIDE_BTN})`, gap: '6px' } }}>
               <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
                 <Img src={KREA_ART.eraser} />
               </StudioButton>
               <StudioButton dataId="undo" label="Fortryd" size={SIDE_BTN} disabled={!canUndo} onPress={doUndo}>
                 <Img src={KREA_ART.undo} />
               </StudioButton>
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', [PHONE_LANDSCAPE]: { gap: '6px' } }}>{sideButtons}</Box>
+              <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canIn} onPress={() => zoom(1)}>
+                <PlusMinus plus />
+              </IconPress>
+              <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
+                <PlusMinus plus={false} />
+              </IconPress>
             </Box>
           </Box>
         </Box>
@@ -410,13 +422,6 @@ const IconPress: React.FC<{ label: string; dataId: string; disabled?: boolean; o
   >
     {children}
   </ButtonBase>
-)
-
-const Arrow: React.FC<{ dir: 'left' | 'right' }> = ({ dir }) => (
-  <svg viewBox="0 0 48 48" width="62%" height="62%" aria-hidden style={{ transform: dir === 'left' ? 'scaleX(-1)' : undefined }}>
-    <path d="M10 30 A15 15 0 1 1 34 30" fill="none" stroke="#5A8F3A" strokeWidth="6" strokeLinecap="round" />
-    <path d="M27 31 L36 33 L37 23" fill="none" stroke="#5A8F3A" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
 )
 
 const PlusMinus: React.FC<{ plus: boolean }> = ({ plus }) => (
