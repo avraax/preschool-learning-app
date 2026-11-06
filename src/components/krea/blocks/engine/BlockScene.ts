@@ -208,7 +208,7 @@ export class BlockScene {
     }
     const gridGeo = new BufferGeometry()
     gridGeo.setAttribute('position', new Float32BufferAttribute(pts, 3))
-    this.grid = new LineSegments(gridGeo, new LineBasicMaterial({ color: island.grid, transparent: true, opacity: 0.22 }))
+    this.grid = new LineSegments(gridGeo, new LineBasicMaterial({ color: island.grid, transparent: true, opacity: island.gridOpacity }))
     this.scene.add(this.grid)
 
     // ----- the blocks: one instanced mesh per SHAPE, colour per instance, a shared seeded clay grain
