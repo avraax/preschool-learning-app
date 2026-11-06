@@ -596,7 +596,9 @@ const SpecialChip: React.FC<{ kind: Exclude<BlockKind, 'cube'>; color: CrayonCol
 
 /** An island as a picker card / "Ny ø" picture: its sky with a flattened clay diamond — drawn in code. */
 const IslandPicture: React.FC<{ island: BlockIslandDef }> = ({ island }) => (
-  <Box sx={{ position: 'absolute', inset: 0, borderRadius: '18%', overflow: 'hidden', background: `url(${BLOCK_ISLAND_ART[island.id].sky}) center / cover no-repeat, linear-gradient(180deg, ${island.sky[0]}, ${island.sky[2]})` }}>
+  // No radius of its own: the picker card (and the "Ny ø" button) already round and clip it — a second,
+  // larger radius inside left the card's white showing in the corners (owner, GYD6K).
+  <Box sx={{ position: 'absolute', inset: 0, borderRadius: 'inherit', overflow: 'hidden', background: `url(${BLOCK_ISLAND_ART[island.id].sky}) center / cover no-repeat, linear-gradient(180deg, ${island.sky[0]}, ${island.sky[2]})` }}>
     <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden style={{ display: 'block' }}>
       <path d="M50 38 L88 58 L50 78 L12 58 Z" transform="translate(0 7)" fill={island.soil} />
       <path d="M50 38 L88 58 L50 78 L12 58 Z" transform="translate(0 3)" fill={island.side} />
