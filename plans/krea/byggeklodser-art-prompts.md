@@ -30,17 +30,18 @@ image comes back with a strong shadow or glossy spot, re-roll it.
 undo buttons (reused from Krea). Tray chips and picker cards are rendered by the game itself.
 
 What each reference image is FOR:
-- `math.counting.webp`, `colors.ram-farven.webp`: **style only** (the clay, the light).
-- `src/assets/games/krea/backdrop.webp`: **consistency** with the Krea studio's painting style.
+- `math.counting.png`, `colors.ram-farven.png`: **style only** (the clay, the light).
+- `krea-backdrop.png`: **consistency** with the Krea studio's painting style.
+- All references are PNG copies in `art-src/krea/blocks-refs/` (Gemini could not read the `.webp` originals).
 
 ---
 
 ## Batch A — three sky backdrops (scene layers, opaque, no green)
 
 **Attach these 3 files:**
-- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
-- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\colors.ram-farven.webp`
-- `C:\Source\preschool-learning-app\src\assets\games\krea\backdrop.webp`
+- `C:\Source\preschool-learning-app\art-src\krea\blocks-refs\math.counting.png`
+- `C:\Source\preschool-learning-app\art-src\krea\blocks-refs\colors.ram-farven.png`
+- `C:\Source\preschool-learning-app\art-src\krea\blocks-refs\krea-backdrop.png`
 
 ```
 I need THREE SEPARATE IMAGES — three individual image files, one per scene below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel or contact sheet. Each image is its own complete, full-frame sky.
@@ -61,8 +62,8 @@ Remember: the centre of each picture left as empty sky — and three separate im
 ## Batch B — island top textures (flat, full frame, square)
 
 **Attach these 2 files:**
-- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\math.counting.webp`
-- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\colors.ram-farven.webp`
+- `C:\Source\preschool-learning-app\art-src\krea\blocks-refs\math.counting.png`
+- `C:\Source\preschool-learning-app\art-src\krea\blocks-refs\colors.ram-farven.png`
 
 ```
 I need THREE SEPARATE IMAGES — three individual image files, one per surface below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel, swatch sheet or contact sheet. Each image shows ONLY its own single surface, filling its own whole square.
@@ -81,7 +82,7 @@ Remember: flat, top-down, evenly lit, nothing on them — and three separate ima
 ---
 
 **If Gemini answers "I don't seem to have access to that content"** (owner, 2026-11-06, on this batch): it
-could not read an attachment. Attach PNG copies instead of the `.webp` files, or send this version with
+could not read an attachment. The listed files are PNG copies now; if it still happens, send this version with
 NO attachments at all — a texture needs no style reference:
 
 ```
@@ -147,8 +148,8 @@ Remember: flat, front-on, evenly lit, no shine — and four separate image files
 ## Batch E — the tile icon (keyed on green)
 
 **Attach these 2 files:**
-- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\krea.beads.webp`
-- `C:\Source\preschool-learning-app\src\assets\themes\icons\games\colors.ram-farven.webp`
+- `C:\Source\preschool-learning-app\art-src\krea\blocks-refs\krea.beads.png`
+- `C:\Source\preschool-learning-app\art-src\krea\blocks-refs\colors.ram-farven.png`
 
 ```
 I need exactly ONE image file showing ONE subject — not a grid, not variations, not a collage. A single centred subject, soft-3D claymation style, Pixar-lite, rounded matte clay, soft top-left key light, gentle rim light, soft contact shadow, warm and child-safe, slight 3/4 top-down angle, no text or letters, flat solid #00FF00 background edge to edge, square 1:1, highest resolution. Match the attached game icons' style and size (style only).
