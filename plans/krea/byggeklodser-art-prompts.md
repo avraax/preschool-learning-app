@@ -80,6 +80,29 @@ Remember: flat, top-down, evenly lit, nothing on them — and three separate ima
 
 ---
 
+**If Gemini answers "I don't seem to have access to that content"** (owner, 2026-11-06, on this batch): it
+could not read an attachment. Attach PNG copies instead of the `.webp` files, or send this version with
+NO attachments at all — a texture needs no style reference:
+
+```
+I need THREE SEPARATE IMAGES — three individual image files, one per surface below. Do NOT combine them into one picture. Do NOT make a grid, collage, panel, swatch sheet or contact sheet. Each image shows ONLY its own single surface, filling its own whole square.
+
+Each image is a FLAT TEXTURE seen from DIRECTLY ABOVE (exactly top-down, no perspective, no horizon), filling the whole square edge to edge, square 1:1, highest resolution. Style: soft modelling clay, like a children's claymation film — rounded, matte, gently hand-made, warm and friendly.
+
+Most important: FLAT EVEN LIGHT. No shadows, no highlights, no shine, no vignette, no darker corners. The texture must look the same brightness everywhere. No objects on it, no text.
+
+Image 1: short soft clay GRASS, a fresh medium green, tiny rounded tufts, even all over.
+Image 2: soft clay SNOW, white with a very faint cool blue tint, gentle soft lumps, even all over.
+Image 3: soft clay SAND, warm light golden beige, a few tiny smooth ripples, even all over.
+
+Remember: flat, top-down, evenly lit, nothing on them — and three separate image files, not one picture containing three.
+```
+
+Batches C and D attach the same two files; if they hit the same reply, drop the attachments the same way
+(replace "matching the attached images (style only)" with the style sentence above).
+
+---
+
 ## Batch C — island side textures (the island's edge, flat, full frame)
 
 **Attach these 2 files:** (same as Batch B)
