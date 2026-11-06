@@ -451,7 +451,52 @@ tårn!", "Se, bilen er klar til at køre!", "Se, raketten er klar til at flyve!"
 
 ## 10. Progress log (read before continuing)
 
-*(empty — the implementing session writes here)*
+### W1 — the spike (2026-11-06): DONE, STOPPED for the owner's iPad
+
+Commits `6123a2b` (spike), `d93e212` (leak + turn cost), `a0caa21` (phone tray, reduced motion). Staging
+gate `blocksGate.ts`; three **0.186.1** pinned (0.187.0 was 7 days old). Free build on one placeholder
+island (`fri-graes`, plain green slab), plain rounded cubes in the 13 crayon colours, no picker yet.
+
+**Owner, 2026-11-06 (for W2, do not re-litigate):** sounds and effects must sound **natural and fit a
+block-building game**, and may be **subtle** so they never get annoying. W1 borrows the approved calm set
+as placeholders (`bead-place` place, `bead-back` bounce, `krea-pick` pick + the prebaked colour name,
+`krea-undo` erase/undo, `tap` buttons); W2's `block-*` set is a soft clay plop/poof, quiet, one press = one
+sound, baked to the calm-set LUFS.
+
+Measured (say the rung when quoting these):
+- **Frames at rest: 0** (`data-blocks-frames` stays put; `perf.mjs` recalc 0, busy 1.6% empty and with
+  158 blocks). Rung 1, harness build. Break proven: a self-scheduling `render()` → 411 frames in the window.
+- **Turning a 158-block build:** 60 fps, p95 17 ms, 0 jank; main thread 6.2% busy (≈1 ms/frame) at 1×,
+  21% at 4× CPU, 25% at 6×. Rung 1, SwiftShader: GPU time is NOT the A10X's — rung 3 decides.
+- **Memory, 25 open/close cycles:** heap plateaus at 13.0 MB, the same as Perleplade's control; every
+  WebGL context is lost on close, no canvas or detached DOM survives (heap snapshot). Rung 1.
+- **Main chunk free of three:** three is only in `ByggeklodserGame-*.js` (565 KB raw / 143 KB gzip),
+  `index.html` neither loads nor preloads it (read from `dist/`; guarded).
+- **DPR used: 2** (`DPR_CAP`), antialias on, one 1024 soft shadow map.
+- WebKit (rung 2), iPad UA, 10 sizes (12.9"/11"/10.2" both ways, 3 phones both ways, desktop): WebGL2
+  present, a tap places, 0 controls off-screen, overlapping the stage or failing a hit-test; targets
+  ≥ 44 px (49–58 on iPads).
+
+Traps found here (each now guarded in `blocks.test.ts`, all re-broken):
+1. **StrictMode's dev remount** + `forceContextLoss()` on a JSX canvas → the second renderer got a lost
+   context (three: null shader precision → "Noget gik galt"). The canvas is created in the effect.
+2. **`InstancedMesh` caches its bounding sphere** on the first raycast (empty island) → no block could
+   ever be hit again (the eraser was dead). Recomputed in `setBlocks`.
+3. **three's module-level DFG lookup texture** keeps a `dispose` listener per renderer that
+   `renderer.dispose()` never removes → every closed game (renderer, programs, GL context) leaked.
+   `dispose()` dispatches it first.
+4. **A turn re-rendered the whole React game** (pose object in state) and redrew the shadow map every
+   frame: 85% busy at 4× → 21% after (pose → two booleans; shadow only on block change).
+5. Phone landscape tray overflowed (4 chip columns + one tool row there now).
+
+Headless notes: `cdp.mjs --webgl` (SwiftShader) and `--expose-gc` (leak checks) were added. A WebGL-less
+browser shows the sky and the tray, never a crash (forced in a probe).
+
+**Owner's iPad check (rung 3, all UNKNOWN until then):** does it run smoothly and stay cool on the A10X
+with shadows on; does WebGL survive many opens on 17.7.11; can he aim a block on a face, turn with one
+finger (Normal/Svær), use the Let arrows and the eraser; does a drag ever also register a tap. If it runs
+hot: `DPR_CAP` → 1.5 first, then the blurred contact shadow instead of the shadow map (§4.7).
+On staging set the level in Indstillinger → Læring: Let = 6×6 + arrows, Normal = 8×8 + finger turn/zoom.
 
 ## 9. Kickoff prompt for a fresh session
 
