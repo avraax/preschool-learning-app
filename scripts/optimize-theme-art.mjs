@@ -589,7 +589,7 @@ const KREA_KEY_OVERRIDES = {
   'crayon-rainbow': { ...GREEN_SUBJECT, darkScreenMax: 30 },
   done: GREEN_SUBJECT,
 }
-const KREA_TILES = { 'icon-draw': 'krea.draw', 'icon-guide': 'krea.guide', 'icon-color': 'krea.color', 'icon-beads': 'krea.beads' }
+const KREA_TILES = { 'icon-draw': 'krea.draw', 'icon-guide': 'krea.guide', 'icon-color': 'krea.color', 'icon-beads': 'krea.beads', 'icon-blocks': 'krea.blocks' }
 // Perleplade's props (PRD-02 W0): art-src/krea/beads/<id>.jpg → src/assets/games/krea/beads/<id>.webp.
 // The pegboard render is NOT shipped: its baked pegs (~19 a side) can't line up with a 7/10/13 board, so
 // the board is drawn in code like the beads (PRD-02 §2.1). The tweezers render is not used either: beads

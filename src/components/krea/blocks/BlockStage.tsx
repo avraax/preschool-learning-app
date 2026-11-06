@@ -30,6 +30,8 @@ export interface BlockStageProps {
   islandSize: number
   heightCap: number
   island: BlockIslandDef
+  /** The owner's renders for this island + the specials' faces (URLs). */
+  art: { top: string; side: string; window: string; door: string; wheel: string }
   /** CSS px of the stage covered by floating controls; the island centres in what is left. */
   insets: { top: number; right: number; bottom: number; left: number }
   blocks: { cell: Cell; block: Block }[]
@@ -43,7 +45,7 @@ export interface BlockStageProps {
 type Pt = { x: number; y: number }
 
 const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function BlockStage(
-  { islandSize, heightCap, island, insets, blocks, onTap, onPose, disabled },
+  { islandSize, heightCap, island, art, insets, blocks, onTap, onPose, disabled },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -75,6 +77,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
         islandSize,
         heightCap,
         island,
+        art,
         onContextLost: () => setLost(true),
         // Rebuild from the pure world: the GPU held nothing that isn't also there.
         onContextRestored: () => {

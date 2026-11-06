@@ -2,10 +2,10 @@
 //
 // - The CLAY grain is a SEEDED procedural normal map: the same seed always draws the same surface, so undo,
 //   resume and a context-loss rebuild look identical. Subtle by design (owner: "subtle clay").
-// - The window, door and wheel-hub faces are CODE-DRAWN STAND-INS until the owner's flat-lit Gemini faces
-//   land (art prompts, batch D). They are flat-lit too: the 3D lights them, so nothing here bakes a shadow.
+// - The window, door and wheel faces, the island's top and side and the skies are the owner's flat-lit
+//   Gemini renders (art prompts, batches A–D), cropped by `scripts/optimize-block-art.mjs`.
 
-import { CanvasTexture, RepeatWrapping, SRGBColorSpace, type Texture } from 'three'
+import { CanvasTexture, MirroredRepeatWrapping, RepeatWrapping, SRGBColorSpace, TextureLoader, type Texture } from 'three'
 import { rng } from '../../canvas/brushes.ts'
 
 const canvas = (w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] => {
@@ -49,50 +49,19 @@ export function clayNormalMap(seed = 20261106, size = 128): Texture {
   return t
 }
 
-const colorTex = (c: HTMLCanvasElement): Texture => {
-  const t = new CanvasTexture(c)
+/**
+ * Load one of the owner's flat renders (`src/assets/games/krea/blocks/`). Colour data, so sRGB; `repeat`
+ * tiles it (the island's side band runs round the whole edge). `onLoad` asks the scene for a frame —
+ * the scene renders on demand, so a texture that arrives later must say so.
+ */
+export function loadTexture(url: string, onLoad: () => void, repeat?: { x: number; y: number }): Texture {
+  const t = new TextureLoader().load(url, onLoad)
   t.colorSpace = SRGBColorSpace
-  return t
-}
-
-/** Stand-in window face: blue glass in a white frame with a cross bar. */
-export function windowFace(): Texture {
-  const [c, g] = canvas(128, 128)
-  g.fillStyle = '#F6F2EA'
-  g.fillRect(0, 0, 128, 128)
-  const glass = g.createLinearGradient(0, 14, 0, 114)
-  glass.addColorStop(0, '#8FD0F2')
-  glass.addColorStop(1, '#4E9FD6')
-  g.fillStyle = glass
-  g.beginPath()
-  g.roundRect(16, 16, 96, 96, 10)
-  g.fill()
-  g.fillStyle = '#F6F2EA'
-  g.fillRect(60, 16, 8, 96)
-  g.fillRect(16, 60, 96, 8)
-  return colorTex(c)
-}
-
-/** Stand-in door face: brown planks, a darker frame and a knob. */
-export function doorFace(): Texture {
-  const [c, g] = canvas(128, 128)
-  g.fillStyle = '#6B3F1C'
-  g.fillRect(0, 0, 128, 128)
-  g.fillStyle = '#9A5E2E'
-  g.beginPath()
-  g.roundRect(14, 10, 100, 118, [14, 14, 0, 0])
-  g.fill()
-  g.strokeStyle = 'rgba(80, 45, 18, 0.55)'
-  g.lineWidth = 3
-  for (const x of [39, 64, 89]) {
-    g.beginPath()
-    g.moveTo(x, 14)
-    g.lineTo(x, 128)
-    g.stroke()
+  if (repeat) {
+    // MIRRORED: the renders aren't seamless, and a plain repeat drew a hard vertical seam every tile
+    // round the island's edge (WebKit shots, sand worst). Mirroring meets every edge with itself.
+    t.wrapS = t.wrapT = MirroredRepeatWrapping
+    t.repeat.set(repeat.x, repeat.y)
   }
-  g.fillStyle = '#E8C060'
-  g.beginPath()
-  g.arc(96, 72, 6, 0, Math.PI * 2)
-  g.fill()
-  return colorTex(c)
+  return t
 }

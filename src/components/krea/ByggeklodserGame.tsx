@@ -18,6 +18,7 @@ import { PALETTE_13, type CrayonColor } from '../../config/kreaPalette'
 import { BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, NEW_ISLAND_LINE, NEW_ISLAND_TITLE } from '../../config/kreaPhrases'
 import { BLOCK_ISLANDS, FREE_ISLAND_PREFIX, FREE_ISLANDS_LABEL, islandById, islandItemId, type BlockIslandDef } from '../../config/kreaBlocks'
 import { KREA_ART } from '../../assets/games/krea'
+import { BLOCK_FACE_ART, BLOCK_ISLAND_ART } from '../../assets/games/krea/blocks'
 import { CRAYON_HEX } from './canvas/brushes'
 import { PlusBadge, pressHandlers, StudioButton } from './studio/StudioControls'
 import { StudioBackdrop } from './studio/StudioScene'
@@ -395,6 +396,8 @@ const BlockStudio: React.FC<{
 
   // ----- render -----------------------------------------------------------------------------------------
   const blocks = useMemo(() => blockList(world), [world])
+  const islandArt = BLOCK_ISLAND_ART[island.id]
+  const art = useMemo(() => ({ top: islandArt.top, side: islandArt.side, ...BLOCK_FACE_ART }), [islandArt])
   const canUndo = world.actions.length > 0
   const hasBlocks = blockCount(world) > 0
   const newIslandPicture = (
@@ -420,7 +423,8 @@ const BlockStudio: React.FC<{
           data-blocks-kinds={Object.entries(world.cells).map(([k, b]) => `${k}:${b.kind}:${b.facing}`).sort().join(' ')}
           data-blocks-level={level}
           data-blocks-held={`${held.kind}:${held.color}`}
-          sx={{ position: 'fixed', inset: 0, zIndex: 1, background: `linear-gradient(180deg, ${island.sky[0]} 0%, ${island.sky[1]} 70%, ${island.sky[2]} 100%)` }}
+          // The owner's painted sky behind the transparent canvas (§4.7); the island's own sky colours show while it loads.
+          sx={{ position: 'fixed', inset: 0, zIndex: 1, background: `url(${islandArt.sky}) ${island.skyAnchor} / cover no-repeat, linear-gradient(180deg, ${island.sky[0]} 0%, ${island.sky[1]} 70%, ${island.sky[2]} 100%)` }}
         >
           {/* ONE droppable: the whole stage. The cell comes from the raycast, not from dnd-kit. */}
           <DroppableZone id="stage" overColor="transparent" style={{ position: 'absolute', inset: 0 }}>
@@ -429,6 +433,7 @@ const BlockStudio: React.FC<{
               islandSize={tuning.island}
               heightCap={tuning.heightCap}
               island={island}
+              art={art}
               insets={insets}
               blocks={blocks}
               onTap={onStageTap}
@@ -580,7 +585,7 @@ const SpecialChip: React.FC<{ kind: Exclude<BlockKind, 'cube'>; color: CrayonCol
 
 /** An island as a picker card / "Ny ø" picture: its sky with a flattened clay diamond — drawn in code. */
 const IslandPicture: React.FC<{ island: BlockIslandDef }> = ({ island }) => (
-  <Box sx={{ position: 'absolute', inset: 0, borderRadius: '18%', overflow: 'hidden', background: `linear-gradient(180deg, ${island.sky[0]}, ${island.sky[2]})` }}>
+  <Box sx={{ position: 'absolute', inset: 0, borderRadius: '18%', overflow: 'hidden', background: `url(${BLOCK_ISLAND_ART[island.id].sky}) center / cover no-repeat, linear-gradient(180deg, ${island.sky[0]}, ${island.sky[2]})` }}>
     <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden style={{ display: 'block' }}>
       <path d="M50 38 L88 58 L50 78 L12 58 Z" transform="translate(0 7)" fill={island.soil} />
       <path d="M50 38 L88 58 L50 78 L12 58 Z" transform="translate(0 3)" fill={island.side} />

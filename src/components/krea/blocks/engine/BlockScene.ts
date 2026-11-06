@@ -25,7 +25,6 @@ import {
   Mesh,
   MeshStandardMaterial,
   MeshBasicMaterial,
-  BoxGeometry,
   BufferGeometry,
   Float32BufferAttribute,
   LineSegments,
@@ -44,8 +43,8 @@ import {
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import type { Block, BlockKind, Cell, Target } from '../blockWorld.ts'
 import type { BlockIslandDef } from '../../../../config/kreaBlocks.ts'
-import { facingAngle, faceGeometry, hubGeometry, roofGeometry, WHEEL_SETBACK, wheelGeometry } from './geometry.ts'
-import { clayNormalMap, doorFace, windowFace } from './textures.ts'
+import { facingAngle, faceGeometry, roofGeometry, WHEEL_SETBACK, wheelFaceGeometry, wheelGeometry } from './geometry.ts'
+import { clayNormalMap, loadTexture } from './textures.ts'
 import { CAMERA, cameraPosition, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
 import { CRAYON_HEX } from '../../canvas/brushes.ts'
 
@@ -53,14 +52,14 @@ import { CRAYON_HEX } from '../../canvas/brushes.ts'
 export const DPR_CAP = 2
 /** Edge rounding as a share of a cell (§4.7: ≈ 0.08). */
 const RADIUS = 0.08
-const SLAB_DEPTH = 0.9
+/** The island's clay slab: thick enough that its side render (a grass/snow/sand band over earth) reads. */
+const SLAB_DEPTH = 1.2
 /** The camera always looks here: the island's centre, a little above its top (§2.3: no panning). */
 const TARGET = { x: 0, y: 0.5, z: 0 }
 /** The fixed-look specials' bodies (§2.2.7): a white window frame, a brown door, a black tyre. */
 const WINDOW_BODY = '#F2EEE6'
 const DOOR_BODY = '#8A5A33'
 const TYRE = '#2E2B2A'
-const HUB = '#C9C4BC'
 /** How strongly the seeded clay grain bends the light. Subtle (owner: "subtle clay"). */
 const CLAY_GRAIN = 0.18
 
@@ -104,6 +103,8 @@ export interface BlockSceneOptions {
   heightCap: number
   /** Which island's clay and grid (the sky is the DOM behind the canvas). */
   island: BlockIslandDef
+  /** The owner's renders (URLs): this island's top and side, and the specials' painted faces. */
+  art: { top: string; side: string; window: string; door: string; wheel: string }
   /** The GPU went away: show the static sky; the world state is untouched. */
   onContextLost?: () => void
   /** The GPU came back: the caller re-applies the world (`setBlocks`) and the pose. */
@@ -121,7 +122,7 @@ export class BlockScene {
   private readonly cubes: Layer
   private readonly roofs: Layer
   private readonly tyres: Layer
-  private readonly hubs: Layer
+  private readonly wheelFaces: Layer
   private readonly windowFaces: Layer
   private readonly doorFaces: Layer
   private readonly layers: Layer[]
@@ -148,7 +149,7 @@ export class BlockScene {
   private readonly onRestored: () => void
 
   constructor(private readonly opts: BlockSceneOptions) {
-    const { canvas, islandSize, heightCap, island } = opts
+    const { canvas, islandSize, heightCap, island, art } = opts
     this.canvas = canvas
     this.half = (islandSize - 1) / 2
     // preserveDrawingBuffer: the feedback screenshot (snapdom) copies this canvas LATER than the frame,
@@ -180,17 +181,23 @@ export class BlockScene {
     this.key.shadow.camera.updateProjectionMatrix()
     this.scene.add(this.key)
 
-    // ----- the island: a plain clay slab (placeholder for W2's textured island)
-    const slabGeo = new RoundedBoxGeometry(islandSize + 0.4, SLAB_DEPTH, islandSize + 0.4, 3, 0.25)
-    this.island = new Mesh(slabGeo, new MeshStandardMaterial({ color: island.top, roughness: 0.95, metalness: 0 }))
+    // ----- the island: a floating clay slab. The owner's top render is stretched once over the top (an
+    // island is at most 16 a side, §4.7: no tiling), the side render's band runs round the edge, repeated
+    // so its pebbles keep their shape. Per-face materials: [+x, −x, +y top, −y bottom, +z, −z].
+    const redraw = () => this.requestRender()
+    const span = islandSize + 0.4
+    const top = loadTexture(art.top, redraw)
+    const side = loadTexture(art.side, redraw, { x: Math.max(1, Math.round(span / SLAB_DEPTH)), y: 1 })
+    this.textures.push(top, side)
+    const topMat = new MeshStandardMaterial({ map: top, roughness: 0.95, metalness: 0 })
+    const sideMat = new MeshStandardMaterial({ map: side, roughness: 0.95, metalness: 0 })
+    const bottomMat = new MeshStandardMaterial({ color: island.soil, roughness: 1 })
+    const slabGeo = new RoundedBoxGeometry(span, SLAB_DEPTH, span, 3, 0.25)
+    this.island = new Mesh(slabGeo, [sideMat, sideMat, topMat, bottomMat, sideMat, sideMat])
     this.island.position.y = -SLAB_DEPTH / 2
     this.island.receiveShadow = true
     this.island.name = 'island'
     this.scene.add(this.island)
-    const soil = new Mesh(new BoxGeometry(islandSize + 0.1, SLAB_DEPTH * 0.9, islandSize + 0.1), new MeshStandardMaterial({ color: island.soil, roughness: 1 }))
-    soil.position.y = -SLAB_DEPTH * 0.75
-    soil.name = 'soil'
-    this.scene.add(soil)
 
     // ----- faint grid lines to aim by (§2.8), drawn in code, a hair above the top
     const pts: number[] = []
@@ -206,9 +213,10 @@ export class BlockScene {
 
     // ----- the blocks: one instanced mesh per SHAPE, colour per instance, a shared seeded clay grain
     const grain = clayNormalMap()
-    const wTex = windowFace()
-    const dTex = doorFace()
-    this.textures.push(grain, wTex, dTex)
+    const wTex = loadTexture(art.window, redraw)
+    const dTex = loadTexture(art.door, redraw)
+    const wheelTex = loadTexture(art.wheel, redraw)
+    this.textures.push(grain, wTex, dTex, wheelTex)
     const clay = (extra: Partial<ConstructorParameters<typeof MeshStandardMaterial>[0]> = {}) =>
       new MeshStandardMaterial({ roughness: 0.88, metalness: 0, normalMap: grain, normalScale: new Vector2(CLAY_GRAIN, CLAY_GRAIN), ...extra })
     this.cubeGeo = new RoundedBoxGeometry(1, 1, 1, 2, RADIUS)
@@ -222,12 +230,12 @@ export class BlockScene {
     this.cubes = new Layer(inst(this.cubeGeo, this.cubeMat, true), true)
     this.roofs = new Layer(inst(roofGeometry(), clay(), true), true)
     this.tyres = new Layer(inst(wheelGeometry(), clay({ color: TYRE, roughness: 0.95 }), false), true)
-    this.hubs = new Layer(inst(hubGeometry(), clay({ color: HUB }), false), true)
+    this.wheelFaces = new Layer(inst(wheelFaceGeometry(), new MeshStandardMaterial({ map: wheelTex, roughness: 0.9, metalness: 0 }), false), true)
     // The painted faces sit on the bodies: not picked (a tap there hits the body behind, the same cell).
     this.windowFaces = new Layer(inst(faceGeometry(), new MeshStandardMaterial({ map: wTex, roughness: 0.6, metalness: 0 }), false), false)
     this.doorFaces = new Layer(inst(faceGeometry(), new MeshStandardMaterial({ map: dTex, roughness: 0.9, metalness: 0 }), false), false)
     this.windowFaces.mesh.castShadow = this.doorFaces.mesh.castShadow = false
-    this.layers = [this.cubes, this.roofs, this.tyres, this.hubs, this.windowFaces, this.doorFaces]
+    this.layers = [this.cubes, this.roofs, this.tyres, this.wheelFaces, this.windowFaces, this.doorFaces]
     for (const l of this.layers) this.scene.add(l.mesh)
 
     // ----- the ghost: where a dragged block would land
@@ -286,7 +294,7 @@ export class BlockScene {
           r.makeTranslation(0, 0, -WHEEL_SETBACK)
           const w = m.clone().multiply(r)
           this.tyres.add(cell, w)
-          this.hubs.add(cell, w)
+          this.wheelFaces.add(cell, w)
           break
         }
       }

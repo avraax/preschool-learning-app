@@ -2,7 +2,7 @@
 // Every shape is built for a unit cell centred on the origin, FACING +z; the scene turns each instance to
 // its block's facing (`facingAngle`).
 
-import { BufferGeometry, CylinderGeometry, Float32BufferAttribute, PlaneGeometry } from 'three'
+import { BufferGeometry, CircleGeometry, CylinderGeometry, Float32BufferAttribute, PlaneGeometry } from 'three'
 import type { Facing } from '../blockWorld.ts'
 
 /** Rotation about y that turns the +z-facing shape to `f`. */
@@ -40,8 +40,8 @@ export const roofGeometry = (): BufferGeometry => {
 /** The wheel's tyre: a squat cylinder whose axle lies along +z (along the face it sits on). */
 export const wheelGeometry = (): BufferGeometry => new CylinderGeometry(0.42, 0.42, 0.3, 28).rotateX(Math.PI / 2)
 
-/** The hub on the tyre's outer side. */
-export const hubGeometry = (): BufferGeometry => new CylinderGeometry(0.2, 0.2, 0.32, 20).rotateX(Math.PI / 2)
+/** The wheel's painted face (tyre + hub render) on the tyre's outer side, a hair proud of it. */
+export const wheelFaceGeometry = (): BufferGeometry => new CircleGeometry(0.42, 32).translate(0, 0, 0.152)
 
 /** How far a wheel sits back towards the block it hangs on, so it touches that face instead of floating. */
 export const WHEEL_SETBACK = 0.3

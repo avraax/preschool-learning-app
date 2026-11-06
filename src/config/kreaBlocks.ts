@@ -12,20 +12,25 @@ export interface BlockIslandDef {
   /** The picker card's label (never spoken). */
   name: string
   /**
-   * The CODE-DRAWN stand-in look until the owner's Gemini textures land (art prompts, batches A–C):
-   * the island's top and side clay, the soil under it, the faint grid, and the DOM sky behind the canvas.
+   * Colours: the picker card's code-drawn island, the island's underside and grid, and the sky gradient
+   * shown while the owner's painted sky loads (the renders: `src/assets/games/krea/blocks/`).
    */
   top: string
   side: string
   soil: string
   grid: string
   sky: readonly [top: string, mid: string, bottom: string]
+  /**
+   * Where the painted sky is anchored when `cover` crops it (a 16:9 render on a 4:3 iPad loses its sides):
+   * the beach's sun sits in the upper-left corner and was cut in half at centre.
+   */
+  skyAnchor: 'center' | 'left'
 }
 
 export const BLOCK_ISLANDS: readonly BlockIslandDef[] = [
-  { id: 'graes', name: 'Græs', top: '#7CB85A', side: '#5E9A43', soil: '#A67C52', grid: '#2F5A1F', sky: ['#9FD6F5', '#D4EEFB', '#EAF6FD'] },
-  { id: 'sne', name: 'Sne', top: '#F3F7FB', side: '#D9E4EF', soil: '#8FA3B8', grid: '#6E86A0', sky: ['#B7C9E2', '#DCE7F3', '#F2F6FB'] },
-  { id: 'strand', name: 'Strand', top: '#EED7A4', side: '#DDBF85', soil: '#B08A55', grid: '#8A6A3A', sky: ['#7FCBEA', '#BFE6F5', '#FFF1D6'] },
+  { id: 'graes', name: 'Græs', top: '#7CB85A', side: '#5E9A43', soil: '#A67C52', grid: '#2F5A1F', sky: ['#9FD6F5', '#D4EEFB', '#EAF6FD'], skyAnchor: 'center' },
+  { id: 'sne', name: 'Sne', top: '#F3F7FB', side: '#D9E4EF', soil: '#8FA3B8', grid: '#6E86A0', sky: ['#B7C9E2', '#DCE7F3', '#F2F6FB'], skyAnchor: 'center' },
+  { id: 'strand', name: 'Strand', top: '#EED7A4', side: '#DDBF85', soil: '#B08A55', grid: '#8A6A3A', sky: ['#7FCBEA', '#BFE6F5', '#FFF1D6'], skyAnchor: 'left' },
 ]
 
 export const islandById = (id: string): BlockIslandDef | undefined => BLOCK_ISLANDS.find((i) => i.id === id)
