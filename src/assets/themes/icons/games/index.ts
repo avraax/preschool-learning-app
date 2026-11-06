@@ -32,6 +32,8 @@ import kreaDraw from './krea.draw.webp'
 import kreaGuide from './krea.guide.webp'
 import kreaColor from './krea.color.webp'
 import kreaBeads from './krea.beads.webp'
+// PLACEHOLDER (Krea PRD-03 W1): three flat cubes, replaced by the owner's render in W2.
+import kreaBlocks from './krea.blocks.webp'
 
 // Keyed `<section>.<id>`; GameTileIcon builds the key and falls back to emoji for any missing key.
 export const gameIconImages: Record<string, string> = {
@@ -60,4 +62,5 @@ export const gameIconImages: Record<string, string> = {
   'krea.guide': kreaGuide,
   'krea.color': kreaColor,
   'krea.beads': kreaBeads,
+  'krea.blocks': kreaBlocks,
 }

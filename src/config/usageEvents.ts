@@ -239,6 +239,8 @@ export const ROUTE_EVENTS: Readonly<Record<string, string>> = {
   '/krea/tegnmedmig': 'route:krea_guide',
   '/krea/farvelaeg': 'route:krea_color',
   '/krea/perler': 'route:krea_beads',
+  // Staging-only (blocksGate.ts): App.tsx does not report it where the gate is shut.
+  '/krea/klodser': 'route:krea_blocks',
 
   '/learning/memory/letters': 'route:memory_letters',
   '/learning/memory/numbers': 'route:memory_numbers',

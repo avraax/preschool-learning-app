@@ -104,7 +104,11 @@ const chrome = spawn(CHROME, [
   '--headless=new', `--remote-debugging-port=${PORT}`, '--no-first-run', '--no-default-browser-check',
   has('--block-autoplay') ? '--autoplay-policy=document-user-activation-required'
                           : '--autoplay-policy=no-user-gesture-required',
-  '--disable-gpu', `--window-size=${W},${H}`,
+  // `--webgl`: headless Chrome with `--disable-gpu` has NO WebGL (three.js dies on a null precision
+  // format), so Byggeklodser renders nothing. SwiftShader gives a software WebGL2 — correct pixels, slow
+  // frames: frame TIMES under it are not the iPad's.
+  ...(has('--webgl') ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--disable-gpu']),
+  `--window-size=${W},${H}`,
   `--user-data-dir=${mkdtempSync(join(tmpdir(), 'cdp-'))}`, 'about:blank',
 ], { stdio: 'ignore' })
 

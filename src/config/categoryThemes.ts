@@ -237,6 +237,13 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         title: 'Perleplade',
         route: '/krea/perler',
         gradient: 'linear-gradient(135deg, #4FC3F7 0%, #0288D1 100%)'
+      },
+      // Krea PRD-03 — staging-only (`blocksGate.ts`); the menus drop it through `gatedGames`.
+      {
+        id: 'blocks',
+        title: 'Byggeklodser',
+        route: '/krea/klodser',
+        gradient: 'linear-gradient(135deg, #81C784 0%, #388E3C 100%)'
       }
     ]
   }

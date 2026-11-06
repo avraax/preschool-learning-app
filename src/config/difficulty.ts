@@ -609,6 +609,27 @@ export const KREA_BEADS: Record<DifficultyLevel, KreaBeadsTuning> = {
   svaer: { board: 16, bead: 0.84, palette: 13, guide: 'none' },
 }
 
+/**
+ * Byggeklodser (`krea.blocks`, Krea PRD-03 §2.3) — the axis is the VIEW and the build's size, never the
+ * colours (all 13 at every level). Let's camera is a fixed angled view (free build turns it only by
+ * 90° arrows); Normal and Svær turn with one finger and zoom. XP is the same at every level.
+ *
+ * W1 (the spike) carries only the free-build half: island size, height cap and camera. The model half
+ * (model size range, model plate, plate help, card) joins in W3/W4.
+ */
+export interface KreaBlocksTuning {
+  /** Free island, cells per side. */
+  island: number
+  heightCap: number
+  /** `steps`: fixed view, 90° arrows in free build. `orbit`: one-finger turn + zoom. */
+  camera: 'steps' | 'orbit'
+}
+export const KREA_BLOCKS: Record<DifficultyLevel, KreaBlocksTuning> = {
+  let: { island: 6, heightCap: 8, camera: 'steps' },
+  normal: { island: 8, heightCap: 8, camera: 'orbit' },
+  svaer: { island: 10, heightCap: 8, camera: 'orbit' },
+}
+
 // ================================================================================================
 // 4. The registry + the exempt list
 // ================================================================================================
@@ -641,6 +662,7 @@ export const TUNING: Record<string, Record<DifficultyLevel, object>> = {
   'krea.guide': KREA_GUIDE,
   'krea.color': KREA_PALETTE,
   'krea.beads': KREA_BEADS,
+  'krea.blocks': KREA_BLOCKS,
 }
 
 /**
@@ -669,6 +691,7 @@ export const TILE_AXIS_EXEMPT: Record<string, string> = {
   'colors.ramfarven': 'drag bench — the axis is the target pool',
   'colors.nuancer': 'drag tray — the axis is slots + a decoy',
   'krea.beads': 'pegboard — the axis is board size',
+  'krea.blocks': 'block building — the axis is the view and the build size',
   'memory.letters': 'card board — the axis is pairs',
   'memory.numbers': 'card board — the axis is pairs',
 }

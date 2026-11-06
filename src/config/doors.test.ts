@@ -50,7 +50,7 @@ test('the four doors, their labels and their order are the owner\'s', () => {
   assert.deepEqual(doorOf('alphabet').games, ['alphabet.learn', 'alphabet.quiz', 'alphabet.memory', 'ordleg.read', 'ordleg.spelling'])
   assert.deepEqual(doorOf('krea').games, [
     'colors.laer', 'colors.farvequiz', 'colors.farvejagt', 'colors.nuancer', 'colors.ram-farven',
-    'krea.draw', 'krea.guide', 'krea.color', 'krea.beads',
+    'krea.draw', 'krea.guide', 'krea.color', 'krea.beads', 'krea.blocks',
   ])
 })
 

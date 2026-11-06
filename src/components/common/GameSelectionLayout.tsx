@@ -20,6 +20,8 @@ import { balancedRows } from '../../config/menuRows'
 import { showsNewGame } from '../../config/newThisRelease'
 import { newSeen } from '../../services/newSeen'
 import { fourDoorsShown } from '../../utils/fourDoors'
+import { blocksShown } from '../../utils/blocksShown'
+import { gameShown } from '../../config/blocksGate'
 import { doorIconImages, sectionIconImages } from '../../assets/themes/icons'
 import { gameIconImages } from '../../assets/themes/icons/games'
 import ThemeMascot from './ThemeMascot'
@@ -51,7 +53,9 @@ const GameSelectionLayout: React.FC<GameSelectionLayoutProps> = ({ categoryId })
   // picture and its tiles (possibly from two sections, in the owner's order) come from `doors.ts`.
   // Off, it is the section's own menu exactly as before.
   const door = fourDoorsShown() ? doorAtRoute(SECTION_MENU_ROUTE[categoryId]) : undefined
-  const games: MenuTile[] = door ? doorTiles(door.games) : sectionTiles(categoryId)
+  // Byggeklodser stands in both lists but is staging-only: `gatedGames` drops it where the gate is shut.
+  const showBlocks = blocksShown()
+  const games: MenuTile[] = (door ? doorTiles(door.games) : sectionTiles(categoryId)).filter((t) => gameShown(t.gameId, showBlocks))
   const menuTitle = door ? door.label : getCategoryTheme(categoryId).name
   const menuIcon = door ? doorIconImages[door.id] : sectionIconImages[categoryId]
   // Explicit balanced rows for a door (D2/T12): the most a row may hold on this viewport — three on
