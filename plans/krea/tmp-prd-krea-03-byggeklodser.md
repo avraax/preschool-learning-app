@@ -498,6 +498,19 @@ finger (Normal/Svær), use the Let arrows and the eraser; does a drag ever also 
 hot: `DPR_CAP` → 1.5 first, then the blurred contact shadow instead of the shadow map (§4.7).
 On staging set the level in Indstillinger → Læring: Let = 6×6 + arrows, Normal = 8×8 + finger turn/zoom.
 
+### After the first iPad look (2026-11-06, owner) — these OVERRIDE §2.3 for free build
+- **Islands 12 / 14 / 16** (was 6/8/10), height cap still 8 (owner left it). `83e821c`.
+- **Every level turns with one finger and zooms**; levels differ only by island size. Let's fixed view
+  and 90° arrows are gone (F6FB9: "the angle for building is weird for Let", "not possible to add blocks
+  behind blocks"). Start tilt 38°. W4 must re-decide what Let's MODEL mode does with the camera.
+- **Full-screen island, controls floating on top** (right panel in landscape, bottom in portrait;
+  GameShell `fullBleed`; island fitted to the free area via the camera's view offset). `d72ccdd`.
+- Feedback screenshots were empty sky: `preserveDrawingBuffer: true` (guarded).
+- Square size on the 12.9" (renderer's projection): 70/61/54 px wide fitted, 171/151/134 zoomed in
+  (measured before the full-screen change, which only adds room).
+- **Open (no panning, PRD §2.3):** zoomed in, the camera still looks at the island's centre, so the
+  edges of a 16×16 island can't be reached while zoomed. Ask the owner if it bites.
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-03-byggeklodser.md` (Byggeklodser, the 3D block game in Krea).
