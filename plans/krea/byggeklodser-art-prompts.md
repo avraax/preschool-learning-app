@@ -99,6 +99,21 @@ Image 3: soft clay SAND, warm light golden beige, a few tiny smooth ripples, eve
 Remember: flat, top-down, evenly lit, nothing on them — and three separate image files, not one picture containing three.
 ```
 
+**Re-render, 2026-11-06 — grass top only.** The first grass came back as a regular grid of round dots,
+which on the island reads exactly like LEGO studs (PRD §2.5 rules studs out). One image, no attachments:
+
+```
+I need exactly ONE image file — not a grid, not variations, not a collage.
+
+A FLAT TEXTURE seen from DIRECTLY ABOVE (exactly top-down, no perspective, no horizon), filling the whole square edge to edge, square 1:1, highest resolution. Style: soft modelling clay, like a children's claymation film — matte, gently hand-made, warm and friendly.
+
+The surface: short soft clay GRASS in a fresh medium green, made of many small, IRREGULAR, softly pointed clay tufts and blades leaning in different directions, slightly varied greens. Absolutely NO dots, NO round bumps, NO studs, NO regular pattern, NO grid — it must not look like a toy baseplate.
+
+Most important: FLAT EVEN LIGHT. No shadows, no highlights, no shine, no vignette, no darker corners. No objects, no flowers, no text.
+
+Remember: one top-down, evenly lit grass texture with NO dots or studs — one image file.
+```
+
 Batches C and D attach the same two files; if they hit the same reply, drop the attachments the same way
 (replace "matching the attached images (style only)" with the style sentence above).
 
