@@ -511,6 +511,31 @@ On staging set the level in Indstillinger → Læring: Let = 6×6 + arrows, Norm
 - **Open (no panning, PRD §2.3):** zoomed in, the camera still looks at the island's centre, so the
   edges of a 16×16 island can't be reached while zoomed. Ask the owner if it bites.
 
+### After the second iPad look (2026-11-06, owner + research) — these OVERRIDE §2.1–§2.6, §4.6–§4.7
+Feedback GR5YE, UM5B3, RK4EG, YRFQQ, GYD6K, JYJ5F (staging e12798a); research brief (Minecraft doors 1×2
+auto-facing, Townscaper/Toca simple ground, Minecraft target outline, NN/g + Sesame: tap-first, no menu
+before play). Owner's decisions, commit `e6fae32`:
+- **Studio, not islands.** The plate (a 0.6-deep clay slab) rests on a plain studio floor that fog fades
+  into the wall (no horizon), with a soft shadow. Painted skies DELETED. A theme is the plate's surface
+  only: `plain` (default) · græs · sne · strand (`kreaBlocks.ts` `BLOCK_THEMES`).
+- **No entry picker.** The tile opens building; four plate pictures in the panel switch the theme and
+  KEEP the build. Session = one build (`fri`) + the theme (`tema`). §2.1.3–4's islands-on-a-picker are gone;
+  W4's models will need their own in-game entry.
+- **Door 1 wide × 2 tall, window a pane**, thin panels FLUSH with the cell's outer face. Tapped onto a
+  cube's side they REPLACE it (set into the wall); on the plate/top they stand alone facing the child.
+  Undo restores the wall. World actions are change-sets (before/after per cell); older sessions ignored.
+- **No wheels** (piece, render, "hjul" clip gone). §2.6's car/train/tractor models must be redesigned
+  without wheels in W3.
+- **Seeing where to build:** a checker on the plate (no lines); while a finger is down a ghost shows the
+  cell(s) the block will fill (`previewCells`, the resolver's own plan), lifting places, turning cancels;
+  a mouse previews on hover.
+- **"Ny ø?" → "Ny byggeplade?"** (prebaked). Picker-card white corners fixed (GYD6K).
+- Verified: end-to-end probe (26 checks) on 14 viewport/engine combos (rung 1+2), heap clean over
+  6 opens (rung 1). A turn-cost "regression" at 6× throttle was a measurement artifact: the W1 build
+  re-measured under identical conditions gave the same ~72–79% (only same-session A/B numbers compare).
+- Still open for the owner: the look on the iPad (rung 3); W3 models list without wheels; how W4's
+  "build what you see" is entered now that there is no picker.
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-03-byggeklodser.md` (Byggeklodser, the 3D block game in Krea).

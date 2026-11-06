@@ -504,8 +504,9 @@ const ByggeklodserGame: React.FC = () => {
                 </Box>
               ))}
             </Box>
-            {/* Eraser, undo, zoom in, zoom out: a 2x2 block (ONE row on a phone in landscape), then "Ny". */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '6px' } }}>
+            {/* Eraser, undo, zoom in, zoom out, then "Ny": a 2x2 block in a landscape column; ONE row in
+                portrait and on a phone in landscape (a 2x2 there left a whole empty row under it). */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '6px' } }}>
               <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
                 <Img src={KREA_ART.eraser} />
               </StudioButton>
@@ -518,7 +519,7 @@ const ByggeklodserGame: React.FC = () => {
               <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
                 <PlusMinus plus={false} />
               </IconPress>
-              <Box sx={{ gridColumn: '1 / -1', visibility: hasBlocks ? 'visible' : 'hidden', [PHONE_LANDSCAPE]: { gridColumn: 'auto' } }}>
+              <Box sx={{ gridColumn: '1 / -1', visibility: hasBlocks ? 'visible' : 'hidden', '@media (orientation: portrait)': { gridColumn: 'auto' }, [PHONE_LANDSCAPE]: { gridColumn: 'auto' } }}>
                 <StudioButton dataId="new-build" label="Ny byggeplade" size={SIDE_BTN} disabled={!hasBlocks || confirmOpen} onPress={askNewBuild}>
                   {newBuildPicture}
                 </StudioButton>
