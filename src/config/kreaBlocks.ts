@@ -38,6 +38,15 @@ export const BLOCK_HILLS = [
   { radius: 450, minDeg: 0.4, maxDeg: 2.6, foot: '#B0C698', top: '#8FAB77', seed: 5 },
 ] as const
 
+/**
+ * Svær's SUN (owner 2026-11-07: "a super simple sun"): a soft warm disc low in the sky, just over the
+ * mountains, in the SAME compass direction as the light — so the shadows visibly fall away from it.
+ * `leftDeg`: how far left of the start view's centre it stands (in view on entering); `discDeg`: its
+ * height above the horizon; `lightDeg`: the light's own height (higher than the disc, so shadows stay
+ * short enough to read under a block).
+ */
+export const BLOCK_SUN = { leftDeg: 8, discDeg: 5.4, lightDeg: 42, color: '#FFF4D6', glow: '#FFE9B0' } as const
+
 /** Outside the build area: the SAME grid, nearly as strong, its edges softened (N24MG: "the surface of the buildable area just with a hint of blur"). */
 export const BLOCK_OUTSIDE_GRID = 0.85
 export const BLOCK_EDGE = '#8DA571'

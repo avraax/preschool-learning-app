@@ -57,7 +57,7 @@ import {
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { DOOR_H, DOOR_W, MATERIAL_KINDS, MAX_BLOCKS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
-import { BLOCK_EDGE, BLOCK_HILLS, BLOCK_OUTSIDE_GRID, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
+import { BLOCK_EDGE, BLOCK_HILLS, BLOCK_SUN, BLOCK_OUTSIDE_GRID, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
 import { facingAngle } from './geometry.ts'
 import { clayNormalMap, loadTexture, materialTexture } from './textures.ts'
 import { CAMERA, cameraPosition, clampTarget, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
@@ -194,6 +194,41 @@ function hillRing(r: { radius: number; minDeg: number; maxDeg: number; foot: str
   return g
 }
 
+/** How far the sun disc sits from the camera (inside the sky dome, beyond the mountains). */
+const SUN_DIST = 1300
+
+/**
+ * The unit direction towards the sun, `elevDeg` above the horizon: `BLOCK_SUN.leftDeg` left of where the
+ * start view looks (so it's in view on entering), one compass direction for the disc and the light alike.
+ */
+function sunDir(elevDeg: number): { x: number; y: number; z: number } {
+  const a = CAMERA.horizonHome.azimuth
+  const fwd = { x: -Math.sin(a), z: -Math.cos(a) }
+  const left = { x: -Math.cos(a), z: Math.sin(a) }
+  const l = (BLOCK_SUN.leftDeg * Math.PI) / 180
+  const h = { x: Math.cos(l) * fwd.x + Math.sin(l) * left.x, z: Math.cos(l) * fwd.z + Math.sin(l) * left.z }
+  const e = (elevDeg * Math.PI) / 180
+  return { x: h.x * Math.cos(e), y: Math.sin(e), z: h.z * Math.cos(e) }
+}
+
+/** The sun: a warm core with a soft glow fading to nothing — no rays, no glare (owner: "super simple"). */
+function sunTexture(px = 128): Texture {
+  const c = document.createElement('canvas')
+  c.width = c.height = px
+  const g = c.getContext('2d')!
+  const r = g.createRadialGradient(px / 2, px / 2, 0, px / 2, px / 2, px / 2)
+  r.addColorStop(0, BLOCK_SUN.color)
+  r.addColorStop(0.22, BLOCK_SUN.color)
+  r.addColorStop(0.3, `${BLOCK_SUN.glow}cc`)
+  r.addColorStop(0.55, `${BLOCK_SUN.glow}33`)
+  r.addColorStop(1, `${BLOCK_SUN.glow}00`)
+  g.fillStyle = r
+  g.fillRect(0, 0, px, px)
+  const t = new CanvasTexture(c)
+  t.colorSpace = SRGBColorSpace
+  return t
+}
+
 /** `a` blended toward `b` by `t` (0…1), as a hex colour — the checker's tint over the grass, baked. */
 function mix(a: string, b: string, t: number): string {
   return `#${new Color(a).lerp(new Color(b), t).getHexString()}`
@@ -252,6 +287,13 @@ export class BlockScene {
   private readonly horizon: boolean
   /** Horizon mode: the sky dome (it follows the camera). */
   private readonly sky: Mesh | null = null
+  private readonly sun: Mesh | null = null
+
+  /** The key light's place relative to the look-at point: towards the sun, `lightDeg` up, `r` away. */
+  private sunOffset(r: number): Vector3 {
+    const d = sunDir(BLOCK_SUN.lightDeg)
+    return new Vector3(d.x * r, d.y * r, d.z * r)
+  }
   private readonly groundPlane = new Plane(new Vector3(0, 1, 0), 0)
   private readonly ghosts: Mesh[]
   private readonly key: DirectionalLight
@@ -329,13 +371,29 @@ export class BlockScene {
     }
 
     // ----- light: hemisphere + one key from the top-left (the art style's key light) + one soft shadow
-    this.scene.add(new HemisphereLight(0xfffaf0, 0x9a8a76, 1.5))
-    this.scene.add(new AmbientLight(0xffffff, 0.3))
-    this.key = new DirectionalLight(0xffffff, 1.5)
+    // On the horizon the sun is in FRONT (so it's in view), which leaves the faces towards the child out
+    // of its light: a little more sky fill keeps them bright, and a warmer, stronger sun makes the
+    // shadows (towards the child) read clearly.
+    this.scene.add(new HemisphereLight(0xfffaf0, 0x9a8a76, this.horizon ? 1.7 : 1.5))
+    this.scene.add(new AmbientLight(0xffffff, this.horizon ? 0.45 : 0.3))
+    this.key = new DirectionalLight(this.horizon ? 0xfff3dc : 0xffffff, this.horizon ? 1.8 : 1.5)
     // On the horizon the shadow covers the VIEW, not the world, and travels with the look-at point.
     const lit = this.horizon ? 16 : islandSize
     const reach = this.horizon ? SHADOW_REACH : islandSize * 0.95 + heightCap * 0.4
     this.key.position.set(-lit * 0.6, lit * 1.3 + heightCap, lit * 0.5)
+    if (this.horizon) {
+      this.key.position.copy(this.sunOffset(24))
+      // The disc: a soft glow on a billboard at "infinity" (it rides with the camera like the sky).
+      const glow = sunTexture()
+      this.textures.push(glow)
+      const sun = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial({ map: glow, transparent: true, depthWrite: false, fog: false }))
+      const size = Math.tan((7 * Math.PI) / 180) * SUN_DIST
+      sun.scale.set(size, size, 1)
+      sun.renderOrder = -0.5
+      sun.name = 'sun'
+      this.scene.add(sun)
+      this.sun = sun
+    }
     this.key.castShadow = true
     this.key.shadow.mapSize.set(1024, 1024)
     this.key.shadow.radius = 5
@@ -614,8 +672,13 @@ export class BlockScene {
     this.camera.lookAt(target.x, target.y, target.z)
     if (this.horizon) {
       this.sky?.position.copy(this.camera.position)
+      if (this.sun) {
+        const d = sunDir(BLOCK_SUN.discDeg)
+        this.sun.position.set(this.camera.position.x + d.x * SUN_DIST, this.camera.position.y + d.y * SUN_DIST, this.camera.position.z + d.z * SUN_DIST)
+        this.sun.lookAt(this.camera.position)
+      }
       if (moved) {
-        this.key.position.set(target.x - 16 * 0.6, 16 * 1.3 + this.opts.heightCap, target.z + 16 * 0.5)
+        this.key.position.copy(this.sunOffset(24)).add(new Vector3(target.x, 0, target.z))
         this.key.target.position.set(target.x, 0, target.z)
         this.key.target.updateMatrixWorld()
         this.renderer.shadowMap.needsUpdate = true
