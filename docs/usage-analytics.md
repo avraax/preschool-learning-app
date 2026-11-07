@@ -676,6 +676,20 @@ no pane marks the end of a sitting the way `adult:gate_fail` does.
 
 ---
 
+### 9.5 Byggeklodser (staging) — `krea:built_blocks`
+
+**The question it answers.** `route:krea_blocks` says the 3D block game was opened. For a new kind of game
+(turning a 3D plate, a press preview) the open question is whether children then actually build, so this
+fires **once per opening, at the 5th block placed** (`BUILT_AT` in `ByggeklodserGame.tsx`), and
+`built / opened` is the engagement rate (owner, 2026-11-07: "make sure we have usage stats in this game").
+
+**It is not a finish.** Free build has none and earns nothing, for the same Lepper reason as Fri Tegning
+(§9.3); the child never sees the count and nothing in the game changes when it fires. It is reported from
+the game's one resolver (`place()`), so a tap and a drag both count. Guarded by `lib/usageEndpoint.test.ts`.
+The route is staging-only until the game releases, so production sees neither key yet.
+
+---
+
 ## 10. Naming: it is the SETTINGS AREA
 
 Owner, 2026-10-17: **do not call it "the adult area" or "adult tools" in writing.** It is the

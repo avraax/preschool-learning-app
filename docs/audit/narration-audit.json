@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T21:55:48.742Z",
+  "updatedAt": "2026-11-07T06:12:35.497Z",
   "clips": {
     "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|b": {
       "verdict": "ok",
@@ -28400,6 +28400,38 @@
       "text": "Vil du have en ny byggeplade? Dine klodser forsvinder.",
       "group": "krea",
       "updatedAt": 1794002148742
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|mursten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "mursten",
+      "group": "krea",
+      "updatedAt": 1794031955497
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|sten": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "sten",
+      "group": "krea",
+      "updatedAt": 1794031955497
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|metal": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "metal",
+      "group": "krea",
+      "updatedAt": 1794031955497
+    },
+    "azure|da-DK-ChristelNeural|da-DK|r1.05|lex1|glas": {
+      "verdict": "ok",
+      "note": "Bulk-approved (PRD-11 owner listen pass)",
+      "candidateIpa": "",
+      "text": "glas",
+      "group": "krea",
+      "updatedAt": 1794031955497
     }
   }
 }

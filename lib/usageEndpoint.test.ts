@@ -310,6 +310,21 @@ test('a finished Krea piece is counted in each activity that HAS a finish, and n
   assert.ok(!fri.includes('completeTask('), 'Fri Tegning now grants a task reward')
 })
 
+test('Byggeklodser counts "really built" ONCE per opening, from the one resolver — and no finish', () => {
+  // Owner 2026-11-07: usage stats in the 3D game. `route:krea_blocks` counts openings; this tells "opened
+  // and left" from "built". It must stay a silent count: no XP, no finish, fired from `place()` only.
+  const read = (rel: string) => code(readFileSync(new URL(rel, import.meta.url), 'utf8'))
+  const game = read('../src/components/krea/ByggeklodserGame.tsx')
+  assert.equal((game.match(/reportBlocksBuilt\(/g) ?? []).length, 1, 'the built count is reported from more than one place')
+  assert.match(game, /if \(placedCount\.current === BUILT_AT\) reportBlocksBuilt\(\)/, 'the count is not once-per-opening at BUILT_AT')
+  const place = game.slice(game.indexOf('const place = '), game.indexOf('const erase = '))
+  assert.match(place, /placedCount\.current \+= 1/, 'placements are not counted inside place()')
+  assert.ok(!game.includes('reportKreaFinished') && !game.includes('completeTask('), 'free build now has a finish')
+  const events = read('../src/config/usageEvents.ts')
+  assert.match(events, /export const KREA_BUILT_EVENT = 'krea:built_blocks'/)
+  assert.match(events, /\.\.\.Object\.values\(KREA_EVENTS\),\s+KREA_BUILT_EVENT,/, 'the endpoint would drop the built count')
+})
+
 test('the weekly-reminder funnel is wired to every step it counts', () => {
   // Re-engagement PRD-01 W4. Same failure shape as the adult funnel above: drop a call and the number
   // simply stops moving, which reads exactly like "nobody opted in". Every NOTIFY_EVENTS key must be

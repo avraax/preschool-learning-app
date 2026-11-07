@@ -12,8 +12,8 @@
 //     never in render (StrictMode's dev double-mount, the trap Farvelæg hit).
 //
 // The look (owner, 2026-11-06): the plate rests on a calm STUDIO floor that fades into the wall — no
-// floating island, no painted landscape. A theme is only the plate's surface. Doors (1×2) and windows are
-// thin panels, set into a wall or standing on their own; there are no wheels.
+// floating island, no painted landscape, ONE plain plate (2026-11-07, J8PYR: no themes). Doors (1×2) and
+// windows are thin panels, set into a wall or standing on their own; there are no wheels and no roofs.
 //
 // Imports name `three` core classes one by one — never `import * as THREE`, never the addons barrel —
 // and the whole module is reached only through the lazy `/krea/klodser` route (`blocks.test.ts`).
@@ -48,10 +48,10 @@ import {
   type Object3D,
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
-import type { Block, BlockKind, Cell, Target } from '../blockWorld.ts'
-import { BLOCK_STUDIO, type BlockThemeDef } from '../../../../config/kreaBlocks.ts'
-import { facingAngle, roofGeometry } from './geometry.ts'
-import { clayNormalMap, loadTexture } from './textures.ts'
+import { MATERIAL_KINDS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
+import { BLOCK_PLATE, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
+import { facingAngle } from './geometry.ts'
+import { clayNormalMap, loadTexture, materialTexture } from './textures.ts'
 import { CAMERA, cameraPosition, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
 import { CRAYON_HEX } from '../../canvas/brushes.ts'
 
@@ -73,8 +73,6 @@ const DOOR_FRAME = '#6B4423'
 /** How strongly the seeded clay grain bends the light. Subtle (owner: "subtle clay"). */
 const CLAY_GRAIN = 0.18
 
-/** What a renders-by-URL theme needs (the plain theme needs none). */
-export type ThemeArt = { top: string; side: string } | null
 export type FaceArt = { window: string; door: string }
 
 /**
@@ -130,9 +128,6 @@ export interface BlockSceneOptions {
   canvas: HTMLCanvasElement
   islandSize: number
   heightCap: number
-  /** The plate's surface; switch later with `setTheme` (no rebuild). */
-  theme: BlockThemeDef
-  themeArt: ThemeArt
   /** The owner's window and door renders (URLs). */
   faces: FaceArt
   /** The GPU went away: show the static studio; the world state is untouched. */
@@ -149,18 +144,13 @@ export class BlockScene {
   private readonly cubeGeo: RoundedBoxGeometry
   private readonly cubeMat: MeshStandardMaterial
   private readonly cubes: Layer
-  private readonly roofs: Layer
   private readonly windows: Layer
+  /** One layer per material box: its painted surface on the rounded cube. */
+  private readonly materials: Record<MaterialKind, Layer>
   private readonly doors: Layer
   private readonly layers: Layer[]
   private readonly textures: Texture[] = []
-  /** Theme renders, loaded on first use and kept for the session's switches. */
-  private readonly themeTextures = new Map<string, Texture>()
   private readonly island: Mesh
-  private readonly topMat: MeshStandardMaterial
-  private readonly sideMat: MeshStandardMaterial
-  private readonly bottomMat: MeshStandardMaterial
-  private readonly checker: Mesh
   private readonly ghosts: Mesh[]
   private readonly key: DirectionalLight
   private readonly half: number
@@ -222,28 +212,28 @@ export class BlockScene {
     this.scene.add(this.key)
 
     // ----- the plate: a clay slab resting on the floor (it casts its own soft shadow onto it). Per-face
-    // materials: [+x, −x, +y top, −y bottom, +z, −z]; `setTheme` swaps their colour/map.
+    // materials: [+x, −x, +y top, −y bottom, +z, −z].
     const span = islandSize + 0.4
-    this.topMat = new MeshStandardMaterial({ roughness: 0.95, metalness: 0 })
-    this.sideMat = new MeshStandardMaterial({ roughness: 0.95, metalness: 0 })
-    this.bottomMat = new MeshStandardMaterial({ roughness: 1, metalness: 0 })
-    const s = this.sideMat
-    this.island = new Mesh(new RoundedBoxGeometry(span, SLAB_DEPTH, span, 3, 0.18), [s, s, this.topMat, this.bottomMat, s, s])
+    const topMat = new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 })
+    const s = new MeshStandardMaterial({ color: BLOCK_PLATE.side, roughness: 0.95, metalness: 0 })
+    const bottomMat = new MeshStandardMaterial({ color: BLOCK_PLATE.bottom, roughness: 1, metalness: 0 })
+    this.island = new Mesh(new RoundedBoxGeometry(span, SLAB_DEPTH, span, 3, 0.18), [s, s, topMat, bottomMat, s, s])
     this.island.position.y = -SLAB_DEPTH / 2
     this.island.receiveShadow = true
     this.island.castShadow = true
     this.island.name = 'island'
     this.scene.add(this.island)
 
-    // ----- the squares: a checker a hair above the top (tint and strength per theme)
+    // ----- the squares: a checker a hair above the top, DARKER than the plate (research 2026-11-07: a
+    // faint light grid on a pale plate was the hard-to-see one, JYJ5F)
     const chk = checkerTexture(islandSize)
     this.textures.push(chk)
-    this.checker = new Mesh(
+    const checker = new Mesh(
       new PlaneGeometry(islandSize, islandSize).rotateX(-Math.PI / 2).translate(0, 0.006, 0),
-      new MeshBasicMaterial({ map: chk, transparent: true, depthWrite: false }),
+      new MeshBasicMaterial({ map: chk, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false }),
     )
-    this.checker.name = 'checker'
-    this.scene.add(this.checker)
+    checker.name = 'checker'
+    this.scene.add(checker)
 
     // ----- the blocks: one instanced mesh per SHAPE, colour per instance, a shared seeded clay grain
     const redraw = () => this.requestRender()
@@ -269,11 +259,24 @@ export class BlockScene {
       return [edge, edge, edge, edge, front, front]
     }
     this.cubes = new Layer(inst(this.cubeGeo, this.cubeMat, true), true)
-    this.roofs = new Layer(inst(roofGeometry(), clay(), true), true)
     this.windows = new Layer(inst(new BoxGeometry(0.98, 0.98, PANEL_DEPTH).translate(0, 0, PANEL_OUT), panel(WINDOW_FRAME, wTex), false), true)
     // A door spans its cell and the one above: drawn once from the bottom cell, centred a cell higher.
     this.doors = new Layer(inst(new BoxGeometry(0.9, 1.96, PANEL_DEPTH).translate(0, 0.5, PANEL_OUT), panel(DOOR_FRAME, dTex), false), true)
-    this.layers = [this.cubes, this.roofs, this.windows, this.doors]
+    const mats = {} as Record<MaterialKind, Layer>
+    for (const k of MATERIAL_KINDS) {
+      const map = materialTexture(k)
+      this.textures.push(map)
+      const glass = k === 'glass'
+      const mat = glass
+        ? new MeshStandardMaterial({ map, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.6, depthWrite: false })
+        : clay({ map, roughness: k === 'metal' ? 0.45 : 0.85, metalness: k === 'metal' ? 0.35 : 0 })
+      const layer = new Layer(inst(this.cubeGeo, mat, false), true)
+      // Glass lets the light through: no hard shadow under a see-through box.
+      if (glass) layer.mesh.castShadow = false
+      mats[k] = layer
+    }
+    this.materials = mats
+    this.layers = [this.cubes, ...MATERIAL_KINDS.map((k) => mats[k]), this.windows, this.doors]
     for (const l of this.layers) this.scene.add(l.mesh)
 
     // ----- the ghosts: where a block would land (a door needs two), or what the eraser would take
@@ -284,8 +287,6 @@ export class BlockScene {
       this.scene.add(g)
       return g
     })
-
-    this.setTheme(opts.theme, opts.themeArt)
 
     // ----- context loss (§4.1): preventDefault so it CAN come back; truth stays in the pure world
     this.onLost = (ev: Event) => {
@@ -308,37 +309,6 @@ export class BlockScene {
     return new Vector3(c.x - this.half, c.y + 0.5, c.z - this.half)
   }
 
-  private themeTexture(url: string, repeat?: { x: number; y: number }): Texture {
-    const key = `${url}|${repeat?.x ?? 0}`
-    let t = this.themeTextures.get(key)
-    if (!t) {
-      t = loadTexture(url, () => this.requestRender(), repeat)
-      this.themeTextures.set(key, t)
-    }
-    return t
-  }
-
-  /** The plate's surface (owner: themes switch inside the game and keep the build). No rebuild. */
-  setTheme(theme: BlockThemeDef, art: ThemeArt): void {
-    const span = this.opts.islandSize + 0.4
-    if (art && theme.textured) {
-      this.topMat.map = this.themeTexture(art.top)
-      this.sideMat.map = this.themeTexture(art.side, { x: Math.max(1, Math.round(span / (SLAB_DEPTH * 2))), y: 1 })
-    } else {
-      this.topMat.map = null
-      this.sideMat.map = null
-    }
-    this.topMat.color.set(theme.top)
-    this.sideMat.color.set(theme.side)
-    this.bottomMat.color.set(theme.soil)
-    this.topMat.needsUpdate = this.sideMat.needsUpdate = true
-    const chk = this.checker.material as MeshBasicMaterial
-    chk.color.set(theme.checker.color)
-    chk.opacity = theme.checker.alpha
-    this.renderer.shadowMap.needsUpdate = true
-    this.requestRender()
-  }
-
   /** Redraw the blocks from the world. */
   setBlocks(list: { cell: Cell; block: Block }[]): void {
     const m = new Matrix4()
@@ -353,15 +323,14 @@ export class BlockScene {
         case 'cube':
           this.cubes.add(cell, m, col.set(CRAYON_HEX[block.color]))
           break
-        case 'roof':
-          this.roofs.add(cell, m, col.set(CRAYON_HEX[block.color]))
-          break
         case 'window':
           this.windows.add(cell, m)
           break
         case 'door':
           this.doors.add(cell, m)
           break
+        default:
+          if (isMaterial(block.kind)) this.materials[block.kind].add(cell, m)
       }
     }
     for (const l of this.layers) l.commit()
@@ -507,8 +476,8 @@ export class BlockScene {
         if (!cell) continue
         // A door is ONE mesh over two cells: a hit on its upper half is its upper cell.
         if (layer === this.doors && h.point.y > cell.y + 1) cell = { x: cell.x, y: cell.y + 1, z: cell.z }
-        // The face normal is in the SHAPE's frame: turn it by the instance's rotation (a roof facing west
-        // is a rotated wedge). The resolver still rounds it to one axis (rounded edges skew it).
+        // The face normal is in the SHAPE's frame: turn it by the instance's rotation (a door facing west
+        // is a rotated panel). The resolver still rounds it to one axis (rounded edges skew it).
         layer.mesh.getMatrixAt(h.instanceId, m)
         const n = h.face.normal.clone().transformDirection(m)
         return { on: 'block', cell, normal: { x: n.x, y: n.y, z: n.z } }
@@ -562,9 +531,8 @@ export class BlockScene {
       else mat?.dispose()
     })
     for (const l of this.layers) l.mesh.dispose()
-    // Materials don't own their maps: the grain, the faces, the checker and the theme renders go explicitly.
+    // Materials don't own their maps: the grain, the faces and the checker go explicitly.
     for (const t of this.textures) t.dispose()
-    for (const t of this.themeTextures.values()) t.dispose()
     this.key.shadow.map?.dispose()
     this.renderer.dispose()
     this.renderer.forceContextLoss()

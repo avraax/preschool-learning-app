@@ -14,21 +14,25 @@ import { sfx } from '../../services/sfxClient'
 import { kreaSession } from '../../services/kreaSession'
 import { KREA_BLOCKS } from '../../config/difficulty'
 import { PALETTE_13, type CrayonColor } from '../../config/kreaPalette'
-import { BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, NEW_BUILD_LINE, NEW_BUILD_TITLE } from '../../config/kreaPhrases'
-import { BLOCK_STUDIO, BLOCK_THEMES, themeById, type BlockThemeDef, type BlockThemeId } from '../../config/kreaBlocks'
+import { BLOCK_MATERIAL_NAME, BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, NEW_BUILD_LINE, NEW_BUILD_TITLE } from '../../config/kreaPhrases'
+import { BLOCK_PLATE, BLOCK_STUDIO } from '../../config/kreaBlocks'
 import { KREA_ART } from '../../assets/games/krea'
-import { BLOCK_FACE_ART, BLOCK_THEME_ART } from '../../assets/games/krea/blocks'
+import { BLOCK_FACE_ART } from '../../assets/games/krea/blocks'
 import { CRAYON_HEX } from './canvas/brushes'
 import { PlusBadge, pressHandlers, StudioButton } from './studio/StudioControls'
+import { reportBlocksBuilt } from '../../services/usagePing'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { DEV } from '../../utils/devHarness'
 import BlockStage, { type BlockStageHandle } from './blocks/BlockStage'
+import { MATERIAL_BASE, materialChipUrl } from './blocks/materialArt'
 import {
   blockAt,
   blockCount,
   blockList,
   emptyWorld,
+  isMaterial,
+  MATERIAL_KINDS,
   previewCells,
   removeBlock,
   resolvePlacement,
@@ -40,18 +44,18 @@ import {
   type BlockWorld,
   type Cell,
   type Held,
+  type MaterialKind,
   type Target,
 } from './blocks/blockWorld'
 import { CAMERA, canZoom, towardsCamera, zoomBy, type Pose } from './blocks/cameraRig'
 
 // Byggeklodser (`krea.blocks`, Krea PRD-03), staging-only behind `blocksGate.ts`. Free build: cubes in
-// the 13 crayon colours plus tag, vindue and dør; eraser, undo, "Ny byggeplade?". Models come in W3–W4.
+// the 13 crayon colours, five material boxes (træ, mursten, sten, metal, glas), vindue and dør; eraser, undo, "Ny byggeplade?". Models come in W3–W4.
 //
 // Owner, 2026-11-06, after two iPad looks:
 //   - the plate fills the WHOLE screen in a calm STUDIO, with the controls floating on top (GameShell
 //     `fullBleed`); no floating island in a painted landscape, no entry picker — tapping the tile builds
-//     at once, and the four themes (plain, grass, snow, sand) are plate pictures in the panel that switch
-//     the plate's surface and KEEP the build;
+//     at once. ONE plate: the themes and the roof went on 2026-11-07 (J8PYR, "not needed in v1");
 //   - every level turns and zooms the same way (only the plate size differs);
 //   - a door is 1×2 and a window a pane, both set INTO a wall when tapped onto one; no wheels;
 //   - while a finger is down, a ghost shows where the block will land; lifting places it.
@@ -61,27 +65,26 @@ import { CAMERA, canZoom, towardsCamera, zoomBy, type Pose } from './blocks/came
 // does NOT change the held selection (a drag is one-off; tapping a chip is the sticky pick).
 //
 // Free build EARNS NOTHING and has NO finish (Lepper 1973, games-krea.md): no `useTaskRun` here, ever —
-// the model mode (W4) brings XP, for a finished model only.
+// the model mode (W4) brings XP, for a finished model only. The usage count `krea:built_blocks` is NOT a
+// finish: the child never sees it and nothing changes when it fires; it only tells "opened and left" from
+// "really built" (`BUILT_AT` placements in one opening, counted once).
 
 const GAME_ID = 'krea.blocks'
-/** The session's one free build (a theme is only a look, so switching it keeps the build). */
+/** The session's one free build. */
 const ITEM_ID = 'fri'
-/** The theme in use, remembered for the session like the build itself. */
-const THEME_ITEM = 'tema'
+/** Placements in one opening that count as "really built" for the usage counter (once per opening). */
+const BUILT_AT = 5
 const SAVE_DEBOUNCE_MS = 500
 /** On touch the drop aims this far ABOVE the finger, so the fingertip doesn't hide the cell (§4.3). */
 const TOUCH_AIM_LIFT_PX = 56
 const CHIP = 'clamp(44px, 6.4vmin, 58px)'
 const SIDE_BTN = 'clamp(44px, 7.6vmin, 68px)'
-const THEME_BTN = 'clamp(40px, 6vmin, 52px)'
 /** Air between the floating panel and the plate's free area / the header. */
 const PANEL_GAP_PX = 8
 /** What the ghost wears for the fixed-look specials and for the eraser's pick. */
 const GHOST_LOOK: Record<'window' | 'door' | 'erase', string> = { window: '#BFE3F7', door: '#9A5E2E', erase: '#FFFFFF' }
 
 type Tool = 'block' | 'eraser'
-
-const themeArtOf = (t: BlockThemeDef) => (t.id === 'plain' ? null : BLOCK_THEME_ART[t.id as Exclude<BlockThemeId, 'plain'>])
 
 const ByggeklodserGame: React.FC = () => {
   useOccludeWorld()
@@ -105,9 +108,6 @@ const ByggeklodserGame: React.FC = () => {
     worldRef.current = w
     setWorldState(w)
   }
-  const [themeId, setThemeId] = useState<BlockThemeId>(() => themeById(kreaSession.load(GAME_ID, THEME_ITEM)).id)
-  const theme = themeById(themeId)
-  const themeArt = themeArtOf(theme)
   const [held, setHeld] = useState<Held>({ kind: 'cube', color: 'roed' })
   const heldRef = useRef(held)
   heldRef.current = held
@@ -164,12 +164,15 @@ const ByggeklodserGame: React.FC = () => {
   const facingNow = () => towardsCamera(stage.current?.getPose() ?? CAMERA.home)
 
   // ----- THE resolver: every block a gesture adds comes through here ------------------------------------
+  const placedCount = useRef(0)
   const place = (target: Target | null, item: Held): boolean => {
     if (!target) return false
     const r = resolvePlacement(worldRef.current, target, item, facingNow())
     if ('placed' in r) {
       setWorld(r.placed)
       sfx.play('block-place')
+      placedCount.current += 1
+      if (placedCount.current === BUILT_AT) reportBlocksBuilt()
       return true
     }
     // A bounce: a soft sound, the world untouched — never a buzzer (§5).
@@ -193,7 +196,7 @@ const ByggeklodserGame: React.FC = () => {
   }
 
   // ----- the preview: where the block will land while the finger is down (owner, JYJ5F) -----------------
-  const lookOf = (h: Held): string => (h.kind === 'cube' || h.kind === 'roof' ? CRAYON_HEX[h.color] : GHOST_LOOK[h.kind])
+  const lookOf = (h: Held): string => (h.kind === 'cube' ? CRAYON_HEX[h.color] : isMaterial(h.kind) ? MATERIAL_BASE[h.kind] : GHOST_LOOK[h.kind])
   const showPreview = (target: Target | null, item: Held | null, erasing: boolean) => {
     const s = stage.current
     if (!s) return
@@ -220,20 +223,21 @@ const ByggeklodserGame: React.FC = () => {
     audio.cancelCurrentAudio()
     void audio.speak(line).catch(() => {})
   }
-  /** A colour: the cube in that colour — or, while a ROOF is held, the roof takes the colour (§2.2.7). */
+  /** A colour: the cube in that colour. */
   const pickColor = (c: CrayonColor) => {
     touched()
-    setHeld((h) => ({ kind: h.kind === 'roof' ? 'roof' : 'cube', color: c }))
+    setHeld({ kind: 'cube', color: c })
     setTool('block')
     sfx.play('krea-pick')
     say(KREA_COLOR_NAME[c])
   }
+  /** A special (window, door) or a material box: a fixed look, so the held colour just rides along. */
   const pickSpecial = (k: Exclude<BlockKind, 'cube'>) => {
     touched()
     setHeld((h) => ({ kind: k, color: h.color }))
     setTool('block')
     sfx.play('krea-pick')
-    say(BLOCK_SPECIAL_NAME[k])
+    say(isMaterial(k) ? BLOCK_MATERIAL_NAME[k] : BLOCK_SPECIAL_NAME[k])
   }
 
   const pickEraser = () => {
@@ -248,14 +252,6 @@ const ByggeklodserGame: React.FC = () => {
     if (!next) return
     setWorld(next)
     sfx.play('krea-undo')
-  }
-
-  /** A theme is the plate's surface only: the build stays (owner, YRFQQ: "a theme selector" in the game). */
-  const pickTheme = (id: BlockThemeId) => {
-    touched()
-    sfx.play('tap')
-    setThemeId(id)
-    kreaSession.save(GAME_ID, THEME_ITEM, id)
   }
 
   // ----- "Ny byggeplade?" (§2.2.12): spoken, asked only when there is something to lose ------------------
@@ -291,7 +287,7 @@ const ByggeklodserGame: React.FC = () => {
 
   // ----- the floating controls (owner 2026-11-06: the building area fullscreen, controls on top) --------
   // The plate is fitted to the screen MINUS the header and the panel, measured, never a tuned percentage:
-  // the panel's rect says which edge it covers (right in landscape, bottom in portrait).
+  // the orientation says which edge the panel covers (right in landscape, bottom in portrait), its rect how much.
   const panelRef = useRef<HTMLDivElement>(null)
   const [insets, setInsets] = useState({ top: 0, right: 0, bottom: 0, left: 0 })
   const [headerBottom, setHeaderBottom] = useState(0)
@@ -302,7 +298,9 @@ const ByggeklodserGame: React.FC = () => {
       setHeaderBottom(top)
       const panel = panelRef.current?.getBoundingClientRect()
       if (!panel) return
-      const sideways = panel.height >= panel.width
+      // The lane's side follows the ORIENTATION, like its CSS — never the panel's shape (on a phone in
+      // landscape the panel is wider than tall, and reading that as "bottom" shrank the plate to a stamp).
+      const sideways = window.innerWidth > window.innerHeight
       const next = {
         top,
         right: sideways ? Math.round(window.innerWidth - panel.left + PANEL_GAP_PX) : 0,
@@ -333,15 +331,15 @@ const ByggeklodserGame: React.FC = () => {
 
   const aimTarget = (): Target | null => stage.current?.pickClient(live.current.x, live.current.y - live.current.lift) ?? null
 
-  /** `chip:<colour>` is a cube (or a roof while one is held); `special:<kind>` a special in the held colour. */
+  /** `chip:<colour>` is a cube; `special:<kind>` a window, a door or a material box. */
   const itemOfDrag = (id: string): Held | null => {
     if (id.startsWith('chip:')) {
       const c = id.slice(5) as CrayonColor
-      return PALETTE_13.includes(c) ? { kind: held.kind === 'roof' ? 'roof' : 'cube', color: c } : null
+      return PALETTE_13.includes(c) ? { kind: 'cube', color: c } : null
     }
     if (id.startsWith('special:')) {
       const k = id.slice(8) as BlockKind
-      return (SPECIAL_KINDS as readonly string[]).includes(k) ? { kind: k, color: held.color } : null
+      return (SPECIAL_KINDS as readonly string[]).includes(k) || isMaterial(k) ? { kind: k, color: held.color } : null
     }
     return null
   }
@@ -405,7 +403,7 @@ const ByggeklodserGame: React.FC = () => {
   const newBuildPicture = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       <Box sx={{ position: 'absolute', inset: '6%' }}>
-        <PlatePicture theme={theme} />
+        <PlatePicture />
       </Box>
       <PlusBadge />
     </Box>
@@ -426,7 +424,6 @@ const ByggeklodserGame: React.FC = () => {
           data-blocks-kinds={Object.entries(world.cells).map(([k, b]) => `${k}:${b.kind}:${b.facing}${b.part ? ':top' : ''}`).sort().join(' ')}
           data-blocks-level={level}
           data-blocks-held={`${held.kind}:${held.color}`}
-          data-blocks-theme={theme.id}
           sx={{ position: 'fixed', inset: 0, zIndex: 1, background: BLOCK_STUDIO.wall }}
         >
           {/* ONE droppable: the whole stage. The cell comes from the raycast, not from dnd-kit. */}
@@ -435,8 +432,6 @@ const ByggeklodserGame: React.FC = () => {
               ref={stage}
               islandSize={tuning.island}
               heightCap={tuning.heightCap}
-              theme={theme}
-              themeArt={themeArt}
               faces={BLOCK_FACE_ART}
               insets={insets}
               blocks={blocks}
@@ -485,28 +480,36 @@ const ByggeklodserGame: React.FC = () => {
               background: 'rgba(255, 252, 247, 0.92)',
               boxShadow: '0 6px 18px rgba(60, 40, 20, 0.14)',
               '@media (orientation: landscape)': { flexDirection: 'column', flexWrap: 'nowrap' },
-              [PHONE_LANDSCAPE]: { gap: '6px', p: '8px' },
+              // A phone in landscape is too short for tray-over-tools: the tools stand in a column beside the tray.
+              [PHONE_LANDSCAPE]: { gap: '6px', p: '8px', flexDirection: 'row' },
             }}
           >
-            {/* The 13 colours, then the 3 specials on their own row (held tools on the right, owner rule).
+            {/* The 13 colours, then the 5 materials and the 2 specials on their own row (held tools on the right, owner rule).
                 Tap = the sticky pick; drag = one block. */}
-            <Box data-blocks-tray sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CHIP})`, gap: '6px', '@media (orientation: landscape)': { gridTemplateColumns: `repeat(3, ${CHIP})` }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(4, ${CHIP})`, gap: '4px' } }}>
+            <Box data-blocks-tray sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CHIP})`, gap: '6px', '@media (orientation: landscape)': { gridTemplateColumns: `repeat(4, ${CHIP})` }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(5, ${CHIP})`, gap: '4px' } }}>
               {PALETTE_13.map((c) => (
                 <DraggableItem key={c} id={`chip:${c}`} inline onActivate={() => pickColor(c)} lift={{ scale: 1.12, rotate: 0 }}>
-                  <ClayChip color={c} selected={tool === 'block' && held.color === c && (held.kind === 'cube' || held.kind === 'roof')} />
+                  <ClayChip color={c} selected={tool === 'block' && held.color === c && held.kind === 'cube'} />
                 </DraggableItem>
               ))}
-              {SPECIAL_KINDS.map((k, i) => (
+              {MATERIAL_KINDS.map((k, i) => (
                 <Box key={k} sx={i === 0 ? { gridColumnStart: 1 } : undefined}>
                   <DraggableItem id={`special:${k}`} inline onActivate={() => pickSpecial(k)} lift={{ scale: 1.12, rotate: 0 }}>
-                    <SpecialChip kind={k} color={held.color} selected={tool === 'block' && held.kind === k} />
+                    <MaterialChip kind={k} selected={tool === 'block' && held.kind === k} />
+                  </DraggableItem>
+                </Box>
+              ))}
+              {SPECIAL_KINDS.map((k) => (
+                <Box key={k}>
+                  <DraggableItem id={`special:${k}`} inline onActivate={() => pickSpecial(k)} lift={{ scale: 1.12, rotate: 0 }}>
+                    <SpecialChip kind={k} selected={tool === 'block' && held.kind === k} />
                   </DraggableItem>
                 </Box>
               ))}
             </Box>
             {/* Eraser, undo, zoom in, zoom out, then "Ny": a 2x2 block in a landscape column; ONE row in
-                portrait and on a phone in landscape (a 2x2 there left a whole empty row under it). */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '6px' } }}>
+                portrait; ONE column beside the tray on a phone in landscape (too short to stack them). */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(1, ${SIDE_BTN})`, gap: '6px' } }}>
               <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
                 <Img src={KREA_ART.eraser} />
               </StudioButton>
@@ -524,29 +527,6 @@ const ByggeklodserGame: React.FC = () => {
                   {newBuildPicture}
                 </StudioButton>
               </Box>
-            </Box>
-            {/* The themes: the plate's surface, picked by its picture (owner, YRFQQ). The build stays. */}
-            <Box data-blocks-themes sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${THEME_BTN})`, gap: '8px', [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(4, ${THEME_BTN})`, gap: '4px' }, '@media (orientation: portrait)': { gridTemplateColumns: `repeat(4, ${THEME_BTN})` } }}>
-              {BLOCK_THEMES.map((t) => (
-                <ButtonBase
-                  key={t.id}
-                  aria-label={t.name}
-                  aria-pressed={t.id === theme.id}
-                  data-blocks-theme-pick={t.id}
-                  {...pressHandlers(() => pickTheme(t.id))}
-                  sx={{
-                    width: THEME_BTN,
-                    height: THEME_BTN,
-                    borderRadius: '14px',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    touchAction: 'manipulation',
-                    boxShadow: t.id === theme.id ? '0 0 0 3px #fff, 0 0 0 6px rgba(255,190,60,0.95)' : '0 2px 4px rgba(60,40,20,0.25)',
-                  }}
-                >
-                  <PlatePicture theme={t} />
-                </ButtonBase>
-              ))}
             </Box>
           </Box>
         </Box>
@@ -583,11 +563,20 @@ const ClayChip: React.FC<{ color: CrayonColor; selected: boolean }> = ({ color, 
   />
 )
 
-/** A special block as a chip, drawn in code: the roof in the held colour, the others as themselves. */
-const SpecialChip: React.FC<{ kind: Exclude<BlockKind, 'cube'>; color: CrayonColor; selected: boolean }> = ({ kind, color, selected }) => (
+/** A material box as a chip: the same painting the 3D box wears (`materialArt.ts`). */
+const MaterialChip: React.FC<{ kind: MaterialKind; selected: boolean }> = ({ kind, selected }) => (
+  <Box
+    aria-label={BLOCK_MATERIAL_NAME[kind]}
+    aria-pressed={selected}
+    data-blocks-special={kind}
+    sx={[chipSx(selected), { backgroundColor: MATERIAL_BASE[kind], backgroundImage: `url(${materialChipUrl(kind)})`, backgroundSize: 'cover' }]}
+  />
+)
+
+/** A special block (window, door) as a chip, drawn in code. */
+const SpecialChip: React.FC<{ kind: (typeof SPECIAL_KINDS)[number]; selected: boolean }> = ({ kind, selected }) => (
   <Box aria-label={BLOCK_SPECIAL_NAME[kind]} aria-pressed={selected} data-blocks-special={kind} sx={[chipSx(selected), { background: '#FBF7F0', display: 'flex', alignItems: 'center', justifyContent: 'center' }]}>
     <svg viewBox="0 0 48 48" width="78%" height="78%" aria-hidden>
-      {kind === 'roof' ? <path d="M4 40 L24 8 L44 40 Z" fill={CRAYON_HEX[color]} stroke="rgba(0,0,0,0.25)" strokeWidth="2" strokeLinejoin="round" /> : null}
       {kind === 'window' ? (
         <g>
           <rect x="8" y="8" width="32" height="32" rx="4" fill="#F2EEE6" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
@@ -607,26 +596,16 @@ const SpecialChip: React.FC<{ kind: Exclude<BlockKind, 'cube'>; color: CrayonCol
   </Box>
 )
 
-/** A theme's plate as a little picture (the theme buttons, the "Ny byggeplade" button) — drawn in code. */
-const PlatePicture: React.FC<{ theme: BlockThemeDef }> = ({ theme }) => {
-  const art = themeArtOf(theme)
-  return (
-    <Box sx={{ position: 'absolute', inset: 0, borderRadius: 'inherit', overflow: 'hidden', background: BLOCK_STUDIO.wall }}>
-      <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden style={{ display: 'block' }}>
-        <defs>
-          {art ? (
-            <pattern id={`plate-${theme.id}`} patternUnits="userSpaceOnUse" width="100" height="100">
-              <image href={art.top} x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid slice" />
-            </pattern>
-          ) : null}
-        </defs>
-        <ellipse cx="50" cy="80" rx="40" ry="7" fill="rgba(80,60,40,0.12)" />
-        <path d="M50 34 L92 56 L50 78 L8 56 Z" transform="translate(0 6)" fill={theme.soil} />
-        <path d="M50 34 L92 56 L50 78 L8 56 Z" fill={art ? `url(#plate-${theme.id})` : theme.top} stroke="rgba(0,0,0,0.08)" />
-      </svg>
-    </Box>
-  )
-}
+/** The plate as a little picture (the "Ny byggeplade" button and its confirm) — drawn in code. */
+const PlatePicture: React.FC = () => (
+  <Box sx={{ position: 'absolute', inset: 0, borderRadius: 'inherit', overflow: 'hidden', background: BLOCK_STUDIO.wall }}>
+    <svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden style={{ display: 'block' }}>
+      <ellipse cx="50" cy="80" rx="40" ry="7" fill="rgba(80,60,40,0.12)" />
+      <path d="M50 34 L92 56 L50 78 L8 56 Z" transform="translate(0 6)" fill={BLOCK_PLATE.bottom} />
+      <path d="M50 34 L92 56 L50 78 L8 56 Z" fill={BLOCK_PLATE.top} stroke="rgba(0,0,0,0.08)" />
+    </svg>
+  </Box>
+)
 
 const IconPress: React.FC<{ label: string; dataId: string; disabled?: boolean; onPress: () => void; children: React.ReactNode }> = ({ label, dataId, disabled, onPress, children }) => (
   <ButtonBase

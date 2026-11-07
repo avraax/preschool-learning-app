@@ -177,6 +177,17 @@ export const KREA_EVENTS = {
 export type KreaPiece = keyof typeof KREA_EVENTS
 
 /**
+ * BYGGEKLODSER: A CHILD REALLY BUILT — once per opening, at the 5th block placed (`BUILT_AT` in the game).
+ *
+ * Free build has no finish and earns nothing (same reason as Fri Tegning), so it gets no `finished_` key.
+ * But `route:krea_blocks` alone cannot tell "opened a 3D toy and left" from "built something", and for a
+ * new kind of game (3D, turning, a press preview) that is the question (owner 2026-11-07: "make sure we
+ * have usage stats in this game"). This is NOT a finish: the child never sees it and nothing in the game
+ * changes when it fires. `built / opened` is the engagement rate.
+ */
+export const KREA_BUILT_EVENT = 'krea:built_blocks'
+
+/**
  * Pathname → event key. EXACT matches only.
  *
  * `/learning/memory/:type` is listed by its two real types rather than by its pattern: `:type` is a URL
@@ -300,6 +311,7 @@ export const USAGE_EVENTS: readonly string[] = [
   ...Object.values(NOTIFY_EVENTS),
   ...Object.values(SIGNIN_EVENTS),
   ...Object.values(KREA_EVENTS),
+  KREA_BUILT_EVENT,
   ...SESSION_MARKS.map((m) => m.event),
   ...Object.values(ROUTE_EVENTS),
   ...Object.values(PRE_DOOR_ROUTE_EVENTS),

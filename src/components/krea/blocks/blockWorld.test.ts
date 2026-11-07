@@ -138,19 +138,21 @@ test('a window or door tapped into a wall replaces the wall block, and undo rest
 test('specials face outward on a side face and towards the child on top or on the plate', () => {
   let w = emptyWorld(8, 8)
   w = put(w, { on: 'island', x: 3, z: 3 }, red)
-  w = placed(resolvePlacement(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: up }, { kind: 'roof', color: 'blaa' }, { x: 0, z: -1 }))
-  assert.deepEqual(blockAt(w, { x: 3, y: 1, z: 3 }), { kind: 'roof', color: 'blaa', facing: 'nz' }, 'a roof takes the colour and faces the child')
+  w = placed(resolvePlacement(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: up }, { kind: 'window', color: 'blaa' }, { x: 0, z: -1 }))
+  assert.deepEqual(blockAt(w, { x: 3, y: 1, z: 3 }), { kind: 'window', color: 'blaa', facing: 'nz' }, 'a window on top faces the child')
   assert.equal(facingFor({ on: 'block', cell: { x: 0, y: 0, z: 0 }, normal: { x: 0.2, y: 0.1, z: -0.9 } }, T), 'nz')
 })
 
-test('nothing attaches to a roof — and the bounce changes nothing', () => {
+test('a material box builds like a cube, and a window or door goes INTO it', () => {
+  const wood: Held = { kind: 'wood', color: 'roed' }
   let w = emptyWorld(8, 8)
-  w = put(w, { on: 'island', x: 3, z: 3 }, red)
-  w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: up }, { kind: 'roof', color: 'roed' })
-  for (const normal of [up, { x: 1, y: 0, z: 0 }]) {
-    const r = resolvePlacement(w, { on: 'block', cell: { x: 3, y: 1, z: 3 }, normal }, blue, T)
-    assert.ok('bounce' in r && r.bounce === 'no-attach' && r.world === w)
-  }
+  w = put(w, { on: 'island', x: 3, z: 3 }, wood)
+  w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: up }, { kind: 'glass', color: 'roed' })
+  assert.equal(blockAt(w, { x: 3, y: 1, z: 3 })?.kind, 'glass', 'a box stacks on a material box')
+  w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: { x: 1, y: 0, z: 0 } }, door)
+  assert.equal(blockAt(w, { x: 3, y: 0, z: 3 })?.kind, 'door', 'a door replaces the wooden box it was set into')
+  assert.equal(blockAt(w, { x: 3, y: 1, z: 3 })?.part, 'top', '…and the glass box above it')
+  assert.equal(restoreWorld(emptyWorld(8, 8), serialiseWorld(w)).cells['3,0,3']?.kind, 'door', 'a session with materials round-trips')
 })
 
 test('a session round-trips exactly — doors, replaced walls, undo after resume', () => {

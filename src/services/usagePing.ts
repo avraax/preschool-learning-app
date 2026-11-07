@@ -40,6 +40,7 @@ import { apiUrl } from '../config/apiBase.ts'
 import {
   ADULT_EVENTS,
   APP_OPEN_EVENT,
+  KREA_BUILT_EVENT,
   KREA_EVENTS,
   MAX_EVENTS_PER_REQUEST,
   NOTIFY_EVENTS,
@@ -486,6 +487,15 @@ export function reportSignInStep(step: SignInStep): void {
  * away mid-dance, and the piece was finished either way. Unbatched, because a finish is immediately
  * followed by a ceremony and quite often by the end of the sitting.
  */
+/** Byggeklodser: this opening reached `BUILT_AT` blocks (`usageEvents.ts`). The game calls it once. */
+export function reportBlocksBuilt(): void {
+  try {
+    post([KREA_BUILT_EVENT], false)
+  } catch {
+    /* a counter may never break a block */
+  }
+}
+
 export function reportKreaFinished(piece: KreaPiece): void {
   try {
     const event = KREA_EVENTS[piece]

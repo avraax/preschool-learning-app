@@ -17,21 +17,26 @@ import { PALETTE_13, type CrayonColor } from '../../../config/kreaPalette.ts'
 export type Cell = { x: number; y: number; z: number }
 
 /**
- * Cubes + three specials: tag (roof), vindue (window), dør (door). Owner, 2026-11-06 (GR5YE): the door is
- * 1 wide × 2 tall and the window a pane set INTO a wall, both thin panels — not block-sized boxes; the
- * wheel is gone. Window and door have a FIXED look; the cube and the roof take the picked colour.
+ * Cubes + two specials: vindue (window), dør (door). Owner, 2026-11-06 (GR5YE): the door is 1 wide × 2
+ * tall and the window a pane set INTO a wall, both thin panels — not block-sized boxes; the wheel is gone.
+ * Owner, 2026-11-07 (J8PYR): the roof is gone too ("not needed in v1"). Window and door have a FIXED
+ * look; only the cube takes the picked colour.
  */
-export const BLOCK_KINDS = ['cube', 'roof', 'window', 'door'] as const
+export const BLOCK_KINDS = ['cube', 'wood', 'brick', 'stone', 'metal', 'glass', 'window', 'door'] as const
 export type BlockKind = (typeof BLOCK_KINDS)[number]
-export const SPECIAL_KINDS = ['roof', 'window', 'door'] as const satisfies readonly BlockKind[]
-/** Kinds whose look follows the picked colour; the others always look like themselves. */
-export const takesColor = (k: BlockKind): boolean => k === 'cube' || k === 'roof'
-/** Nothing attaches TO a roof (§4.5): it slopes away. */
-export const isCapping = (k: BlockKind): boolean => k === 'roof'
+export const SPECIAL_KINDS = ['window', 'door'] as const satisfies readonly BlockKind[]
+/**
+ * MATERIAL boxes (owner 2026-11-07): a full cube like the clay one, with a FIXED look — træ, mursten, sten,
+ * metal, glas. They build exactly like a cube (stack, attach, a window or door goes into them).
+ */
+export const MATERIAL_KINDS = ['wood', 'brick', 'stone', 'metal', 'glass'] as const satisfies readonly BlockKind[]
+export type MaterialKind = (typeof MATERIAL_KINDS)[number]
+export const isMaterial = (k: BlockKind): k is MaterialKind => (MATERIAL_KINDS as readonly string[]).includes(k)
+/** A full box (clay or material): a window or door can be set INTO its side. */
+export const isBox = (k: BlockKind): boolean => k === 'cube' || isMaterial(k)
 
 /**
- * Which horizontal way a block faces (§4.6). A window/door looks out this way, a roof slopes DOWN this
- * way. A cube has one too and ignores it. NEVER chosen by the child: there is no rotate step, ever.
+ * Which horizontal way a block faces (§4.6). A window/door looks out this way. A cube has one too and ignores it. NEVER chosen by the child: there is no rotate step, ever.
  */
 export const FACINGS = ['px', 'nx', 'pz', 'nz'] as const
 export type Facing = (typeof FACINGS)[number]
@@ -119,13 +124,13 @@ const plan = (w: BlockWorld, t: Target, held: Held, towardsCamera: { x: number; 
   let on: Block | undefined
   if (t.on === 'block') {
     on = blockAt(w, t.cell)
-    if (!on || isCapping(on.kind)) return 'no-attach'
+    if (!on) return 'no-attach'
   }
   const facing = facingFor(t, towardsCamera)
   const make = (part?: 'top'): Block => ({ kind: held.kind, color: held.color, facing, ...(part ? { part } : {}) })
   // A window or door tapped onto the SIDE of a cube goes INTO the wall: it replaces that cube (owner:
   // "a pane set into the wall", not a box stuck on it).
-  const intoWall = (held.kind === 'window' || held.kind === 'door') && on?.kind === 'cube' && !!sideNormal(t)
+  const intoWall = (held.kind === 'window' || held.kind === 'door') && !!on && isBox(on.kind) && !!sideNormal(t)
   const base = intoWall ? (t as { cell: Cell }).cell : targetCell(t)
   if (!inBounds(w, base)) return base.y >= w.heightCap ? 'too-high' : 'outside'
   const baseNow = blockAt(w, base)
@@ -135,7 +140,7 @@ const plan = (w: BlockWorld, t: Target, held: Held, towardsCamera: { x: number; 
     const top = above(base)
     const topNow = blockAt(w, top)
     // The door's upper half needs room: an empty cell, or (going into a wall) a wall cube it replaces.
-    if (!inBounds(w, top) || (topNow && !(intoWall && topNow.kind === 'cube'))) return 'no-room'
+    if (!inBounds(w, top) || (topNow && !(intoWall && isBox(topNow.kind)))) return 'no-room'
     changes.push(change(top, topNow, make('top')))
   }
   return changes

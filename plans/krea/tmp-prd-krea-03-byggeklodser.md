@@ -536,6 +536,27 @@ before play). Owner's decisions, commit `e6fae32`:
 - Still open for the owner: the look on the iPad (rung 3); W3 models list without wheels; how W4's
   "build what you see" is entered now that there is no picker.
 
+### After the third look (2026-11-07, owner feedback J8PYR + Q5T69 + chat) — OVERRIDES the themes and the roof
+- **No roof** ("not needed in v1"): the kind, the wedge geometry, the chip and the "tag" clip are gone.
+- **One plate, no themes** ("we don't need to be able to pick different plates"): græs/sne/strand, their
+  renders (src + art-src) and the theme buttons are gone; `kreaBlocks.ts` holds one `BLOCK_PLATE`.
+- **The plate is a soft mid-tone sage with a darker checker** (Q5T69 research: a pale plate under pale
+  blocks lost contrast and attention in a 4–7-year-old eye-tracking study, Frontiers 2023; a green base is
+  the DUPLO/Toca/Minecraft convention; white, tan and yellow blocks now read). The 13-colour palette was
+  left alone (shared with all of Krea) — the research's "slightly less saturated, add grey" is the
+  owner's call.
+- **Material boxes:** træ, mursten, sten, metal, glas — full boxes with a FIXED look, painted in code
+  (`blocks/materialArt.ts`, seeded canvas; the chip shows the same painting). They build like a cube and
+  a window or door goes INTO them (`isBox`). Glass is see-through and casts no shadow. No Gemini art
+  needed so far; each painter is where a render would replace it. Names prebaked (approved-but-unheard).
+- **Usage:** `krea:built_blocks` once per opening at the 5th placement (`docs/usage-analytics.md` §9.5);
+  `route:krea_blocks` already counted opens. Not a finish.
+- Layout: the landscape tray is 4 wide; on a phone in landscape the tools stand in a column beside a
+  5-wide tray, and the plate's free area follows the ORIENTATION (the panel's shape had put it "below").
+- Verified: rung 1 all 17 matrix viewports + rung 2 seven, no panel item off-screen/under 44 px; the
+  regression probe (17 checks incl. a door into brick) on 3 Chrome sizes + WebKit; the usage count fires
+  once at the 5th block (rung 1, fetch intercepted). Look on the iPad: UNKNOWN (rung 3).
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-03-byggeklodser.md` (Byggeklodser, the 3D block game in Krea).

@@ -1,10 +1,9 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import { TAP_SLOP_DISTANCE } from '../../common/dnd/dragActivation'
-import { BlockScene, type FaceArt, type ThemeArt } from './engine/BlockScene'
+import { BlockScene, type FaceArt } from './engine/BlockScene'
 import { CAMERA, dragTurn, pinchZoom, type Pose } from './cameraRig'
 import type { Block, Cell, Target } from './blockWorld'
-import type { BlockThemeDef } from '../../../config/kreaBlocks'
 
 // The 3D stage (Krea PRD-03 §4.4): one canvas, one BlockScene, and the gesture split on it.
 //
@@ -35,9 +34,6 @@ export interface BlockStageHandle {
 export interface BlockStageProps {
   islandSize: number
   heightCap: number
-  /** The plate's surface — switched live, the scene is not rebuilt. */
-  theme: BlockThemeDef
-  themeArt: ThemeArt
   faces: FaceArt
   /** CSS px of the stage covered by floating controls; the plate centres in what is left. */
   insets: { top: number; right: number; bottom: number; left: number }
@@ -54,7 +50,7 @@ export interface BlockStageProps {
 type Pt = { x: number; y: number }
 
 const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function BlockStage(
-  { islandSize, heightCap, theme, themeArt, faces, insets, blocks, onTap, onPreview, onPose, disabled },
+  { islandSize, heightCap, faces, insets, blocks, onTap, onPreview, onPose, disabled },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -64,8 +60,6 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   blocksRef.current = blocks
   const insetsRef = useRef(insets)
   insetsRef.current = insets
-  const themeRef = useRef({ theme, themeArt })
-  themeRef.current = { theme, themeArt }
   const [lost, setLost] = useState(false)
   const onPoseRef = useRef(onPose)
   onPoseRef.current = onPose
@@ -89,8 +83,6 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
         canvas,
         islandSize,
         heightCap,
-        theme: themeRef.current.theme,
-        themeArt: themeRef.current.themeArt,
         faces,
         onContextLost: () => setLost(true),
         // Rebuild from the pure world: the GPU held nothing that isn't also there.
@@ -136,10 +128,6 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   useEffect(() => {
     sceneRef.current?.setInsets(insets)
   }, [insets])
-
-  useEffect(() => {
-    sceneRef.current?.setTheme(theme, themeArt)
-  }, [theme, themeArt])
 
   useImperativeHandle(ref, () => ({
     pickClient: (cx, cy) => {

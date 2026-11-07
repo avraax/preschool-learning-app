@@ -2,11 +2,13 @@
 //
 // - The CLAY grain is a SEEDED procedural normal map: the same seed always draws the same surface, so undo,
 //   resume and a context-loss rebuild look identical. Subtle by design (owner: "subtle clay").
-// - The window, door and wheel faces, the island's top and side and the skies are the owner's flat-lit
-//   Gemini renders (art prompts, batches A–D), cropped by `scripts/optimize-block-art.mjs`.
+// - The window and door faces are the owner's flat-lit Gemini renders, cropped by
+//   `scripts/optimize-block-art.mjs`. The material boxes are painted in code (`materialArt.ts`).
 
 import { CanvasTexture, MirroredRepeatWrapping, RepeatWrapping, SRGBColorSpace, TextureLoader, type Texture } from 'three'
 import { rng } from '../../canvas/brushes.ts'
+import { paintMaterial } from '../materialArt.ts'
+import type { MaterialKind } from '../blockWorld.ts'
 
 const canvas = (w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] => {
   const c = document.createElement('canvas')
@@ -46,6 +48,14 @@ export function clayNormalMap(seed = 20261106, size = 128): Texture {
   g.putImageData(img, 0, 0)
   const t = new CanvasTexture(c)
   t.wrapS = t.wrapT = RepeatWrapping
+  return t
+}
+
+/** A material box's painted surface (`materialArt.ts`) as a colour texture — seeded, identical every time. */
+export function materialTexture(kind: MaterialKind): Texture {
+  const t = new CanvasTexture(paintMaterial(kind))
+  t.colorSpace = SRGBColorSpace
+  t.anisotropy = 4
   return t
 }
 
