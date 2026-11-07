@@ -483,7 +483,8 @@ export class TtsClient {
       const speak = () => {
         try {
           synth.cancel()
-          const u = new SpeechSynthesisUtterance(text)
+          // A `|` pause mark (shared-azure-tts `PAUSE_MARK`) is an SSML break for Azure; Web Speech hears a comma.
+          const u = new SpeechSynthesisUtterance(text.split('|').map((p) => p.trim()).join(', ').replace(/, ([?.!])/g, '$1'))
           u.lang = lang
           u.rate = 0.85
           const prefix = lang.slice(0, 2)

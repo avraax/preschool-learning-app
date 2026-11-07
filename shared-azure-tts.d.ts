@@ -3,6 +3,11 @@ import type { AzureVoice } from './shared-tts-config';
 export type VoiceType = 'primary' | 'backup' | 'male' | 'english';
 
 export declare function escapeXml(text: string): string;
+/** `|` in a narration line = a short spoken pause (an SSML <break>). */
+export declare const PAUSE_MARK: '|';
+export declare const PAUSE_MS: number;
+export declare function withPauses(text: string): string;
+export declare function stripPauses(text: string): string;
 export declare function resolveVoice(voiceType: VoiceType | string): AzureVoice;
 export declare function buildSsml(opts: {
   text: string;

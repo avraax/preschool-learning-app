@@ -17,6 +17,31 @@ export function escapeXml(text) {
     .replace(/'/g, '&apos;');
 }
 
+/**
+ * A short spoken PAUSE inside a line (owner 2026-11-07: "Hvad starter | raket | med" — set the word the
+ * child must listen to apart, so the sentence isn't one flat, fast run). `|` in a narration string
+ * becomes an SSML <break>. Short on purpose: long gaps sound like the voice stalled.
+ */
+export const PAUSE_MARK = '|';
+// Measured on Christel (2026-11-07, "Hvad starter | Raket | med?"): ANY break also makes Azure close
+// the phrase, so the heard gap is ~0.33 s + this — 100 ms gives ~0.43 s, 250 gave a stalled ~0.58 s.
+// The prebake key is the TEXT, not this value: after changing it, delete the clips whose key holds a
+// `|` and re-run `npm run tts:prebake`, or the old pauses stay on disk.
+export const PAUSE_MS = 100;
+
+/** The escaped SSML body, each `|` a <break>. */
+export function withPauses(text) {
+  return String(text)
+    .split(PAUSE_MARK)
+    .map((part) => escapeXml(part.trim()))
+    .join(`<break time="${PAUSE_MS}ms"/>`);
+}
+
+/** Plain text for a voice that can't take SSML (Web Speech): a pause becomes a comma. */
+export function stripPauses(text) {
+  return String(text).split(PAUSE_MARK).map((p) => p.trim()).join(', ').replace(/, ([?.!])/g, '$1');
+}
+
 /** Resolve a voiceType ('primary'|'backup'|'male'|'english') to an Azure voice. */
 export function resolveVoice(voiceType) {
   return TTS_CONFIG.voices[voiceType] || TTS_CONFIG.voices.primary;
@@ -37,8 +62,8 @@ export function buildSsml({ text, voiceName, lang, speed, pitch, lexiconUri, ipa
   const pitchAttr = typeof pitch === 'string' && pitch ? ` pitch="${escapeXml(pitch)}"` : '';
 
   const inner = ipa
-    ? `<phoneme alphabet="ipa" ph="${escapeXml(ipa)}">${escapeXml(text)}</phoneme>`
-    : escapeXml(text);
+    ? `<phoneme alphabet="ipa" ph="${escapeXml(ipa)}">${escapeXml(stripPauses(text))}</phoneme>`
+    : withPauses(text);
 
   const lexiconTag = lexiconUri ? `<lexicon uri="${escapeXml(lexiconUri)}"/>` : '';
 
