@@ -109,3 +109,16 @@ test('horizon pan: the look-at point eases home and stays over the build area', 
   assert.deepEqual([clampTarget({ ...home, tx: 99, tz: -99 }, 64).tx, clampTarget({ ...home, tx: 99, tz: -99 }, 64).tz], [64, -64])
   assert.equal(clampPose({ ...home, tx: 5 }).tx, 5, 'clamping the angle keeps the pan')
 })
+
+// Owner QPCT6: the open world zooms out far enough to see the whole build area; the plate keeps its limit.
+test('the open world zooms out to worldZoomMax, the plate to zoomMax', () => {
+  const world = { ...CAMERA.horizonHome }
+  let p = world
+  for (let i = 0; i < 30; i++) p = zoomBy(p, -1)
+  assert.equal(p.zoom, CAMERA.worldZoomMax)
+  assert.equal(canZoom(p, -1), false)
+  let q: Pose = { ...CAMERA.plateHome }
+  for (let i = 0; i < 30; i++) q = zoomBy(q, -1)
+  assert.equal(q.zoom, CAMERA.zoomMax)
+  assert.ok(CAMERA.worldZoomMax >= 8, 'not far enough out to see 128² cells')
+})

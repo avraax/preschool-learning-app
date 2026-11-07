@@ -17,6 +17,8 @@ export interface Pose {
   /** Where the camera looks on the ground, in world units from the centre (horizon mode pans it). */
   tx?: number
   tz?: number
+  /** The open world: zoom out far enough to see the whole build area (owner QPCT6). */
+  wide?: boolean
 }
 
 const DEG = Math.PI / 180
@@ -37,6 +39,12 @@ export const CAMERA = {
   zoomMax: 1.3,
   /** One + / − press. */
   zoomStep: 1.25,
+  /**
+   * The open world's far limit and step (owner 2026-11-07, QPCT6: "zoom out to see the entire buildable
+   * area"): from the start view, ~9× the fit shows all 128² of it; a bigger step gets there in a few presses.
+   */
+  worldZoomMax: 9,
+  worldZoomStep: 1.5,
   /** One-finger drag: radians per CSS px. A full stage width ≈ one half-turn. */
   turnPerPx: 0.008,
   tiltPerPx: 0.006,
@@ -51,7 +59,7 @@ export const CAMERA = {
    * Svær's horizon ground starts LOWER, so a band of sky and the horizon show (owner 2026-11-07: "see the
    * horizon but not too low"), and a little closer, so the squares near you stay a finger's size.
    */
-  horizonHome: { azimuth: 45 * DEG, tilt: 11.5 * DEG, zoom: 0.85, tx: 0, tz: 0 } as Pose,
+  horizonHome: { azimuth: 45 * DEG, tilt: 11.5 * DEG, zoom: 0.85, tx: 0, tz: 0, wide: true } as Pose,
   /**
    * Let's plate, outdoors (owner 2026-11-07): low enough that the hills and the sky show over it, high
    * enough that every square of the plate is easy to hit. The fit is judged from THIS angle.
@@ -68,7 +76,7 @@ export const clampPose = (p: Pose): Pose => ({
   ...p,
   azimuth: p.azimuth,
   tilt: clamp(p.tilt, CAMERA.tiltMin, CAMERA.tiltMax),
-  zoom: clamp(p.zoom, CAMERA.zoomMin, CAMERA.zoomMax),
+  zoom: clamp(p.zoom, CAMERA.zoomMin, p.wide ? CAMERA.worldZoomMax : CAMERA.zoomMax),
 })
 
 /** Keep the look-at point over the buildable ground: `half` world units either side of the centre. */
@@ -79,13 +87,16 @@ export const dragTurn = (p: Pose, dxPx: number, dyPx: number): Pose =>
   clampPose({ ...p, azimuth: p.azimuth - dxPx * CAMERA.turnPerPx, tilt: p.tilt + dyPx * CAMERA.tiltPerPx })
 
 /** + / − buttons: dir 1 zooms in. */
-export const zoomBy = (p: Pose, dir: 1 | -1): Pose => clampPose({ ...p, zoom: dir > 0 ? p.zoom / CAMERA.zoomStep : p.zoom * CAMERA.zoomStep })
+export const zoomBy = (p: Pose, dir: 1 | -1): Pose => {
+  const step = p.wide ? CAMERA.worldZoomStep : CAMERA.zoomStep
+  return clampPose({ ...p, zoom: dir > 0 ? p.zoom / step : p.zoom * step })
+}
 
 /** A pinch: `ratio` = current finger distance / starting distance, applied to the pose at the start. */
 export const pinchZoom = (start: Pose, ratio: number): Pose => clampPose({ ...start, zoom: start.zoom / Math.max(0.01, ratio) })
 
 export const canZoom = (p: Pose, dir: 1 | -1): boolean =>
-  dir > 0 ? p.zoom > CAMERA.zoomMin + 1e-6 : p.zoom < CAMERA.zoomMax - 1e-6
+  dir > 0 ? p.zoom > CAMERA.zoomMin + 1e-6 : p.zoom < (p.wide ? CAMERA.worldZoomMax : CAMERA.zoomMax) - 1e-6
 
 /**
  * Distance at which a sphere of `radius` fits the view on BOTH axes (the narrower one binds), with a

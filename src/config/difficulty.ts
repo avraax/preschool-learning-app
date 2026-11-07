@@ -632,9 +632,10 @@ export interface KreaBlocksTuning {
 export const KREA_BLOCKS: Record<DifficultyLevel, KreaBlocksTuning> = {
   // Owner 2026-11-07: Let is a plate (the size Normal had), under the same sky; Normal and Svær are the
   // SAME open world — free building has nothing to grade, so the level only picks plate or world.
-  let: { island: 14, heightCap: 8 },
-  normal: { island: 128, heightCap: 8, horizon: true },
-  svaer: { island: 128, heightCap: 8, horizon: true },
+  // Height (owner GJD3V: "as high as possible"): the real limit is MAX_BLOCKS, not a ceiling.
+  let: { island: 14, heightCap: 24 },
+  normal: { island: 128, heightCap: 48, horizon: true },
+  svaer: { island: 128, heightCap: 48, horizon: true },
 }
 
 // ================================================================================================

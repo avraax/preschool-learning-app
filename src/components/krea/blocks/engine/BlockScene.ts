@@ -79,6 +79,11 @@ const SHADOW_REACH = 26
 const SKY_RADIUS = 1500
 /** How far the view may travel before the shadow is redrawn round it (well inside SHADOW_REACH). */
 const SHADOW_STEP = 8
+/**
+ * The key light's distance from what it lights: above the tallest tower (heightCap 48, owner GJD3V) —
+ * a light lower than a tower leaves the top of it out of the shadow pass.
+ */
+const SUN_LIGHT_DIST = 90
 /** A block picked up to move (T59B2) floats this far above its cell, held AND dragged alike. */
 const LIFT = 0.3
 /** The pick-up rise, so the hold visibly turns into "you're holding it now". */
@@ -398,11 +403,10 @@ export class BlockScene {
     this.scene.add(new AmbientLight(0xffffff, 0.45))
     this.key = new DirectionalLight(0xfff3dc, 1.8)
     // On the horizon the shadow covers the VIEW, not the world, and travels with the look-at point.
-    const lit = this.horizon ? 16 : islandSize
     const reach = this.horizon ? SHADOW_REACH : islandSize * 0.95 + heightCap * 0.4
     {
       // From the sun's direction; far enough out that the whole plate (Let) or the view (the open world) is lit.
-      this.key.position.copy(this.sunOffset(this.horizon ? 24 : Math.max(24, lit * 1.7)))
+      this.key.position.copy(this.sunOffset(SUN_LIGHT_DIST))
       // The disc: a soft glow on a billboard at "infinity" (it rides with the camera like the sky).
       const glow = sunTexture()
       this.textures.push(glow)
@@ -422,7 +426,7 @@ export class BlockScene {
     this.key.shadow.radius = 3
     this.key.shadow.bias = -0.0003
     this.key.shadow.normalBias = 0.012
-    Object.assign(this.key.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 0.5, far: lit * 4 + heightCap * 2 })
+    Object.assign(this.key.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 1, far: SUN_LIGHT_DIST * 2 + heightCap * 2 })
     this.key.shadow.camera.updateProjectionMatrix()
     this.scene.add(this.key)
     this.scene.add(this.key.target)
@@ -735,7 +739,7 @@ export class BlockScene {
   private shadowAt = { x: 0, z: 0 }
   private centreShadow(t: { x: number; z: number }): void {
     this.shadowAt = { ...t }
-    this.key.position.copy(this.sunOffset(24)).add(new Vector3(t.x, 0, t.z))
+    this.key.position.copy(this.sunOffset(SUN_LIGHT_DIST)).add(new Vector3(t.x, 0, t.z))
     this.key.target.position.set(t.x, 0, t.z)
     this.key.target.updateMatrixWorld()
     this.renderer.shadowMap.needsUpdate = true
@@ -775,7 +779,8 @@ export class BlockScene {
     this.raycaster.setFromCamera(ndc, this.camera)
     const hit = this.raycaster.ray.intersectPlane(this.groundPlane, new Vector3())
     if (!hit) return null
-    return hit.distanceTo(this.camera.position) > this.fit * 4 ? null : hit
+    // Relative to how far out the camera is — zoomed out over the whole world, the grabbed ground is far too.
+    return hit.distanceTo(this.camera.position) > this.fit * Math.max(1, this.pose.zoom) * 4 ? null : hit
   }
 
   /** Ease to a pose over `ms` — frames run only for the length of the move. */
