@@ -51,7 +51,7 @@ export const CAMERA = {
    * Svær's horizon ground starts LOWER, so a band of sky and the horizon show (owner 2026-11-07: "see the
    * horizon but not too low"), and a little closer, so the squares near you stay a finger's size.
    */
-  horizonHome: { azimuth: 45 * DEG, tilt: 13 * DEG, zoom: 0.85, tx: 0, tz: 0 } as Pose,
+  horizonHome: { azimuth: 45 * DEG, tilt: 11.5 * DEG, zoom: 0.85, tx: 0, tz: 0 } as Pose,
 } as const
 
 /** Where a level starts and where the home button returns: the horizon pose on Svær's ground. */

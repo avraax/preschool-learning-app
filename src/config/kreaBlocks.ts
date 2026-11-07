@@ -27,6 +27,17 @@ export const BLOCK_PLATE = {
  * SHARP line — no haze (BNCW4). `BLOCK_EDGE` is the thin strip that marks where building stops.
  */
 export const BLOCK_SKY = { top: '#6FA9E3', horizon: '#CFE3F3' } as const
+/**
+ * The hills that close the horizon (owner 2026-11-07: "hills/mountains in the horizon ... the sense of a
+ * closed room"): a near ring of soft green hills and a far ring of mountains in the blue of distance,
+ * each a gentle silhouette, sized in DEGREES above the horizon so they sit in the band of sky the start
+ * view shows and leave sky above them. `foot`/`top` shade each ring from its base to its ridge.
+ */
+export const BLOCK_HILLS = [
+  { radius: 900, minDeg: 1.2, maxDeg: 4.4, foot: '#B9CBD5', top: '#9CB3C4', seed: 11 },
+  { radius: 450, minDeg: 0.4, maxDeg: 2.6, foot: '#B0C698', top: '#8FAB77', seed: 5 },
+] as const
+
 /** Outside the build area: the SAME grid, nearly as strong, its edges softened (N24MG: "the surface of the buildable area just with a hint of blur"). */
 export const BLOCK_OUTSIDE_GRID = 0.85
 export const BLOCK_EDGE = '#8DA571'

@@ -34,6 +34,7 @@ import {
   SphereGeometry,
   Float32BufferAttribute,
   BackSide,
+  DoubleSide,
   Plane,
   BufferGeometry,
   CanvasTexture,
@@ -56,7 +57,7 @@ import {
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { DOOR_H, DOOR_W, MATERIAL_KINDS, MAX_BLOCKS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
-import { BLOCK_EDGE, BLOCK_OUTSIDE_GRID, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
+import { BLOCK_EDGE, BLOCK_HILLS, BLOCK_OUTSIDE_GRID, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
 import { facingAngle } from './geometry.ts'
 import { clayNormalMap, loadTexture, materialTexture } from './textures.ts'
 import { CAMERA, cameraPosition, clampTarget, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
@@ -146,6 +147,51 @@ function checkerTile(px = 16, soft = false): Texture {
   t.magFilter = soft ? LinearFilter : NearestFilter
   t.minFilter = LinearMipmapLinearFilter
   return t
+}
+
+/**
+ * One ring of hills round the world: a band from just under the ground up to a smooth, seeded ridge —
+ * a sum of a few periodic waves (so it closes on itself), its height in DEGREES above the horizon as
+ * seen from the middle. Shaded from `foot` to `top` (a hint of light on the ridges); flat, no lighting —
+ * distance flattens hills. Fixed in the world: panning (±64) against a radius of hundreds gives a gentle,
+ * natural parallax.
+ */
+function hillRing(r: { radius: number; minDeg: number; maxDeg: number; foot: string; top: string; seed: number }): BufferGeometry {
+  const N = 360
+  const rand = (() => {
+    let s = r.seed * 9301 + 49297
+    return () => ((s = (s * 9301 + 49297) % 233280) / 233280)
+  })()
+  const waves = [3, 5, 7, 11, 17, 23].map((k, i) => ({ k, a: (0.4 + rand()) / (1 + i * 0.35), p: rand() * Math.PI * 2 }))
+  const sum = waves.reduce((t, w) => t + w.a, 0)
+  const lo = Math.tan((r.minDeg * Math.PI) / 180) * r.radius
+  const hi = Math.tan((r.maxDeg * Math.PI) / 180) * r.radius
+  const foot = new Color(r.foot), top = new Color(r.top), c = new Color()
+  const pos: number[] = []
+  const col: number[] = []
+  for (let i = 0; i <= N; i++) {
+    const a = (i / N) * Math.PI * 2
+    // 0…1, softened toward rounded tops (a smoothstep of the wave sum).
+    let v = waves.reduce((t, w) => t + w.a * Math.sin(w.k * a + w.p), 0) / sum * 0.5 + 0.5
+    v = v * v * (3 - 2 * v)
+    const h = lo + (hi - lo) * v
+    const x = Math.cos(a) * r.radius, z = Math.sin(a) * r.radius
+    pos.push(x, -2, z, x, h, z)
+    c.copy(foot)
+    col.push(c.r, c.g, c.b)
+    c.copy(foot).lerp(top, 0.5 + 0.5 * v)
+    col.push(c.r, c.g, c.b)
+  }
+  const idx: number[] = []
+  for (let i = 0; i < N; i++) {
+    const b = i * 2
+    idx.push(b, b + 1, b + 2, b + 1, b + 3, b + 2)
+  }
+  const g = new BufferGeometry()
+  g.setAttribute('position', new Float32BufferAttribute(pos, 3))
+  g.setAttribute('color', new Float32BufferAttribute(col, 3))
+  g.setIndex(idx)
+  return g
 }
 
 /** `a` blended toward `b` by `t` (0…1), as a hex colour — the checker's tint over the grass, baked. */
@@ -265,6 +311,12 @@ export class BlockScene {
       this.scene.add(this.sky)
       this.scene.background = foot
       // No fog: the horizon is a sharp line and the sky is clear (owner BNCW4).
+      // The hills close it in (far ring first, so the near one draws over it).
+      for (const ring of BLOCK_HILLS) {
+        const hills = new Mesh(hillRing(ring), new MeshBasicMaterial({ vertexColors: true, side: DoubleSide, fog: false }))
+        hills.name = 'hills'
+        this.scene.add(hills)
+      }
     } else {
       // ----- the studio: a plain wall colour, and a floor that fades into it (fog), so there is no horizon
       this.scene.background = new Color(BLOCK_STUDIO.wall)
