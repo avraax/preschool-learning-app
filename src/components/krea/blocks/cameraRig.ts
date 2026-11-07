@@ -19,7 +19,9 @@ const DEG = Math.PI / 180
 
 export const CAMERA = {
   fovDeg: 35,
-  tiltMin: 18 * DEG,
+  // Low enough to look in UNDER a block (owner G9BA8: his son couldn't tilt down to the ground); never
+  // below the horizon line, or the floor fills the screen.
+  tiltMin: 5 * DEG,
   tiltMax: 70 * DEG,
   /**
    * Closest and farthest, as multiples of the fit distance (the whole island filling the stage). The

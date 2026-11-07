@@ -17,10 +17,10 @@ import { PALETTE_13, type CrayonColor } from '../../../config/kreaPalette.ts'
 export type Cell = { x: number; y: number; z: number }
 
 /**
- * Cubes + two specials: vindue (window), dør (door). Owner, 2026-11-06 (GR5YE): the door is 1 wide × 2
- * tall and the window a pane set INTO a wall, both thin panels — not block-sized boxes; the wheel is gone.
- * Owner, 2026-11-07 (J8PYR): the roof is gone too ("not needed in v1"). Window and door have a FIXED
- * look; only the cube takes the picked colour.
+ * Cubes + two specials: vindue (window), dør (door), both thin panels with a FIXED look; only the cube
+ * takes the picked colour. Owner, 2026-11-07: no roof (J8PYR); the door is 2 WIDE × 3 TALL (6BC2N); and
+ * NOTHING EVER REPLACES a block (QHYV8: "I just wanted it on top") — a window or door tapped onto a wall
+ * hangs on the wall in the cell in front of it, like any block.
  */
 export const BLOCK_KINDS = ['cube', 'wood', 'brick', 'stone', 'metal', 'glass', 'window', 'door'] as const
 export type BlockKind = (typeof BLOCK_KINDS)[number]
@@ -32,8 +32,6 @@ export const SPECIAL_KINDS = ['window', 'door'] as const satisfies readonly Bloc
 export const MATERIAL_KINDS = ['wood', 'brick', 'stone', 'metal', 'glass'] as const satisfies readonly BlockKind[]
 export type MaterialKind = (typeof MATERIAL_KINDS)[number]
 export const isMaterial = (k: BlockKind): k is MaterialKind => (MATERIAL_KINDS as readonly string[]).includes(k)
-/** A full box (clay or material): a window or door can be set INTO its side. */
-export const isBox = (k: BlockKind): boolean => k === 'cube' || isMaterial(k)
 
 /**
  * Which horizontal way a block faces (§4.6). A window/door looks out this way. A cube has one too and ignores it. NEVER chosen by the child: there is no rotate step, ever.
@@ -45,8 +43,12 @@ export const facingVector = (f: Facing): { x: number; z: number } =>
 export const facingOf = (v: { x: number; z: number }): Facing =>
   Math.abs(v.x) >= Math.abs(v.z) ? (v.x >= 0 ? 'px' : 'nx') : v.z >= 0 ? 'pz' : 'nz'
 
-/** `part: 'top'` marks a door's upper cell; the door is drawn once, from its bottom cell. */
-export type Block = { kind: BlockKind; color: CrayonColor; facing: Facing; part?: 'top' }
+/**
+ * A door fills 2×3 cells. Its ANCHOR is the bottom cell on the left as seen from the front; every other
+ * cell of it carries `anchor` (that cell), so a hit or an erase on any part finds the whole door. The
+ * door is drawn once, from its anchor.
+ */
+export type Block = { kind: BlockKind; color: CrayonColor; facing: Facing; anchor?: Cell }
 /** What is in the child's hand: a tray pick (sticky) or a dragged item (one-off). The colour is the one
  * currently picked; a fixed-look special carries it but ignores it. */
 export type Held = { kind: BlockKind; color: CrayonColor }
@@ -79,14 +81,39 @@ export const parseKey = (k: string): Cell => {
   const [x, y, z] = k.split(',').map(Number)
   return { x, y, z }
 }
-const above = (c: Cell): Cell => ({ x: c.x, y: c.y + 1, z: c.z })
-const below = (c: Cell): Cell => ({ x: c.x, y: c.y - 1, z: c.z })
+/** The door's size in cells (owner 6BC2N): wide along the front, tall up. */
+export const DOOR_W = 2
+export const DOOR_H = 3
+/**
+ * The way a door grows sideways: to the RIGHT as seen by someone standing in front of it (looking back
+ * along −facing). Matches the scene's local +x after its facing rotation (`facingAngle`).
+ */
+export const doorWidthDir = (f: Facing): { x: number; z: number } => {
+  const v = facingVector(f)
+  return { x: v.z, z: -v.x }
+}
+/** Every cell a door anchored at `a`, facing `f`, fills — the anchor first. */
+export const doorCells = (a: Cell, f: Facing): Cell[] => {
+  const d = doorWidthDir(f)
+  const out: Cell[] = []
+  for (let j = 0; j < DOOR_H; j++) for (let i = 0; i < DOOR_W; i++) out.push({ x: a.x + d.x * i, y: a.y + j, z: a.z + d.z * i })
+  return out
+}
 
 export const emptyWorld = (size: number, heightCap: number): BlockWorld => ({ size, heightCap, cells: {}, actions: [] })
 
 export const blockAt = (w: BlockWorld, c: Cell): Block | undefined => w.cells[cellKey(c)]
-/** Blocks as a child counts them: a door is ONE block, though it fills two cells. */
-export const blockCount = (w: BlockWorld): number => Object.values(w.cells).filter((b) => b.part !== 'top').length
+/** Blocks as a child counts them: a door is ONE block, though it fills six cells. */
+export const blockCount = (w: BlockWorld): number => Object.values(w.cells).filter((b) => !b.anchor).length
+/** The cells of the whole block at `c` (a door: all six; anything else: just `c`), or [] when empty. */
+export const wholeBlockCells = (w: BlockWorld, c: Cell): Cell[] => {
+  const b = blockAt(w, c)
+  if (!b) return []
+  if (b.kind !== 'door') return [c]
+  const a = b.anchor ?? c
+  const ab = blockAt(w, a)
+  return doorCells(a, ab?.facing ?? b.facing).filter((x) => blockAt(w, x)?.kind === 'door')
+}
 
 const inBounds = (w: BlockWorld, c: Cell): boolean =>
   c.x >= 0 && c.z >= 0 && c.x < w.size && c.z < w.size && c.y >= 0 && c.y < w.heightCap
@@ -127,23 +154,16 @@ const plan = (w: BlockWorld, t: Target, held: Held, towardsCamera: { x: number; 
     if (!on) return 'no-attach'
   }
   const facing = facingFor(t, towardsCamera)
-  const make = (part?: 'top'): Block => ({ kind: held.kind, color: held.color, facing, ...(part ? { part } : {}) })
-  // A window or door tapped onto the SIDE of a cube goes INTO the wall: it replaces that cube (owner:
-  // "a pane set into the wall", not a box stuck on it).
-  const intoWall = (held.kind === 'window' || held.kind === 'door') && !!on && isBox(on.kind) && !!sideNormal(t)
-  const base = intoWall ? (t as { cell: Cell }).cell : targetCell(t)
+  // NEVER a replace (owner QHYV8): the block goes in the empty cell across the tapped face, or nowhere.
+  const base = targetCell(t)
   if (!inBounds(w, base)) return base.y >= w.heightCap ? 'too-high' : 'outside'
-  const baseNow = blockAt(w, base)
-  if (!intoWall && baseNow) return 'occupied'
-  const changes: Change[] = [change(base, baseNow, make())]
-  if (held.kind === 'door') {
-    const top = above(base)
-    const topNow = blockAt(w, top)
-    // The door's upper half needs room: an empty cell, or (going into a wall) a wall cube it replaces.
-    if (!inBounds(w, top) || (topNow && !(intoWall && isBox(topNow.kind)))) return 'no-room'
-    changes.push(change(top, topNow, make('top')))
-  }
-  return changes
+  if (blockAt(w, base)) return 'occupied'
+  const block: Block = { kind: held.kind, color: held.color, facing }
+  if (held.kind !== 'door') return [change(base, undefined, block)]
+  // A door needs all six cells free and inside the plate.
+  const cells = doorCells(base, facing)
+  for (const c of cells) if (!inBounds(w, c) || blockAt(w, c)) return 'no-room'
+  return cells.map((c, i) => change(c, undefined, i === 0 ? block : { ...block, anchor: base }))
 }
 
 /** Why a target can't take this block, or null when it can. */
@@ -178,20 +198,15 @@ export const resolvePlacement = (w: BlockWorld, t: Target, held: Held, towardsCa
   return { placed: { ...w, cells: apply(w, p, 'after'), actions: [...w.actions, { t: 'place', changes: p }] }, cell: p[0].cell }
 }
 
-/** The eraser: take the block at `cell` off — a door goes whole, from either half. Null when empty. */
+/** The eraser: take the block at `cell` off — a door goes whole, from any part. Null when empty. */
 export const removeBlock = (w: BlockWorld, cell: Cell): BlockWorld | null => {
-  const b = blockAt(w, cell)
-  if (!b) return null
-  const changes: Change[] = [change(cell, b)]
-  if (b.kind === 'door') {
-    const other = b.part === 'top' ? below(cell) : above(cell)
-    const ob = blockAt(w, other)
-    if (ob?.kind === 'door') changes.push(change(other, ob))
-  }
+  const cells = wholeBlockCells(w, cell)
+  if (!cells.length) return null
+  const changes: Change[] = cells.map((c) => change(c, blockAt(w, c)))
   return { ...w, cells: apply(w, changes, 'after'), actions: [...w.actions, { t: 'remove', changes }] }
 }
 
-/** Undo the last place or removal (§2.2.11: unlimited). Restores every cell's "before" — a replaced wall too. */
+/** Undo the last place or removal (§2.2.11: unlimited). Restores every cell's "before". */
 export const undo = (w: BlockWorld): BlockWorld | null => {
   const last = w.actions[w.actions.length - 1]
   if (!last) return null
@@ -200,18 +215,23 @@ export const undo = (w: BlockWorld): BlockWorld | null => {
 
 // ----- session (§4.12): the ACTION LIST, colours by palette ID (never an index) ------------------------
 
-type SavedBlock = [kind: string, color: string, facing: string, part?: 'top']
+/** `anchor` as "x,y,z" on a door's non-anchor cells. (A session from the 1×2 door era is dropped whole.) */
+type SavedBlock = [kind: string, color: string, facing: string, anchor?: string]
 type SavedChange = [x: number, y: number, z: number, before: SavedBlock | 0, after: SavedBlock | 0]
 type SavedAction = { t: 'p' | 'r'; c: SavedChange[] }
 
-const saveBlock = (b?: Block): SavedBlock | 0 => (b ? (b.part ? [b.kind, b.color, b.facing, b.part] : [b.kind, b.color, b.facing]) : 0)
+const saveBlock = (b?: Block): SavedBlock | 0 => (b ? (b.anchor ? [b.kind, b.color, b.facing, cellKey(b.anchor)] : [b.kind, b.color, b.facing]) : 0)
 const loadBlock = (s: unknown): Block | undefined | null => {
   if (s === 0) return undefined
   if (!Array.isArray(s)) return null
-  const [kind, color, facing, part] = s as SavedBlock
+  const [kind, color, facing, anchor] = s as SavedBlock
   if (!(BLOCK_KINDS as readonly string[]).includes(kind) || !(PALETTE_13 as readonly string[]).includes(color) || !(FACINGS as readonly string[]).includes(facing)) return null
-  if (part !== undefined && part !== 'top') return null
-  return { kind: kind as BlockKind, color: color as CrayonColor, facing: facing as Facing, ...(part ? { part } : {}) }
+  let a: Cell | undefined
+  if (anchor !== undefined) {
+    if (typeof anchor !== 'string' || !/^-?\d+,-?\d+,-?\d+$/.test(anchor)) return null
+    a = parseKey(anchor)
+  }
+  return { kind: kind as BlockKind, color: color as CrayonColor, facing: facing as Facing, ...(a ? { anchor: a } : {}) }
 }
 
 export const serialiseWorld = (w: BlockWorld): string =>
@@ -258,6 +278,6 @@ export const restoreWorld = (fresh: BlockWorld, raw: string | null): BlockWorld 
   return w
 }
 
-/** Every block as a list — what the scene draws (a door's upper half included; the scene skips it). */
+/** Every block as a list — what the scene draws (a door's non-anchor cells included; the scene skips them). */
 export const blockList = (w: BlockWorld): { cell: Cell; block: Block }[] =>
   Object.entries(w.cells).map(([k, block]) => ({ cell: parseKey(k), block }))

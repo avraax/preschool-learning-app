@@ -4,6 +4,7 @@ import {
   axisNormal,
   blockAt,
   blockCount,
+  doorCells,
   emptyWorld,
   facingFor,
   previewCells,
@@ -93,43 +94,49 @@ test('undo takes back places and removals, in order, all the way to empty', () =
   assert.equal(removeBlock(u3, { x: 0, y: 0, z: 0 }), null, 'erasing nothing is a no-op')
 })
 
-// Owner, 2026-11-06 (GR5YE): a door is 1 wide × 2 tall — one block to a child, two cells to the world.
-test('a door stands two cells tall, counts as one block, and goes whole from either half', () => {
+// Owner, 2026-11-07 (6BC2N): a door is 2 wide × 3 tall — one block to a child, six cells to the world.
+test('a door fills 2×3 cells to the right of its anchor, counts as one block, and goes whole from any part', () => {
   let w = emptyWorld(8, 8)
   w = put(w, { on: 'island', x: 3, z: 3 }, door)
+  // Facing the child (pz): it grows to +x (the right as seen from the front) and up.
   assert.deepEqual(blockAt(w, { x: 3, y: 0, z: 3 }), { ...door, facing: 'pz' })
-  assert.deepEqual(blockAt(w, { x: 3, y: 1, z: 3 }), { ...door, facing: 'pz', part: 'top' })
+  for (const c of [{ x: 4, y: 0, z: 3 }, { x: 3, y: 2, z: 3 }, { x: 4, y: 2, z: 3 }])
+    assert.deepEqual(blockAt(w, c), { ...door, facing: 'pz', anchor: { x: 3, y: 0, z: 3 } }, JSON.stringify(c))
+  assert.equal(Object.keys(w.cells).length, 6)
   assert.equal(blockCount(w), 1)
-  assert.deepEqual(previewCells(w, { on: 'island', x: 5, z: 5 }, door, T), [{ x: 5, y: 0, z: 5 }, { x: 5, y: 1, z: 5 }])
-  // Its top half is a full cell: a block can sit on it.
-  w = put(w, { on: 'block', cell: { x: 3, y: 1, z: 3 }, normal: up }, red)
-  const gone = removeBlock(w, { x: 3, y: 1, z: 3 })!
-  assert.equal(blockAt(gone, { x: 3, y: 0, z: 3 }), undefined, 'erasing the top half takes the whole door')
-  assert.deepEqual(undo(gone)!.cells, w.cells, 'undo brings both halves back')
-  // No room above → it bounces, unchanged.
-  const low = put(emptyWorld(8, 1), { on: 'island', x: 0, z: 0 }, red)
+  assert.deepEqual(previewCells(w, { on: 'island', x: 0, z: 6 }, door, T)?.length, 6)
+  assert.deepEqual(doorCells({ x: 0, y: 0, z: 0 }, 'px')[1], { x: 0, y: 0, z: -1 }, 'facing east it grows to −z')
+  // Its top is a full cell: a block can sit on it.
+  w = put(w, { on: 'block', cell: { x: 4, y: 2, z: 3 }, normal: up }, red)
+  const gone = removeBlock(w, { x: 4, y: 1, z: 3 })!
+  assert.equal(blockCount(gone), 1, 'erasing any part takes the whole door (the red block stays)')
+  assert.deepEqual(undo(gone)!.cells, w.cells, 'undo brings all six back')
+  // No room → it bounces, unchanged: too low, a block in the way, off the edge.
+  const low = emptyWorld(8, 2)
   const r = resolvePlacement(low, { on: 'island', x: 2, z: 2 }, door, T)
   assert.ok('bounce' in r && r.bounce === 'no-room' && r.world === low)
+  const blocked = put(emptyWorld(8, 8), { on: 'island', x: 3, z: 3 }, red)
+  const r2 = resolvePlacement(blocked, { on: 'island', x: 2, z: 3 }, door, T)
+  assert.ok('bounce' in r2 && r2.bounce === 'no-room' && r2.world === blocked)
+  const r3 = resolvePlacement(emptyWorld(8, 8), { on: 'island', x: 7, z: 0 }, door, T)
+  assert.ok('bounce' in r3 && r3.bounce === 'no-room')
 })
 
-// "A pane set INTO the wall": a window or door tapped onto a cube's side replaces that cube, facing out —
-// and undo puts the wall back.
-test('a window or door tapped into a wall replaces the wall block, and undo restores it', () => {
+// Owner, 2026-11-07 (QHYV8): "I just wanted it on top" — NOTHING replaces a block, ever.
+test('a window or door tapped onto a wall hangs on it in the cell in front; the wall stays', () => {
   let w = emptyWorld(8, 8)
-  w = put(w, { on: 'island', x: 4, z: 4 }, red)
-  w = put(w, { on: 'block', cell: { x: 4, y: 0, z: 4 }, normal: up }, red)
+  w = put(w, { on: 'island', x: 4, z: 4 }, { kind: 'brick', color: 'roed' })
   const wall = w
   const side = { on: 'block' as const, cell: { x: 4, y: 0, z: 4 }, normal: { x: -1, y: 0, z: 0 } }
   w = put(w, side, window_)
-  assert.deepEqual(blockAt(w, { x: 4, y: 0, z: 4 }), { ...window_, facing: 'nx' }, 'the wall cube became a window looking west')
-  assert.equal(blockAt(w, { x: 3, y: 0, z: 4 }), undefined, 'nothing stuck on the outside')
-  assert.deepEqual(undo(w)!.cells, wall.cells, 'undo puts the wall cube back')
-  // A door into the wall takes the tapped cube and the one above it.
-  const d = put(wall, side, door)
-  assert.equal(blockAt(d, { x: 4, y: 0, z: 4 })?.kind, 'door')
-  assert.equal(blockAt(d, { x: 4, y: 1, z: 4 })?.part, 'top')
-  assert.deepEqual(undo(d)!.cells, wall.cells)
-  // On the plate or a top face it stands on its own, facing the child.
+  assert.equal(blockAt(w, { x: 4, y: 0, z: 4 })?.kind, 'brick', 'the wall block is still there')
+  assert.deepEqual(blockAt(w, { x: 3, y: 0, z: 4 }), { ...window_, facing: 'nx' }, 'the window hangs on its west side, looking west')
+  assert.deepEqual(undo(w)!.cells, wall.cells)
+  // On top: on top, never instead of.
+  const top = put(wall, { on: 'block', cell: { x: 4, y: 0, z: 4 }, normal: up }, window_)
+  assert.equal(blockAt(top, { x: 4, y: 0, z: 4 })?.kind, 'brick')
+  assert.equal(blockAt(top, { x: 4, y: 1, z: 4 })?.kind, 'window')
+  // On the plate it stands on its own, facing the child.
   const free = put(emptyWorld(8, 8), { on: 'island', x: 1, z: 1 }, window_)
   assert.deepEqual(blockAt(free, { x: 1, y: 0, z: 1 }), { ...window_, facing: 'pz' })
 })
@@ -143,24 +150,24 @@ test('specials face outward on a side face and towards the child on top or on th
   assert.equal(facingFor({ on: 'block', cell: { x: 0, y: 0, z: 0 }, normal: { x: 0.2, y: 0.1, z: -0.9 } }, T), 'nz')
 })
 
-test('a material box builds like a cube, and a window or door goes INTO it', () => {
+test('a material box builds like a cube, and a door stands against it', () => {
   const wood: Held = { kind: 'wood', color: 'roed' }
   let w = emptyWorld(8, 8)
   w = put(w, { on: 'island', x: 3, z: 3 }, wood)
   w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: up }, { kind: 'glass', color: 'roed' })
   assert.equal(blockAt(w, { x: 3, y: 1, z: 3 })?.kind, 'glass', 'a box stacks on a material box')
-  w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: { x: 1, y: 0, z: 0 } }, door)
-  assert.equal(blockAt(w, { x: 3, y: 0, z: 3 })?.kind, 'door', 'a door replaces the wooden box it was set into')
-  assert.equal(blockAt(w, { x: 3, y: 1, z: 3 })?.part, 'top', '…and the glass box above it')
-  assert.equal(restoreWorld(emptyWorld(8, 8), serialiseWorld(w)).cells['3,0,3']?.kind, 'door', 'a session with materials round-trips')
+  w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: { x: 0, y: 0, z: 1 } }, door)
+  assert.equal(blockAt(w, { x: 3, y: 0, z: 3 })?.kind, 'wood', 'the wooden box stays')
+  assert.equal(blockAt(w, { x: 3, y: 0, z: 4 })?.kind, 'door', 'the door stands in front of it')
+  assert.deepEqual(restoreWorld(emptyWorld(8, 8), serialiseWorld(w)).cells, w.cells, 'a session with materials and a door round-trips')
 })
 
-test('a session round-trips exactly — doors, replaced walls, undo after resume', () => {
+test('a session round-trips exactly — doors, an erased door, undo after resume', () => {
   let w = emptyWorld(8, 8)
   w = put(w, { on: 'island', x: 3, z: 3 }, red)
   w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: up }, blue)
   w = put(w, { on: 'block', cell: { x: 3, y: 0, z: 3 }, normal: { x: 1, y: 0, z: 0 } }, door)
-  w = removeBlock(w, { x: 3, y: 1, z: 3 })!
+  w = removeBlock(w, { x: 4, y: 2, z: 3 })!
   const raw = serialiseWorld(w)
   assert.match(raw, /"roed"/)
   const back = restoreWorld(emptyWorld(8, 8), raw)

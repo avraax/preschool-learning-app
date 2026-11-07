@@ -48,7 +48,7 @@ import {
   type Object3D,
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
-import { MATERIAL_KINDS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
+import { DOOR_H, DOOR_W, MATERIAL_KINDS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
 import { BLOCK_PLATE, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
 import { facingAngle } from './geometry.ts'
 import { clayNormalMap, loadTexture, materialTexture } from './textures.ts'
@@ -65,9 +65,9 @@ const SLAB_DEPTH = 0.6
 const TARGET = { x: 0, y: 0.5, z: 0 }
 /** Window and door panels: thin slabs, framed in these colours on their edges. */
 const PANEL_DEPTH = 0.16
-/** Panels sit FLUSH with the cell's outward face: centred, a door set into a wall was recessed half a
- * block and the next wall block hid it from any angle but straight on (WebKit shot, 2026-11-06). */
-const PANEL_OUT = 0.5 - PANEL_DEPTH / 2 - 0.01
+/** Panels hang at the BACK of their cell, against whatever they were tapped onto (owner QHYV8: nothing
+ * replaces a block any more, so a window tapped onto a wall must sit ON the wall, not a cell in front). */
+const PANEL_OUT = -(0.5 - PANEL_DEPTH / 2 - 0.01)
 const WINDOW_FRAME = '#F2EEE6'
 const DOOR_FRAME = '#6B4423'
 /** How strongly the seeded clay grain bends the light. Subtle (owner: "subtle clay"). */
@@ -260,8 +260,9 @@ export class BlockScene {
     }
     this.cubes = new Layer(inst(this.cubeGeo, this.cubeMat, true), true)
     this.windows = new Layer(inst(new BoxGeometry(0.98, 0.98, PANEL_DEPTH).translate(0, 0, PANEL_OUT), panel(WINDOW_FRAME, wTex), false), true)
-    // A door spans its cell and the one above: drawn once from the bottom cell, centred a cell higher.
-    this.doors = new Layer(inst(new BoxGeometry(0.9, 1.96, PANEL_DEPTH).translate(0, 0.5, PANEL_OUT), panel(DOOR_FRAME, dTex), false), true)
+    // A door spans 2×3 cells (owner 6BC2N): drawn once from its anchor (bottom-left from the front), so the
+    // shape reaches one cell to the local right (+x) and two up.
+    this.doors = new Layer(inst(new BoxGeometry(DOOR_W - 0.1, DOOR_H - 0.04, PANEL_DEPTH).translate((DOOR_W - 1) / 2, (DOOR_H - 1) / 2, PANEL_OUT), panel(DOOR_FRAME, dTex), false), true)
     const mats = {} as Record<MaterialKind, Layer>
     for (const k of MATERIAL_KINDS) {
       const map = materialTexture(k)
@@ -280,7 +281,7 @@ export class BlockScene {
     for (const l of this.layers) this.scene.add(l.mesh)
 
     // ----- the ghosts: where a block would land (a door needs two), or what the eraser would take
-    this.ghosts = [0, 1].map(() => {
+    this.ghosts = Array.from({ length: DOOR_W * DOOR_H }, () => {
       const g = new Mesh(this.cubeGeo, new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false }))
       g.visible = false
       g.renderOrder = 2
@@ -315,7 +316,7 @@ export class BlockScene {
     const col = new Color()
     for (const l of this.layers) l.begin()
     for (const { cell, block } of list) {
-      if (block.part === 'top') continue // a door is drawn once, from its bottom cell
+      if (block.anchor) continue // a door is drawn once, from its anchor
       const p = this.centre(cell)
       // Turn the +z-facing shape to the block's facing, then move it to its cell.
       m.makeRotationY(facingAngle(block.facing)).setPosition(p.x, p.y, p.z)
@@ -474,12 +475,15 @@ export class BlockScene {
       if (layer && h.instanceId !== undefined && h.face) {
         let cell = layer.cells[h.instanceId]
         if (!cell) continue
-        // A door is ONE mesh over two cells: a hit on its upper half is its upper cell.
-        if (layer === this.doors && h.point.y > cell.y + 1) cell = { x: cell.x, y: cell.y + 1, z: cell.z }
         // The face normal is in the SHAPE's frame: turn it by the instance's rotation (a door facing west
         // is a rotated panel). The resolver still rounds it to one axis (rounded edges skew it).
         layer.mesh.getMatrixAt(h.instanceId, m)
         const n = h.face.normal.clone().transformDirection(m)
+        // A door is ONE mesh over six cells: the cell is wherever the hit lies (a hair inside the face).
+        if (layer === this.doors) {
+          const q = h.point.clone().addScaledVector(n, -0.02)
+          cell = { x: Math.round(q.x + this.half), y: Math.floor(q.y), z: Math.round(q.z + this.half) }
+        }
         return { on: 'block', cell, normal: { x: n.x, y: n.y, z: n.z } }
       }
       if (h.object === this.island) {

@@ -457,7 +457,7 @@ const TegnMedMigGame: React.FC = () => {
           </Box>
         }
       />
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.guide" keepContent={<SubjectCard subject={subject} drawing={piece.drawing} />} />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onClose={confirmKeep} />
     </GameShell>
   )
 }

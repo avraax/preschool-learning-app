@@ -27,7 +27,6 @@ import { DEV } from '../../utils/devHarness'
 import BlockStage, { type BlockStageHandle } from './blocks/BlockStage'
 import { MATERIAL_BASE, materialChipUrl } from './blocks/materialArt'
 import {
-  blockAt,
   blockCount,
   blockList,
   emptyWorld,
@@ -40,9 +39,9 @@ import {
   serialiseWorld,
   SPECIAL_KINDS,
   undo,
+  wholeBlockCells,
   type BlockKind,
   type BlockWorld,
-  type Cell,
   type Held,
   type MaterialKind,
   type Target,
@@ -203,12 +202,9 @@ const ByggeklodserGame: React.FC = () => {
     if (!target || (!item && !erasing)) return s.setGhost(null, null)
     if (erasing) {
       if (target.on !== 'block') return s.setGhost(null, null)
-      const b = blockAt(worldRef.current, target.cell)
-      if (!b) return s.setGhost(null, null)
-      // A door goes whole: show both halves.
-      const cells: Cell[] = [target.cell]
-      if (b.kind === 'door') cells.push({ ...target.cell, y: target.cell.y + (b.part === 'top' ? -1 : 1) })
-      return s.setGhost(cells, GHOST_LOOK.erase)
+      // A door goes whole: show all of it.
+      const cells = wholeBlockCells(worldRef.current, target.cell)
+      return s.setGhost(cells.length ? cells : null, GHOST_LOOK.erase)
     }
     const cells = previewCells(worldRef.current, target, item!, facingNow())
     s.setGhost(cells, cells ? lookOf(item!) : null)
@@ -421,7 +417,7 @@ const ByggeklodserGame: React.FC = () => {
           data-blocks-count={blockCount(world)}
           // Probe hook: the world as sorted `x,y,z:colour` (rung 1/2 drivers read it; a few hundred bytes).
           data-blocks-cells={Object.entries(world.cells).map(([k, b]) => `${k}:${b.color}`).sort().join(' ')}
-          data-blocks-kinds={Object.entries(world.cells).map(([k, b]) => `${k}:${b.kind}:${b.facing}${b.part ? ':top' : ''}`).sort().join(' ')}
+          data-blocks-kinds={Object.entries(world.cells).map(([k, b]) => `${k}:${b.kind}:${b.facing}${b.anchor ? ':part' : ''}`).sort().join(' ')}
           data-blocks-level={level}
           data-blocks-held={`${held.kind}:${held.color}`}
           sx={{ position: 'fixed', inset: 0, zIndex: 1, background: BLOCK_STUDIO.wall }}
@@ -531,7 +527,7 @@ const ByggeklodserGame: React.FC = () => {
           </Box>
         </Box>
       </DndContext>
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture="krea.blocks" title={NEW_BUILD_TITLE} freshPicture={newBuildPicture} freshLabel="Ja, ny byggeplade" keepLabel="Nej, behold mine klodser" />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onClose={confirmKeep} title={NEW_BUILD_TITLE} freshPicture={newBuildPicture} freshLabel="Ja, ny byggeplade" />
     </GameShell>
   )
 }
@@ -586,10 +582,10 @@ const SpecialChip: React.FC<{ kind: (typeof SPECIAL_KINDS)[number]; selected: bo
         </g>
       ) : null}
       {kind === 'door' ? (
-        // Tall: a door is two blocks high.
+        // A door is 2 wide x 3 tall (owner 6BC2N).
         <g>
-          <path d="M14 46 V12 a10 8 0 0 1 20 0 V46 Z" fill="#9A5E2E" stroke="rgba(0,0,0,0.25)" strokeWidth="2" />
-          <circle cx="29" cy="30" r="2.2" fill="#E8C060" />
+          <path d="M11 46 V14 a13 9 0 0 1 26 0 V46 Z" fill="#9A5E2E" stroke="rgba(0,0,0,0.25)" strokeWidth="2" />
+          <circle cx="32" cy="31" r="2.4" fill="#E8C060" />
         </g>
       ) : null}
     </svg>

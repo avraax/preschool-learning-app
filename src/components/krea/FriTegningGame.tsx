@@ -29,7 +29,6 @@ import {
 import { StudioBackdrop, Paper } from './studio/StudioScene'
 import { CrayonPalette, PICTURES, SIDE_BTN, SIDE_TOP_CLEARANCE, StampTray, StudioButton, ToolRow, studioColumns, studioPalSx, studioStageVars } from './studio/StudioControls'
 import NewPaperConfirm from './studio/NewPaperConfirm'
-import { InkThumb } from './studio/KreaPicker'
 import { STAMPS, STAMP_IDS, STAMP_URLS } from './studio/stamps'
 import { swapPaper } from './studio/alive'
 
@@ -303,8 +302,7 @@ const FriTegningGame: React.FC = () => {
       <NewPaperConfirm
         open={confirmOpen}
         onFresh={confirmFresh}
-        onKeep={confirmKeep}
-        keepContent={<InkThumb drawing={drawing} stampSrc={(id) => STAMP_URLS[id]} />}
+        onClose={confirmKeep}
       />
     </GameShell>
   )

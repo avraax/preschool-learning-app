@@ -25,13 +25,18 @@ for (const file of ['./TegnMedMigGame.tsx', './FarvelaegGame.tsx', './Perleplade
   })
 }
 
-// Owner, 2026-10-17: the "no, keep it" choice shows the piece in hand (this drawing, this board with its
-// beads), so it plainly means "back to this one" — not the game's generic tile picture.
-for (const file of ['./FriTegningGame.tsx', './TegnMedMigGame.tsx', './FarvelaegGame.tsx', './PerlepladeGame.tsx']) {
-  test(`${file}: "Nyt papir?" keeps the piece in hand on its keep button`, () => {
+// Owner, 2026-11-07 (HRJ4H): "Nyt papir?" has ONE picture button (yes, a fresh one) and a red close X that
+// closes it and keeps the piece — no second "keep" picture, in every Krea game that asks.
+test('the new-piece question is one picture button and a close X, no keep picture', () => {
+  const dialog = src('./studio/NewPaperConfirm.tsx')
+  assert.equal((dialog.match(/<StudioButton\b/g) ?? []).length, 1, 'a second picture button is back')
+  assert.match(dialog, /data-krea-control="confirm-close"\s+onClick=\{onClose\}/, 'the close X does not close on click')
+})
+for (const file of ['./FriTegningGame.tsx', './TegnMedMigGame.tsx', './FarvelaegGame.tsx', './PerlepladeGame.tsx', './ByggeklodserGame.tsx']) {
+  test(`${file}: the new-piece question closes with the close X and keeps the piece`, () => {
     const confirm = src(file).match(/<NewPaperConfirm\b[\s\S]*?\/>\r?\n/)
     assert.ok(confirm, 'no NewPaperConfirm')
-    assert.match(confirm[0], /keepContent=\{/, 'the keep button shows the tile picture, not the piece')
+    assert.match(confirm[0], /onClose=\{confirmKeep\}/, 'the close X is not wired to keep the piece')
   })
 }
 

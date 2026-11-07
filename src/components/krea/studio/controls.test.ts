@@ -15,7 +15,9 @@ test('studio controls act on the press, and the blocking confirm acts on the cli
   assert.doesNotMatch(c, /onClick=\{onPress\}\s*\n/, 'a bare onClick is back on a studio button')
   // …but a button inside a BLOCKING overlay must close on the click, or the tap lands underneath.
   const confirm = code('./NewPaperConfirm.tsx')
-  assert.equal((confirm.match(/activateOn="click"/g) ?? []).length, 2)
+  assert.equal((confirm.match(/activateOn="click"/g) ?? []).length, 1, 'the fresh button acts on the press')
+  assert.match(confirm, /onClick=\{onClose\}/, 'the close X acts on something other than the click')
+  assert.doesNotMatch(confirm, /pressHandlers\(onClose\)/)
 })
 
 // The glitter bottle was a tap-and-hold brush unlike everything else (owner, 2026-10-16); stars are a

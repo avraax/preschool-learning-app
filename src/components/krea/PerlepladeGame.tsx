@@ -53,7 +53,7 @@ import {
   heldBeadLiftPx,
   heldBeadPx,
 } from './beads/beadBoard'
-import { BoardArt, geometryOf, Pegboard, pegBox, PlacedBeads } from './beads/Pegboard'
+import { BoardArt, geometryOf, Pegboard, pegBox } from './beads/Pegboard'
 import { BeadBowls } from './beads/BeadBowls'
 import { DragGhost } from './beads/HeldBead'
 import { BeadThumb } from './beads/BeadThumb'
@@ -625,19 +625,6 @@ const PerlepladeGame: React.FC = () => {
       <PlusBadge />
     </Box>
   )
-  // "No, keep it": THIS board with the child's beads on it, the same size as "Ny plade"'s board beside it.
-  const keepBoardPicture = (
-    <Box sx={{ position: 'absolute', inset: '6%' }}>
-      {board.target ? (
-        <Box sx={{ position: 'absolute', inset: 0, opacity: 0.3 }}>
-          <PlacedBeads board={finishedPattern(board.n, board.target)} size={tuning.bead} />
-        </Box>
-      ) : (
-        <BoardArt n={board.n} mask={board.mask} />
-      )}
-      <PlacedBeads board={board} size={tuning.bead} />
-    </Box>
-  )
   const pulse = idlePulse(reduce, { peak: 1.07, durationS: 1.4 })
   const wayOn =
     stage === 'finished' ? (
@@ -754,7 +741,7 @@ const PerlepladeGame: React.FC = () => {
         </Box>
         <DragGhost ghostRef={ghostRef} colour={grab?.colour ?? null} beadPx={beadPx} />
       </DndContext>
-      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onKeep={confirmKeep} keepPicture={GAME_ID} title={NEW_BOARD_TITLE} freshPicture={newBoardPicture} keepContent={keepBoardPicture} keepOnSheet={false} />
+      <NewPaperConfirm open={confirmOpen} onFresh={confirmFresh} onClose={confirmKeep} title={NEW_BOARD_TITLE} freshPicture={newBoardPicture} />
     </GameShell>
   )
 }
