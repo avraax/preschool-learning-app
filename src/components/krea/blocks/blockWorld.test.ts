@@ -6,6 +6,7 @@ import {
   blockCount,
   doorCells,
   MAX_BLOCKS,
+  moveBlock,
   emptyWorld,
   facingFor,
   previewCells,
@@ -203,4 +204,33 @@ test('a world holds at most MAX_BLOCKS — the next one bounces, unchanged', () 
   assert.equal(blockCount(w), MAX_BLOCKS)
   const r = resolvePlacement(w, { on: 'island', x: 127, z: 127 }, red, T)
   assert.ok('bounce' in r && r.bounce === 'full' && r.world === w)
+})
+
+// Owner T59B2: press, hold and drag a placed block anywhere a new one could go — one action, undo returns it.
+test('moving a block lifts it whole and lands it like a new one; undo puts it back', () => {
+  let w = emptyWorld(8, 8)
+  w = put(w, { on: 'island', x: 1, z: 1 }, red)
+  w = put(w, { on: 'island', x: 5, z: 5 }, blue)
+  const before = w
+  // Onto the top of the blue one: "in all axes".
+  const r = moveBlock(w, { x: 1, y: 0, z: 1 }, { on: 'block', cell: { x: 5, y: 0, z: 5 }, normal: up }, T)
+  assert.ok('placed' in r)
+  const m = r.placed
+  assert.equal(blockAt(m, { x: 1, y: 0, z: 1 }), undefined, 'gone from where it was')
+  assert.equal(blockAt(m, { x: 5, y: 1, z: 5 })?.color, 'roed', 'on top of the blue one')
+  assert.equal(blockCount(m), 2)
+  assert.equal(m.actions.length, before.actions.length + 1, 'one action')
+  assert.deepEqual(undo(m)!.cells, before.cells, 'undo puts it back')
+  // A door moves whole, all six cells.
+  let d = put(emptyWorld(8, 8), { on: 'island', x: 0, z: 0 }, door)
+  const rd = moveBlock(d, { x: 1, y: 2, z: 0 }, { on: 'island', x: 3, z: 4 }, T)
+  assert.ok('placed' in rd)
+  d = rd.placed
+  assert.equal(Object.keys(d.cells).length, 6)
+  assert.equal(blockAt(d, { x: 3, y: 0, z: 4 })?.kind, 'door')
+  // Nowhere to go → unchanged.
+  const bad = moveBlock(before, { x: 1, y: 0, z: 1 }, { on: 'island', x: 5, z: 5 }, T)
+  assert.ok('bounce' in bad && bad.world === before)
+  // A serialised session with a move round-trips.
+  assert.deepEqual(restoreWorld(emptyWorld(8, 8), serialiseWorld(m)).cells, m.cells)
 })

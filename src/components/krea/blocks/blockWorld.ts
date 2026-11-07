@@ -206,6 +206,28 @@ export const resolvePlacement = (w: BlockWorld, t: Target, held: Held, towardsCa
   return { placed: { ...w, cells: apply(w, p, 'after'), actions: [...w.actions, { t: 'place', changes: p }] }, cell: p[0].cell }
 }
 
+/**
+ * MOVE a placed block (owner T59B2: "tap, hold and move it — in all axes"): lift the whole block at `from`
+ * and place it where `t` points, through the same planning as a new block (so it lands only where a new
+ * one could; a door keeps its 2×3). ONE action: undo puts it back where it was. A bounce leaves the world
+ * unchanged. Targets on the lifted block itself are the caller's to ignore (the scene's pick skips them).
+ */
+export const moveBlock = (w: BlockWorld, from: Cell, t: Target, towardsCamera: { x: number; z: number }): PlaceResult => {
+  const cells = wholeBlockCells(w, from)
+  const b = cells.length ? blockAt(w, cells[0]) : undefined
+  if (!b) return { bounce: 'no-attach', world: w }
+  const lifted: BlockWorld = { ...w, cells: apply(w, cells.map((c) => change(c, blockAt(w, c))), 'after') }
+  const p = plan(lifted, t, { kind: b.kind, color: b.color }, towardsCamera)
+  if (typeof p === 'string') return { bounce: p, world: w }
+  // Merge lift + drop per cell, `before` from the world as it was; a cell that ends as it began is no change.
+  const merged = new Map<string, Change>()
+  for (const c of cells) merged.set(cellKey(c), change(c, blockAt(w, c)))
+  for (const ch of p) merged.set(cellKey(ch.cell), change(ch.cell, blockAt(w, ch.cell), ch.after))
+  const changes = [...merged.values()].filter((c) => JSON.stringify(c.before) !== JSON.stringify(c.after))
+  if (!changes.length) return { bounce: 'occupied', world: w }
+  return { placed: { ...w, cells: apply(w, changes, 'after'), actions: [...w.actions, { t: 'place', changes }] }, cell: p[0].cell }
+}
+
 /** The eraser: take the block at `cell` off — a door goes whole, from any part. Null when empty. */
 export const removeBlock = (w: BlockWorld, cell: Cell): BlockWorld | null => {
   const cells = wholeBlockCells(w, cell)

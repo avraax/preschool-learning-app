@@ -23,12 +23,14 @@ import type { Block, Cell, Target } from './blockWorld'
 // canvas. The scene is created in the EFFECT, never in render (StrictMode's double mount, §4.1).
 
 export interface BlockStageHandle {
-  /** What a CLIENT point lands on (for the drag drop), or null. */
-  pickClient: (clientX: number, clientY: number) => Target | null
+  /** What a CLIENT point lands on (for the drag drop), or null. `ignore`: cells to see through. */
+  pickClient: (clientX: number, clientY: number, ignore?: Cell[]) => Target | null
+  /** What a STAGE point lands on (the hold-to-move drag), seeing through `ignore`. */
+  pickStage: (x: number, y: number, ignore?: Cell[]) => Target | null
   /** A cell point's CLIENT position (probe aid). */
   projectClient: (cell: Cell, fy?: number) => { x: number; y: number } | null
   /** Show cells as a ghost in `tint`, or hide it (null). */
-  setGhost: (cells: Cell[] | null, tint: string | null) => void
+  setGhost: (cells: Cell[] | null, tint: string | null, halo?: boolean) => void
   getPose: () => Pose
   setPose: (p: Pose) => void
   animateTo: (p: Pose, done?: () => void) => void
@@ -47,6 +49,13 @@ export interface BlockStageProps {
   onTap: (target: Target | null) => void
   /** What a finger (or a hovering mouse) is over right now, for the preview ghost; null = none. */
   onPreview?: (target: Target | null) => void
+  /**
+   * Press and HOLD on a block (owner T59B2): return true to start moving it — the finger then drags it
+   * (`onHoldMove`, stage px) and lifting drops it (`onHoldEnd`); no tap and no turn happen in that gesture.
+   */
+  onHoldStart?: (target: Target) => boolean
+  onHoldMove?: (p: { x: number; y: number }) => void
+  onHoldEnd?: (p: { x: number; y: number } | null) => void
   /** The camera moved by a gesture (for buttons that grey out at a clamp). */
   onPose?: (p: Pose) => void
   disabled?: boolean
@@ -54,8 +63,12 @@ export interface BlockStageProps {
 
 type Pt = { x: number; y: number }
 
+/** How long a still finger on a block waits before it picks the block up (T59B2). Longer than a tap,
+ * short enough not to feel stuck. */
+export const HOLD_MS = 450
+
 const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function BlockStage(
-  { islandSize, heightCap, faces, horizon, insets, blocks, onTap, onPreview, onPose, disabled },
+  { islandSize, heightCap, faces, horizon, insets, blocks, onTap, onPreview, onHoldStart, onHoldMove, onHoldEnd, onPose, disabled },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -70,6 +83,8 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   onPoseRef.current = onPose
   const onPreviewRef = useRef(onPreview)
   onPreviewRef.current = onPreview
+  const holdRef = useRef({ onHoldStart, onHoldMove, onHoldEnd })
+  holdRef.current = { onHoldStart, onHoldMove, onHoldEnd }
 
   // ----- the scene: ONE per mount (and per plate size), disposed on the way out -------------------------
   useEffect(() => {
@@ -136,14 +151,15 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   }, [insets])
 
   useImperativeHandle(ref, () => ({
-    pickClient: (cx, cy) => {
+    pickClient: (cx, cy, ignore) => {
       const host = hostRef.current
       const scene = sceneRef.current
       if (!host || !scene) return null
       const r = host.getBoundingClientRect()
       if (cx < r.left || cy < r.top || cx > r.right || cy > r.bottom) return null
-      return scene.pick(cx - r.left, cy - r.top)
+      return scene.pick(cx - r.left, cy - r.top, ignore)
     },
+    pickStage: (x, y, ignore) => sceneRef.current?.pick(x, y, ignore) ?? null,
     projectClient: (cell, fy) => {
       const host = hostRef.current
       const scene = sceneRef.current
@@ -152,7 +168,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       const p = scene.project(cell, fy)
       return { x: r.left + p.x, y: r.top + p.y }
     },
-    setGhost: (cells, tint) => sceneRef.current?.setGhost(cells, tint),
+    setGhost: (cells, tint, halo) => sceneRef.current?.setGhost(cells, tint, halo),
     getPose: () => sceneRef.current?.getPose() ?? { ...CAMERA.home },
     setPose: (p) => {
       sceneRef.current?.setPose(p)
@@ -168,9 +184,18 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
 
   // ----- gestures ----------------------------------------------------------------------------------------
   const pointers = useRef(new Map<number, Pt>())
-  const gesture = useRef<{ start: Pt; pose: Pose; turning: boolean; multi: boolean; pinchD: number; pinchPose: Pose; mid: Pt; mousePan: boolean } | null>(null)
+  const gesture = useRef<{ start: Pt; pose: Pose; turning: boolean; multi: boolean; pinchD: number; pinchPose: Pose; mid: Pt; mousePan: boolean; holding: boolean; holdMoved: boolean } | null>(null)
   const hoverRaf = useRef(0)
-  useEffect(() => () => cancelAnimationFrame(hoverRaf.current), [])
+  /** The press-and-hold timer (a still finger on a block for HOLD_MS picks it up). */
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearHold = () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current)
+    holdTimer.current = null
+  }
+  useEffect(() => () => {
+    cancelAnimationFrame(hoverRaf.current)
+    clearHold()
+  }, [])
 
   // iOS: block page zoom/scroll while a finger is on the stage (non-passive, so preventDefault holds).
   useEffect(() => {
@@ -208,10 +233,30 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     const p = local(e)
     pointers.current.set(e.pointerId, p)
     if (pointers.current.size === 1) {
-      gesture.current = { start: p, pose: scene.getPose(), turning: false, multi: mousePan, pinchD: 0, pinchPose: scene.getPose(), mid: p, mousePan }
-      if (!mousePan) preview(p)
+      gesture.current = { start: p, pose: scene.getPose(), turning: false, multi: mousePan, pinchD: 0, pinchPose: scene.getPose(), mid: p, mousePan, holding: false, holdMoved: false }
+      if (!mousePan) {
+        preview(p)
+        clearHold()
+        if (holdRef.current.onHoldStart) {
+          holdTimer.current = setTimeout(() => {
+            holdTimer.current = null
+            const g = gesture.current
+            const sc = sceneRef.current
+            if (!g || g.turning || g.multi || !sc || pointers.current.size !== 1) return
+            const t = sc.pick(g.start.x, g.start.y)
+            if (t?.on !== 'block' || !holdRef.current.onHoldStart?.(t)) return
+            g.holding = true
+            preview(null)
+          }, HOLD_MS)
+        }
+      }
     } else if (gesture.current) {
-      // A second finger: this is a pinch, never a tap.
+      // A second finger: this is a pinch, never a tap — and never a move (a held block goes back).
+      clearHold()
+      if (gesture.current.holding) {
+        gesture.current.holding = false
+        holdRef.current.onHoldEnd?.(null)
+      }
       const [a, b] = [...pointers.current.values()]
       gesture.current.multi = true
       gesture.current.pinchD = Math.max(1, dist(a, b))
@@ -236,6 +281,13 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     if (!g || !scene || !pointers.current.has(e.pointerId)) return
     const p = local(e)
     pointers.current.set(e.pointerId, p)
+    if (g.holding) {
+      // Still within the slop: the finger hasn't moved the block yet.
+      if (!g.holdMoved && dist(p, g.start) <= TAP_SLOP_DISTANCE) return
+      g.holdMoved = true
+      holdRef.current.onHoldMove?.(p)
+      return
+    }
     if (g.mousePan) {
       const next = scene.pan(g.mid, p)
       g.mid = p
@@ -256,6 +308,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       return
     }
     if (!g.turning && dist(p, g.start) > TAP_SLOP_DISTANCE) {
+      clearHold()
       g.turning = true
       preview(null)
       // Measure the turn from HERE, so the view doesn't jump by the slop.
@@ -275,6 +328,12 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     if (!g || !had) return
     if (pointers.current.size > 0) return
     gesture.current = null
+    clearHold()
+    if (g.holding) {
+      // A hold that never moved puts the block back where it was (no 1-cell nudge from the release).
+      holdRef.current.onHoldEnd?.(cancelled || !g.holdMoved ? null : local(e))
+      return
+    }
     if (e.pointerType !== 'mouse') preview(null)
     if (cancelled || g.multi || g.turning || disabled) return
     const scene = sceneRef.current

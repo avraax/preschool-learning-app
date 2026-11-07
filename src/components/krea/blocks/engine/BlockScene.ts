@@ -44,6 +44,9 @@ import {
   Vector2,
   Vector3,
   NearestFilter,
+  LinearMipmapLinearFilter,
+  LinearFilter,
+  RepeatWrapping,
   PCFSoftShadowMap,
   SRGBColorSpace,
   DynamicDrawUsage,
@@ -53,7 +56,7 @@ import {
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { DOOR_H, DOOR_W, MATERIAL_KINDS, MAX_BLOCKS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
-import { BLOCK_EDGE, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
+import { BLOCK_EDGE, BLOCK_OUTSIDE_GRID, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
 import { facingAngle } from './geometry.ts'
 import { clayNormalMap, loadTexture, materialTexture } from './textures.ts'
 import { CAMERA, cameraPosition, clampTarget, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
@@ -69,8 +72,8 @@ const SLAB_DEPTH = 0.6
 const TARGET = { x: 0, y: 0.5, z: 0 }
 /** Horizon mode: the box (cells either side of the look-at point) that fills the view at zoom 1. */
 const VIEW_HALF = 8
-/** Horizon mode: the grid patch that travels with the look-at point, in cells (even: the checker keeps its parity). */
-const GRID = 36
+/** Horizon mode: the ground plane's side — a multiple of 4, so its checker lines up with the cells. */
+const GROUND = 3744
 /** Horizon mode: half the shadow's square, around the look-at point (the shadow travels with the view). */
 const SHADOW_REACH = 26
 const SKY_RADIUS = 1500
@@ -120,18 +123,25 @@ class Layer {
   }
 }
 
-/** Horizon grid patch: opaque in the middle, fading to nothing at its rim (an alpha map: green channel). */
-function radialFade(size = 128): Texture {
+/**
+ * Horizon mode: ONE 2×2-cell checker tile, repeated, mipmapped and anisotropic — so the whole build area
+ * stays crisp out to where the squares get smaller than a pixel (owner N24MG: "the entire buildable area
+ * non-blurred"). The plate's one-texel-per-cell texture can't do that: unfiltered it shimmers far out.
+ */
+function checkerTile(px = 16, soft = false): Texture {
   const c = document.createElement('canvas')
-  c.width = c.height = size
+  c.width = c.height = px
   const g = c.getContext('2d')!
-  const r = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
-  r.addColorStop(0, '#fff')
-  r.addColorStop(0.3, '#fff')
-  r.addColorStop(1, '#000')
-  g.fillStyle = r
-  g.fillRect(0, 0, size, size)
-  return new CanvasTexture(c)
+  g.fillStyle = '#ffffff'
+  g.fillRect(px / 2, 0, px / 2, px / 2)
+  g.fillRect(0, px / 2, px / 2, px / 2)
+  const t = new CanvasTexture(c)
+  t.wrapS = t.wrapT = RepeatWrapping
+  // Soft: a coarse tile magnified with LINEAR filtering, so each square's edge melts over a quarter of
+  // a cell — the "super subtle blur" outside the build area (owner N24MG), same squares, same colour.
+  t.magFilter = soft ? LinearFilter : NearestFilter
+  t.minFilter = LinearMipmapLinearFilter
+  return t
 }
 
 /** The squares as a checker (owner JYJ5F: the thin lines were hard to see). One texel per cell, crisp. */
@@ -179,9 +189,8 @@ export class BlockScene {
   private readonly textures: Texture[] = []
   private readonly island: Mesh
   private readonly horizon: boolean
-  /** Horizon mode: the sky dome (it follows the camera) and the grid patch (it follows the look-at point). */
+  /** Horizon mode: the sky dome (it follows the camera). */
   private readonly sky: Mesh | null = null
-  private readonly grid: Mesh | null = null
   private readonly groundPlane = new Plane(new Vector3(0, 1, 0), 0)
   private readonly ghosts: Mesh[]
   private readonly key: DirectionalLight
@@ -239,7 +248,7 @@ export class BlockScene {
       this.sky.renderOrder = -1
       this.scene.add(this.sky)
       this.scene.background = foot
-      this.scene.fog = new Fog(BLOCK_SKY.horizon, 60, 400)
+      // No fog: the horizon is a sharp line and the sky is clear (owner BNCW4).
     } else {
       // ----- the studio: a plain wall colour, and a floor that fades into it (fog), so there is no horizon
       this.scene.background = new Color(BLOCK_STUDIO.wall)
@@ -274,7 +283,7 @@ export class BlockScene {
     if (this.horizon) {
       // ----- the ground: ONE plane of the plate's sage, far past the haze. Building stops at the build
       // area's edge, marked by a thin darker strip just outside it (owner: "a subtle indicator").
-      this.island = new Mesh(new PlaneGeometry(SKY_RADIUS * 2.5, SKY_RADIUS * 2.5).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 }))
+      this.island = new Mesh(new PlaneGeometry(GROUND, GROUND).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 }))
       this.island.receiveShadow = true
       this.island.name = 'island'
       this.scene.add(this.island)
@@ -301,25 +310,37 @@ export class BlockScene {
 
     // ----- the squares: a checker a hair above the top, DARKER than the plate (research 2026-11-07: a
     // faint light grid on a pale plate was the hard-to-see one, JYJ5F)
-    // On the horizon the checker is a PATCH that travels with the look-at point and fades out at its rim
-    // (the grid is "faint, only near you"), clipped to the build area so it never promises ground that
-    // can't be built on.
-    const n = this.horizon ? GRID : islandSize
-    const chk = checkerTexture(n)
-    this.textures.push(chk)
-    const chkMat = new MeshBasicMaterial({ map: chk, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false })
+    // On the horizon: the WHOLE build area carries the full grid, crisp (N24MG); the grass outside it
+    // carries the same grid at a fraction of its strength — "the same surface, a hint" — cut out where the
+    // build area is (clipIntersection: clipped only where a point is inside all four edges).
     if (this.horizon) {
-      const fade = radialFade()
-      this.textures.push(fade)
-      chkMat.alphaMap = fade
+      const tile = checkerTile()
+      tile.anisotropy = this.renderer.capabilities.getMaxAnisotropy()
+      tile.repeat.set(islandSize / 2, islandSize / 2)
+      const out = checkerTile(8, true)
+      out.anisotropy = tile.anisotropy
+      out.repeat.set(GROUND / 2, GROUND / 2)
+      this.textures.push(tile, out)
+      const inMat = new MeshBasicMaterial({ map: tile, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false })
+      const inside = new Mesh(new PlaneGeometry(islandSize, islandSize).rotateX(-Math.PI / 2).translate(0, 0.006, 0), inMat)
+      inside.name = 'checker'
+      this.scene.add(inside)
       const b = islandSize / 2
-      chkMat.clippingPlanes = [new Plane(new Vector3(1, 0, 0), b), new Plane(new Vector3(-1, 0, 0), b), new Plane(new Vector3(0, 0, 1), b), new Plane(new Vector3(0, 0, -1), b)]
+      const outMat = new MeshBasicMaterial({ map: out, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha * BLOCK_OUTSIDE_GRID, transparent: true, depthWrite: false })
+      outMat.clippingPlanes = [new Plane(new Vector3(-1, 0, 0), -b), new Plane(new Vector3(1, 0, 0), -b), new Plane(new Vector3(0, 0, -1), -b), new Plane(new Vector3(0, 0, 1), -b)]
+      outMat.clipIntersection = true
       this.renderer.localClippingEnabled = true
+      const outside = new Mesh(new PlaneGeometry(GROUND, GROUND).rotateX(-Math.PI / 2).translate(0, 0.005, 0), outMat)
+      outside.name = 'checker-outside'
+      this.scene.add(outside)
+    } else {
+      const chk = checkerTexture(islandSize)
+      this.textures.push(chk)
+      const chkMat = new MeshBasicMaterial({ map: chk, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false })
+      const checker = new Mesh(new PlaneGeometry(islandSize, islandSize).rotateX(-Math.PI / 2).translate(0, 0.006, 0), chkMat)
+      checker.name = 'checker'
+      this.scene.add(checker)
     }
-    const checker = new Mesh(new PlaneGeometry(n, n).rotateX(-Math.PI / 2).translate(0, 0.006, 0), chkMat)
-    checker.name = 'checker'
-    this.scene.add(checker)
-    if (this.horizon) this.grid = checker
 
     // ----- the blocks: one instanced mesh per SHAPE, colour per instance, a shared seeded clay grain
     const redraw = () => this.requestRender()
@@ -430,8 +451,12 @@ export class BlockScene {
    * Show where a block would land (one cell, or a door's two), or what the eraser would take — or hide
    * it (null). `tint` is the colour the ghost wears.
    */
-  setGhost(cells: Cell[] | null, tint: string | null): void {
+  setGhost(cells: Cell[] | null, tint: string | null, halo = false): void {
     let changed = false
+    // A HALO (a block being moved, T59B2) is a faint, slightly larger shell, so the block inside it —
+    // its real look — stays visible; the placing ghost is a half-opaque cell of the held colour.
+    const scale = halo ? 1.12 : 1
+    const opacity = halo ? 0.3 : 0.5
     this.ghosts.forEach((g, i) => {
       const c = cells?.[i]
       if (!c || !tint) {
@@ -441,8 +466,10 @@ export class BlockScene {
       }
       const p = this.centre(c)
       const mat = g.material as MeshBasicMaterial
-      if (!g.visible || !g.position.equals(p) || mat.color.getHexString() !== new Color(tint).getHexString()) changed = true
+      if (!g.visible || !g.position.equals(p) || mat.color.getHexString() !== new Color(tint).getHexString() || g.scale.x !== scale) changed = true
       g.position.copy(p)
+      g.scale.setScalar(scale)
+      mat.opacity = opacity
       mat.color.set(tint)
       g.visible = true
     })
@@ -467,8 +494,6 @@ export class BlockScene {
     this.camera.lookAt(target.x, target.y, target.z)
     if (this.horizon) {
       this.sky?.position.copy(this.camera.position)
-      // The grid patch steps in whole PAIRS of cells, so each square keeps its shade as it travels.
-      this.grid?.position.set(Math.round(target.x / 2) * 2, 0, Math.round(target.z / 2) * 2)
       if (moved) {
         this.key.position.set(target.x - 16 * 0.6, 16 * 1.3 + this.opts.heightCap, target.z + 16 * 0.5)
         this.key.target.position.set(target.x, 0, target.z)
@@ -571,12 +596,8 @@ export class BlockScene {
     // On the horizon there is no plate to fit: a VIEW_HALF box around the look-at point fills the view.
     const box = this.horizon ? { half: VIEW_HALF, bottom: 0, top: 2 } : { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }
     this.fit = fitBox(CAMERA.home, box, TARGET, aspect, fill)
-    const fog = this.scene.fog as Fog
-    if (this.horizon) {
-      // The grass stays clear around the build and hazes into the sky far out — the horizon is soft.
-      fog.near = this.fit * 2
-      fog.far = this.fit * 9
-    } else {
+    const fog = this.scene.fog as Fog | null
+    if (fog) {
       // The floor fades into the wall well beyond the plate at every zoom, so there is no horizon line.
       fog.near = this.fit * (CAMERA.zoomMax + 0.4)
       fog.far = this.fit * (CAMERA.zoomMax + 2.2)
@@ -599,7 +620,8 @@ export class BlockScene {
    * What a stage point (CSS px inside the canvas) lands on: a block's face, or the plate's top. Null over
    * the studio, the plate's sides or nothing at all.
    */
-  pick(x: number, y: number): Target | null {
+  pick(x: number, y: number, ignore: Cell[] = []): Target | null {
+    const skip = new Set(ignore.map((c) => `${c.x},${c.y},${c.z}`))
     const ndc = new Vector2((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1)
     this.raycaster.setFromCamera(ndc, this.camera)
     const pickable = this.layers.filter((l) => l.pickable)
@@ -610,6 +632,8 @@ export class BlockScene {
       if (layer && h.instanceId !== undefined && h.face) {
         let cell = layer.cells[h.instanceId]
         if (!cell) continue
+        // The block being moved is drawn where it would land; the finger must see THROUGH it.
+        if (skip.has(`${cell.x},${cell.y},${cell.z}`)) continue
         // The face normal is in the SHAPE's frame: turn it by the instance's rotation (a door facing west
         // is a rotated panel). The resolver still rounds it to one axis (rounded edges skew it).
         layer.mesh.getMatrixAt(h.instanceId, m)

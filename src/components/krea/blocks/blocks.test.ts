@@ -156,3 +156,14 @@ test('the horizon ground is Svær-only, its buffers are bounded by MAX_BLOCKS, a
   assert.match(scene, /const capacity = Math\.min\(islandSize \* islandSize \* heightCap, MAX_BLOCKS\)/)
   assert.match(scene, /pan\(from: \{ x: number; y: number \}, to: \{ x: number; y: number \}\): Pose \{\s+if \(!this\.horizon\) return this\.getPose\(\)/)
 })
+
+// Owner T59B2: press-and-hold moves a block. A hold that never moved must put it back (the release point,
+// seen through the lifted block, is the cell BEHIND it — a 1-cell nudge, measured), and a second finger
+// cancels the move rather than dropping it mid-pinch.
+test('hold-to-move: an unmoved hold puts the block back; a second finger cancels', () => {
+  const stage = readFileSync(new URL('./BlockStage.tsx', import.meta.url), 'utf8')
+  assert.match(stage, /onHoldEnd\?\.\(cancelled \|\| !g\.holdMoved \? null : local\(e\)\)/)
+  assert.match(stage, /if \(gesture\.current\.holding\) \{\s+gesture\.current\.holding = false\s+holdRef\.current\.onHoldEnd\?\.\(null\)/)
+  const game = readFileSync(new URL('../ByggeklodserGame.tsx', import.meta.url), 'utf8')
+  assert.match(game, /if \(t\.on !== 'block' \|\| toolRef\.current !== 'block' \|\| confirmOpen\) return false/, 'the eraser (or an open question) can pick blocks up')
+})

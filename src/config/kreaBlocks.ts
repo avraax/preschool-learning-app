@@ -22,11 +22,13 @@ export const BLOCK_PLATE = {
 } as const
 
 /**
- * Svær's HORIZON ground (owner 2026-11-07, G9BA8): the same sage as the plate out to the horizon, under a
- * SUBTLE sky ("not too much visual impact, just for the feeling"), the haze at the horizon matching the
- * sky's foot so the ground melts into it. `edge` is the thin strip that marks where building stops.
+ * Svær's HORIZON ground (owner 2026-11-07, G9BA8): the same sage as the plate out to the horizon. The sky
+ * is a real-sky blue, deeper overhead (R4PG9: "a bit more blue like the real sky"), and the horizon is a
+ * SHARP line — no haze (BNCW4). `BLOCK_EDGE` is the thin strip that marks where building stops.
  */
-export const BLOCK_SKY = { top: '#BFDDF0', horizon: '#EEF3EC' } as const
+export const BLOCK_SKY = { top: '#6FA9E3', horizon: '#CFE3F3' } as const
+/** Outside the build area: the SAME grid, nearly as strong, its edges softened (N24MG: "the surface of the buildable area just with a hint of blur"). */
+export const BLOCK_OUTSIDE_GRID = 0.85
 export const BLOCK_EDGE = '#8DA571'
 
 /** The studio the plate stands in (the floor fades into the wall). */

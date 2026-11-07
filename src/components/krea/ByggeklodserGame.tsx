@@ -32,6 +32,7 @@ import {
   emptyWorld,
   isMaterial,
   MATERIAL_KINDS,
+  moveBlock,
   previewCells,
   removeBlock,
   resolvePlacement,
@@ -42,6 +43,7 @@ import {
   wholeBlockCells,
   type BlockKind,
   type BlockWorld,
+  type Cell,
   type Held,
   type MaterialKind,
   type Target,
@@ -192,6 +194,54 @@ const ByggeklodserGame: React.FC = () => {
     if (confirmOpen) return
     if (tool === 'eraser') erase(target)
     else place(target, held)
+  }
+
+  // ----- press and HOLD a block to move it (owner T59B2) ------------------------------------------------
+  // The block itself travels with the finger — the world is DRAWN as if it had already landed there — in
+  // a faint halo, so the child sees exactly what is moving and where it will go. Lifting commits it as one
+  // action (undo puts it back); a spot it can't go shows it back home. Only with a block tool, not the eraser.
+  const [movePreview, setMovePreview] = useState<BlockWorld | null>(null)
+  const moving = useRef<{ from: Cell; drawn: Cell[] } | null>(null)
+  const HALO = '#FFFFFF'
+  const moveTo = (p: { x: number; y: number }) => {
+    const m = moving.current
+    if (!m) return null
+    const target = stage.current?.pickStage(p.x, p.y, m.drawn) ?? null
+    return target ? moveBlock(worldRef.current, m.from, target, facingNow()) : null
+  }
+  const onHoldStart = (t: Target): boolean => {
+    if (t.on !== 'block' || toolRef.current !== 'block' || confirmOpen) return false
+    const cells = wholeBlockCells(worldRef.current, t.cell)
+    if (!cells.length) return false
+    touched()
+    moving.current = { from: cells[0], drawn: cells }
+    sfx.play('krea-pick')
+    stage.current?.setGhost(cells, HALO, true)
+    return true
+  }
+  const onHoldMove = (p: { x: number; y: number }) => {
+    const m = moving.current
+    if (!m) return
+    const r = moveTo(p)
+    if (r && 'placed' in r) {
+      m.drawn = wholeBlockCells(r.placed, r.cell)
+      setMovePreview(r.placed)
+    } else {
+      // Nowhere it can go: it waits at home.
+      m.drawn = wholeBlockCells(worldRef.current, m.from)
+      setMovePreview(null)
+    }
+    stage.current?.setGhost(m.drawn, HALO, true)
+  }
+  const onHoldEnd = (p: { x: number; y: number } | null) => {
+    const r = p ? moveTo(p) : null
+    moving.current = null
+    setMovePreview(null)
+    stage.current?.setGhost(null, null)
+    if (r && 'placed' in r) {
+      setWorld(r.placed)
+      sfx.play('block-place')
+    } else sfx.play('block-back')
   }
 
   // ----- the preview: where the block will land while the finger is down (owner, JYJ5F) -----------------
@@ -402,7 +452,7 @@ const ByggeklodserGame: React.FC = () => {
   }
 
   // ----- render -----------------------------------------------------------------------------------------
-  const blocks = useMemo(() => blockList(world), [world])
+  const blocks = useMemo(() => blockList(movePreview ?? world), [world, movePreview])
   const canUndo = world.actions.length > 0
   const hasBlocks = blockCount(world) > 0
   /** Tool buttons in the panel: eraser, undo, zoom in/out, Ny — and on the horizon the way home. */
@@ -445,6 +495,9 @@ const ByggeklodserGame: React.FC = () => {
               blocks={blocks}
               onTap={onStageTap}
               onPreview={onStagePreview}
+              onHoldStart={onHoldStart}
+              onHoldMove={onHoldMove}
+              onHoldEnd={onHoldEnd}
               onPose={onPose}
             />
           </DroppableZone>

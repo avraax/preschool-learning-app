@@ -575,6 +575,21 @@ before play). Owner's decisions, commit `e6fae32`:
   bounce, edge cell builds, 0 frames at rest; Svær panel clean on all 17 viewports; Normal regression
   (incl. close X) on Chrome + WebKit. UNKNOWN (rung 3): pan feel, shadow cost while panning on the A10X.
 
+### After the fifth look (2026-11-07, N24MG / BNCW4 / R4PG9 / T59B2)
+- **No blur, no haze** (N24MG, BNCW4): the fading grid patch and the fog read as blur. The WHOLE build
+  area now carries the full grid (one 2×2 tile, repeated, mipmapped + anisotropic — crisp far out); the
+  grass outside carries the SAME grid at 0.85 with linear-magnified soft edges ("a hint of blur"); no
+  fog, so the horizon is a sharp line; the edge strip stays.
+- **Sky bluer** (R4PG9): `#6FA9E3` overhead → `#CFE3F3` at the horizon.
+- **Hold to move** (T59B2): a still finger on a block for 450 ms (block tool only) lifts it; the world is
+  drawn as if it had landed under the finger, inside a faint white halo shell (the block's real look
+  stays visible); lifting commits ONE action (`moveBlock` — lift + drop merged per cell, undo returns
+  it). Through the lifted block the pick sees what is behind it; a hold that never moved puts it back
+  (else the release nudged it one cell — measured); a second finger cancels. Anywhere a new block could
+  go, in all axes; a door moves whole.
+- Verified rung 1+2 (Chrome + WebKit): move onto another block's top, undo, tap still places, unmoved
+  hold unchanged; horizon probe; Normal regression. UNKNOWN (rung 3): whether 450 ms feels right.
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-03-byggeklodser.md` (Byggeklodser, the 3D block game in Krea).
