@@ -49,7 +49,7 @@ import {
   type MaterialKind,
   type Target,
 } from './blocks/blockWorld'
-import { CAMERA, canZoom, towardsCamera, zoomBy, type Pose } from './blocks/cameraRig'
+import { CAMERA, canZoom, homePose, towardsCamera, zoomBy, type Pose } from './blocks/cameraRig'
 
 // Byggeklodser (`krea.blocks`, Krea PRD-03), staging-only behind `blocksGate.ts`. Free build: cubes in
 // the 13 crayon colours, five material boxes (træ, mursten, sten, metal, glas), vindue and dør; eraser, undo, "Ny byggeplade?". Models come in W3–W4.
@@ -219,6 +219,8 @@ const ByggeklodserGame: React.FC = () => {
     touched()
     moving.current = { from: cells[0], drawn: cells }
     sfx.play('krea-pick')
+    // It rises into the dragged look the moment the hold takes: lifted, in its halo (owner 2026-11-07).
+    stage.current?.setLifted(cells)
     stage.current?.setGhost(cells, HALO, true)
     return true
   }
@@ -234,12 +236,14 @@ const ByggeklodserGame: React.FC = () => {
       m.drawn = wholeBlockCells(worldRef.current, m.from)
       setMovePreview(null)
     }
+    stage.current?.setLifted(m.drawn)
     stage.current?.setGhost(m.drawn, HALO, true)
   }
   const onHoldEnd = (p: { x: number; y: number } | null) => {
     const r = p ? moveTo(p) : null
     moving.current = null
     setMovePreview(null)
+    stage.current?.setLifted(null)
     stage.current?.setGhost(null, null)
     if (r && 'placed' in r) {
       setWorld(r.placed)
@@ -331,7 +335,7 @@ const ByggeklodserGame: React.FC = () => {
     if (!s) return
     touched()
     sfx.play('tap')
-    s.animateTo({ ...CAMERA.home, tx: 0, tz: 0 })
+    s.animateTo(homePose(true))
   }
 
   const zoom = (dir: 1 | -1) => {

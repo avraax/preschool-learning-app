@@ -77,6 +77,10 @@ const GROUND = 3744
 /** Horizon mode: half the shadow's square, around the look-at point (the shadow travels with the view). */
 const SHADOW_REACH = 26
 const SKY_RADIUS = 1500
+/** A block picked up to move (T59B2) floats this far above its cell, held AND dragged alike. */
+const LIFT = 0.3
+/** The pick-up rise, so the hold visibly turns into "you're holding it now". */
+const LIFT_MS = 140
 /** Window and door panels: thin slabs, framed in these colours on their edges. */
 const PANEL_DEPTH = 0.16
 /** Panels hang at the BACK of their cell, against whatever they were tapped onto (owner QHYV8: nothing
@@ -144,18 +148,27 @@ function checkerTile(px = 16, soft = false): Texture {
   return t
 }
 
-/** The squares as a checker (owner JYJ5F: the thin lines were hard to see). One texel per cell, crisp. */
-function checkerTexture(n: number): Texture {
+/** `a` blended toward `b` by `t` (0…1), as a hex colour — the checker's tint over the grass, baked. */
+function mix(a: string, b: string, t: number): string {
+  return `#${new Color(a).lerp(new Color(b), t).getHexString()}`
+}
+
+/** Horizon ground: the 2×2-cell checker in two GROUND colours (the grid baked into the grass, no layer). */
+function groundTile(light: string, dark: string, soft: boolean): Texture {
+  const px = soft ? 8 : 16
   const c = document.createElement('canvas')
-  c.width = c.height = n
+  c.width = c.height = px
   const g = c.getContext('2d')!
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-    g.fillStyle = (x + y) % 2 ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0)'
-    g.fillRect(x, y, 1, 1)
-  }
+  g.fillStyle = light
+  g.fillRect(0, 0, px, px)
+  g.fillStyle = dark
+  g.fillRect(px / 2, 0, px / 2, px / 2)
+  g.fillRect(0, px / 2, px / 2, px / 2)
   const t = new CanvasTexture(c)
-  t.magFilter = t.minFilter = NearestFilter
-  t.generateMipmaps = false
+  t.colorSpace = SRGBColorSpace
+  t.wrapS = t.wrapT = RepeatWrapping
+  t.magFilter = soft ? LinearFilter : NearestFilter
+  t.minFilter = LinearMipmapLinearFilter
   return t
 }
 
@@ -188,6 +201,8 @@ export class BlockScene {
   private readonly layers: Layer[]
   private readonly textures: Texture[] = []
   private readonly island: Mesh
+  /** Horizon mode: the grass outside the build area (also ground for a pick, which then bounces). */
+  private readonly outside: Mesh | null = null
   private readonly horizon: boolean
   /** Horizon mode: the sky dome (it follows the camera). */
   private readonly sky: Mesh | null = null
@@ -232,7 +247,8 @@ export class BlockScene {
     if (this.horizon) {
       // ----- the horizon: a SUBTLE sky dome (pale blue overhead, near-white at its foot) and a haze of
       // the same foot colour, so the grass melts into the sky with no hard line (owner G9BA8).
-      this.camera.near = 0.2
+      // A tighter depth range: the camera never comes closer than ~10 units (zoomMin × fit).
+      this.camera.near = 0.5
       this.camera.far = SKY_RADIUS * 2
       const dome = new SphereGeometry(SKY_RADIUS, 32, 16)
       const pos = dome.getAttribute('position')
@@ -283,15 +299,38 @@ export class BlockScene {
     if (this.horizon) {
       // ----- the ground: ONE plane of the plate's sage, far past the haze. Building stops at the build
       // area's edge, marked by a thin darker strip just outside it (owner: "a subtle indicator").
-      this.island = new Mesh(new PlaneGeometry(GROUND, GROUND).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 }))
+      // The checker is painted INTO the ground (owner 2026-11-07: "it flickers a lot when dragging,
+      // rotating, panning"): a separate grid layer a hair above the grass z-fought with it far out, where
+      // the depth buffer can't tell 5 mm apart — so there is no layer. The build area is one plane with the
+      // crisp tile; the grass outside is another with the softened tile, clipped where the build area is.
+      const b = islandSize / 2
+      const inTile = groundTile(BLOCK_PLATE.top, mix(BLOCK_PLATE.top, BLOCK_PLATE.checker, BLOCK_PLATE.checkerAlpha), false)
+      const outTile = groundTile(BLOCK_PLATE.top, mix(BLOCK_PLATE.top, BLOCK_PLATE.checker, BLOCK_PLATE.checkerAlpha * BLOCK_OUTSIDE_GRID), true)
+      const aniso = this.renderer.capabilities.getMaxAnisotropy()
+      inTile.anisotropy = outTile.anisotropy = aniso
+      inTile.repeat.set(islandSize / 2, islandSize / 2)
+      outTile.repeat.set(GROUND / 2, GROUND / 2)
+      this.textures.push(inTile, outTile)
+      // SUBDIVIDED (owner NGNDA: a curved wedge of grid went missing, zoomed in after a drag): a few giant
+      // triangles crossing the camera's near plane get their texture garbled on the iPad's GPU. Small tiles don't.
+      this.island = new Mesh(new PlaneGeometry(islandSize, islandSize, islandSize / 8, islandSize / 8).rotateX(-Math.PI / 2), new MeshStandardMaterial({ map: inTile, roughness: 0.95, metalness: 0 }))
       this.island.receiveShadow = true
       this.island.name = 'island'
       this.scene.add(this.island)
-      const b = islandSize / 2, wEdge = 0.35
-      const edgeMat = new MeshBasicMaterial({ color: BLOCK_EDGE, transparent: true, opacity: 0.55, depthWrite: false })
+      const outMat = new MeshStandardMaterial({ map: outTile, roughness: 0.95, metalness: 0 })
+      outMat.clippingPlanes = [new Plane(new Vector3(-1, 0, 0), -b), new Plane(new Vector3(1, 0, 0), -b), new Plane(new Vector3(0, 0, -1), -b), new Plane(new Vector3(0, 0, 1), -b)]
+      outMat.clipIntersection = true
+      this.renderer.localClippingEnabled = true
+      this.outside = new Mesh(new PlaneGeometry(GROUND, GROUND, GROUND / 48, GROUND / 48).rotateX(-Math.PI / 2), outMat)
+      this.outside.receiveShadow = true
+      this.outside.name = 'island-outside'
+      this.scene.add(this.outside)
+      const wEdge = 0.35
+      // The edge lies ON the grass, drawn in front of it by a depth offset (not a height that z-fights).
+      const edgeMat = new MeshBasicMaterial({ color: BLOCK_EDGE, transparent: true, opacity: 0.55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })
       for (const [w, d, x, z] of [[islandSize + 2 * wEdge, wEdge, 0, -b - wEdge / 2], [islandSize + 2 * wEdge, wEdge, 0, b + wEdge / 2], [wEdge, islandSize, -b - wEdge / 2, 0], [wEdge, islandSize, b + wEdge / 2, 0]]) {
         const strip = new Mesh(new PlaneGeometry(w, d).rotateX(-Math.PI / 2), edgeMat)
-        strip.position.set(x, 0.004, z)
+        strip.position.set(x, 0, z)
         strip.name = 'edge'
         this.scene.add(strip)
       }
@@ -313,30 +352,15 @@ export class BlockScene {
     // On the horizon: the WHOLE build area carries the full grid, crisp (N24MG); the grass outside it
     // carries the same grid at a fraction of its strength — "the same surface, a hint" — cut out where the
     // build area is (clipIntersection: clipped only where a point is inside all four edges).
-    if (this.horizon) {
-      const tile = checkerTile()
-      tile.anisotropy = this.renderer.capabilities.getMaxAnisotropy()
-      tile.repeat.set(islandSize / 2, islandSize / 2)
-      const out = checkerTile(8, true)
-      out.anisotropy = tile.anisotropy
-      out.repeat.set(GROUND / 2, GROUND / 2)
-      this.textures.push(tile, out)
-      const inMat = new MeshBasicMaterial({ map: tile, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false })
-      const inside = new Mesh(new PlaneGeometry(islandSize, islandSize).rotateX(-Math.PI / 2).translate(0, 0.006, 0), inMat)
-      inside.name = 'checker'
-      this.scene.add(inside)
-      const b = islandSize / 2
-      const outMat = new MeshBasicMaterial({ map: out, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha * BLOCK_OUTSIDE_GRID, transparent: true, depthWrite: false })
-      outMat.clippingPlanes = [new Plane(new Vector3(-1, 0, 0), -b), new Plane(new Vector3(1, 0, 0), -b), new Plane(new Vector3(0, 0, -1), -b), new Plane(new Vector3(0, 0, 1), -b)]
-      outMat.clipIntersection = true
-      this.renderer.localClippingEnabled = true
-      const outside = new Mesh(new PlaneGeometry(GROUND, GROUND).rotateX(-Math.PI / 2).translate(0, 0.005, 0), outMat)
-      outside.name = 'checker-outside'
-      this.scene.add(outside)
-    } else {
-      const chk = checkerTexture(islandSize)
+    // The plate's checker: the smooth 2×2 tile (mipmapped, anisotropic) — one texel per cell, unfiltered,
+    // made every square's edge crawl while the plate turned (owner: "it flickers a lot"). A depth offset,
+    // not just height, keeps it in front of the slab's top.
+    if (!this.horizon) {
+      const chk = checkerTile()
+      chk.anisotropy = this.renderer.capabilities.getMaxAnisotropy()
+      chk.repeat.set(islandSize / 2, islandSize / 2)
       this.textures.push(chk)
-      const chkMat = new MeshBasicMaterial({ map: chk, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false })
+      const chkMat = new MeshBasicMaterial({ map: chk, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
       const checker = new Mesh(new PlaneGeometry(islandSize, islandSize).rotateX(-Math.PI / 2).translate(0, 0.006, 0), chkMat)
       checker.name = 'checker'
       this.scene.add(checker)
@@ -419,13 +443,54 @@ export class BlockScene {
   }
 
   /** Redraw the blocks from the world. */
+  /** The cells of the block being moved (it floats, `LIFT`), and how far it has risen right now. */
+  private lifted = new Set<string>()
+  private liftY = 0
+  private liftAnim = 0
+  private lastList: { cell: Cell; block: Block }[] = []
+  private ghostState: { cells: Cell[] | null; tint: string | null; halo: boolean } = { cells: null, tint: null, halo: false }
+
+  /**
+   * The block being moved floats (owner 2026-11-07: holding must already LOOK like dragging). A new pick-up
+   * rises over `LIFT_MS`; following the finger keeps it up; null puts it down. Frames run only while it rises.
+   */
+  setLifted(cells: Cell[] | null): void {
+    const was = this.lifted.size > 0
+    this.lifted = new Set((cells ?? []).map((c) => `${c.x},${c.y},${c.z}`))
+    cancelAnimationFrame(this.liftAnim)
+    this.liftAnim = 0
+    if (!this.lifted.size) {
+      this.liftY = 0
+    } else if (!was) {
+      const t0 = performance.now()
+      const tick = (now: number) => {
+        if (this.disposed) return
+        const t = Math.min(1, (now - t0) / LIFT_MS)
+        this.liftY = LIFT * (1 - (1 - t) * (1 - t))
+        this.drawLift()
+        this.liftAnim = t < 1 ? requestAnimationFrame(tick) : 0
+      }
+      this.liftY = 0
+      this.liftAnim = requestAnimationFrame(tick)
+      return
+    }
+    this.drawLift()
+  }
+
+  private drawLift(): void {
+    this.setBlocks(this.lastList)
+    this.setGhost(this.ghostState.cells, this.ghostState.tint, this.ghostState.halo)
+  }
+
   setBlocks(list: { cell: Cell; block: Block }[]): void {
+    this.lastList = list
     const m = new Matrix4()
     const col = new Color()
     for (const l of this.layers) l.begin()
     for (const { cell, block } of list) {
       if (block.anchor) continue // a door is drawn once, from its anchor
       const p = this.centre(cell)
+      if (this.lifted.has(`${cell.x},${cell.y},${cell.z}`)) p.y += this.liftY
       // Turn the +z-facing shape to the block's facing, then move it to its cell.
       m.makeRotationY(facingAngle(block.facing)).setPosition(p.x, p.y, p.z)
       switch (block.kind as BlockKind) {
@@ -452,6 +517,7 @@ export class BlockScene {
    * it (null). `tint` is the colour the ghost wears.
    */
   setGhost(cells: Cell[] | null, tint: string | null, halo = false): void {
+    this.ghostState = { cells, tint, halo }
     let changed = false
     // A HALO (a block being moved, T59B2) is a faint, slightly larger shell, so the block inside it —
     // its real look — stays visible; the placing ghost is a half-opaque cell of the held colour.
@@ -465,6 +531,8 @@ export class BlockScene {
         return
       }
       const p = this.centre(c)
+      // The halo floats with the block it wraps.
+      if (halo && this.lifted.has(`${c.x},${c.y},${c.z}`)) p.y += this.liftY
       const mat = g.material as MeshBasicMaterial
       if (!g.visible || !g.position.equals(p) || mat.color.getHexString() !== new Color(tint).getHexString() || g.scale.x !== scale) changed = true
       g.position.copy(p)
@@ -625,7 +693,8 @@ export class BlockScene {
     const ndc = new Vector2((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1)
     this.raycaster.setFromCamera(ndc, this.camera)
     const pickable = this.layers.filter((l) => l.pickable)
-    const hits = this.raycaster.intersectObjects([...pickable.map((l) => l.mesh), this.island] as Object3D[], false)
+    const grounds = this.outside ? [this.island, this.outside] : [this.island]
+    const hits = this.raycaster.intersectObjects([...pickable.map((l) => l.mesh), ...grounds] as Object3D[], false)
     const m = new Matrix4()
     for (const h of hits) {
       const layer = pickable.find((l) => l.mesh === h.object)
@@ -645,7 +714,7 @@ export class BlockScene {
         }
         return { on: 'block', cell, normal: { x: n.x, y: n.y, z: n.z } }
       }
-      if (h.object === this.island) {
+      if (grounds.includes(h.object as Mesh)) {
         if (h.point.y < -0.05) return null // a side of the slab, not its top
         const cx = Math.floor(h.point.x + this.half + 0.5)
         const cz = Math.floor(h.point.z + this.half + 0.5)
@@ -676,6 +745,7 @@ export class BlockScene {
     if (this.disposed) return
     this.disposed = true
     cancelAnimationFrame(this.pending)
+    cancelAnimationFrame(this.liftAnim)
     this.stopAnimation()
     this.canvas.removeEventListener('webglcontextlost', this.onLost, false)
     this.canvas.removeEventListener('webglcontextrestored', this.onRestored, false)

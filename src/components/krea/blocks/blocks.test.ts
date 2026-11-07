@@ -57,7 +57,7 @@ test('render on demand: no animation loop, and every requestAnimationFrame is a 
   const scene = read(SCENE)
   assert.doesNotMatch(scene, /setAnimationLoop/, 'a three.js animation loop renders every frame forever')
   const rafs = [...scene.matchAll(/requestAnimationFrame\(/g)].length
-  assert.equal(rafs, 3, 'requestAnimationFrame sites in BlockScene changed — re-check each one is bounded')
+  assert.equal(rafs, 5, 'requestAnimationFrame sites in BlockScene changed — re-check each one is bounded')
   // requestRender: one frame, guarded by `pending`, never re-scheduled from inside its own callback.
   const rr = scene.match(/requestRender\(\): void \{([\s\S]*?)\n {2}\}/)
   assert.ok(rr)
@@ -67,6 +67,8 @@ test('render on demand: no animation loop, and every requestAnimationFrame is a 
   const render = scene.match(/private render\(\): void \{([\s\S]*?)\n {2}\}/)
   assert.ok(render, 'BlockScene has no render()')
   assert.doesNotMatch(render[1], /requestRender|requestAnimationFrame|setAnimationLoop/, 'render() schedules the next frame')
+  // The pick-up rise (T59B2): re-arms only while t < 1, then stops.
+  assert.match(scene, /this\.liftAnim = t < 1 \? requestAnimationFrame\(tick\) : 0/)
   // animateTo: re-arms only while t < 1.
   assert.match(scene, /if \(t < 1\) this\.animation = requestAnimationFrame\(tick\)/)
   // The game's drag ghost: one raycast a frame, never a loop.

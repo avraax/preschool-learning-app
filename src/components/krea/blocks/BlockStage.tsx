@@ -2,7 +2,7 @@ import React, { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import { TAP_SLOP_DISTANCE } from '../../common/dnd/dragActivation'
 import { BlockScene, type FaceArt } from './engine/BlockScene'
-import { CAMERA, dragTurn, pinchZoom, type Pose } from './cameraRig'
+import { CAMERA, dragTurn, homePose, pinchZoom, type Pose } from './cameraRig'
 import type { Block, Cell, Target } from './blockWorld'
 
 // The 3D stage (Krea PRD-03 §4.4): one canvas, one BlockScene, and the gesture split on it.
@@ -31,6 +31,8 @@ export interface BlockStageHandle {
   projectClient: (cell: Cell, fy?: number) => { x: number; y: number } | null
   /** Show cells as a ghost in `tint`, or hide it (null). */
   setGhost: (cells: Cell[] | null, tint: string | null, halo?: boolean) => void
+  /** The block being moved floats above its cells (null: put down). */
+  setLifted: (cells: Cell[] | null) => void
   getPose: () => Pose
   setPose: (p: Pose) => void
   animateTo: (p: Pose, done?: () => void) => void
@@ -124,7 +126,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     const r = host.getBoundingClientRect()
     scene.resize(r.width, r.height)
     scene.setInsets(insetsRef.current)
-    scene.setPose({ ...CAMERA.home })
+    scene.setPose(homePose(horizon))
     scene.setBlocks(blocksRef.current)
     onPoseRef.current?.(scene.getPose())
     const ro = new ResizeObserver((entries) => {
@@ -169,6 +171,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       return { x: r.left + p.x, y: r.top + p.y }
     },
     setGhost: (cells, tint, halo) => sceneRef.current?.setGhost(cells, tint, halo),
+    setLifted: (cells) => sceneRef.current?.setLifted(cells),
     getPose: () => sceneRef.current?.getPose() ?? { ...CAMERA.home },
     setPose: (p) => {
       sceneRef.current?.setPose(p)
