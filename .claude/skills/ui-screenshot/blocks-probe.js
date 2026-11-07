@@ -22,11 +22,11 @@
   const ev = (t, x, y, id = 5) => host().dispatchEvent(new PointerEvent(t, { bubbles: true, cancelable: true, pointerId: id, pointerType: 'touch', isPrimary: id === 5, button: 0, clientX: x, clientY: y }))
   const tap = async (q) => { ev('pointerdown', q.x, q.y); ev('pointerup', q.x, q.y); await sleep(160) }
   const at = (x, y, z, fy = 0) => window.__blocks.project(x, y, z, fy)
-  /** Hold the "Ny" confirm button long enough, then release + click. */
+  /** Hold the "Ny" confirm button long enough, then release — NO click: iOS sends none after a long press. */
   const holdFresh = async () => {
     const b = document.querySelector('[data-krea-control=confirm-fresh]')
     const pe = (t) => b.dispatchEvent(new PointerEvent(t, { bubbles: true, pointerId: 7, pointerType: 'touch', isPrimary: true, button: 0 }))
-    pe('pointerdown'); await sleep(1650); pe('pointerup'); b.click(); await sleep(500)
+    pe('pointerdown'); await sleep(1650); pe('pointerup'); await sleep(500)
   }
 
   // ---------------- LET: the plate ----------------

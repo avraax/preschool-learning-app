@@ -46,11 +46,14 @@ test('GameShell hands onBackWithin to the back arrow, which prefers it over the 
 })
 
 // Owner 2026-11-07: kids can clear by accident. The fresh button must be HELD (a full ring only arms it;
-// the click that ends the hold clears), and the clear is undoable in every game with Fortryd.
+// letting go then clears — iOS sends no click after a long press), and every game's Fortryd undoes it.
 test('the new-piece question clears only after a hold', () => {
   const dialog = src('./studio/NewPaperConfirm.tsx')
   assert.match(dialog, /export const HOLD_CONFIRM_MS = 1500/)
-  assert.match(dialog, /const commit = \(\) => \{\s+if \(hold !== 'armed'\) return/, 'a tap clears without the hold')
+  assert.match(dialog, /const commit = \(\) => \{\s+if \(holdRef\.current !== 'armed'\) return/, 'a tap clears without the hold')
+  // iOS fires no click after a long press: LETTING GO of an armed button must clear by itself.
+  assert.match(dialog, /const releaseHold = \(\) => \{\s+if \(holdRef\.current === 'armed'\) return commit\(\)/, 'the iPad never clears (click-only commit)')
+  assert.match(dialog, /onPointerUp=\{releaseHold\}/)
   assert.match(dialog, /onPress=\{commit\}/)
   assert.doesNotMatch(dialog, /onPress=\{onFresh\}/)
 })

@@ -16,9 +16,12 @@ import { NEW_PAPER_TITLE } from '../../../config/kreaPhrases'
 // the picture button must be HELD for `HOLD_CONFIRM_MS` while a ring fills round it; a quick tap only
 // wiggles it. And every game makes the clear UNDOABLE (Fortryd brings the piece back) — two safety nets.
 //
-// Both close on `onClick` only, never on pointerdown: a blocking overlay closed on pointerdown passes the
-// same tap through to the paper underneath (memory: audio-modal tap-through). So a full ring only ARMS the
-// button; the click that ends the hold is what clears.
+// Never close on pointerdown: a blocking overlay closed on pointerdown passes the same tap through to the
+// paper underneath (memory: audio-modal tap-through). So a full ring only ARMS the button, and LETTING GO
+// of an armed button clears — on `pointerup`, NOT on the click: iOS synthesizes no `click` after a long
+// press (its tap recognizer gives up well under 1.5 s), so a click-only commit never cleared on the iPad
+// (owner 2026-11-07). The click stays for a keyboard/mouse; the hold state is a REF so the release and a
+// following click can't both clear.
 
 export interface NewPaperConfirmProps {
   open: boolean
@@ -42,7 +45,12 @@ const RING_C = 2 * Math.PI * 46
 
 const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onClose, title = NEW_PAPER_TITLE, freshPicture, freshLabel = 'Ja, nyt papir' }) => {
   const theme = useTheme()
-  const [hold, setHold] = useState<'idle' | 'holding' | 'armed'>('idle')
+  const [hold, setHoldState] = useState<'idle' | 'holding' | 'armed'>('idle')
+  const holdRef = useRef<'idle' | 'holding' | 'armed'>('idle')
+  const setHold = (h: 'idle' | 'holding' | 'armed') => {
+    holdRef.current = h
+    setHoldState(h)
+  }
   const [wiggle, setWiggle] = useState(0)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const stop = () => {
@@ -62,25 +70,21 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onClos
     setHold('holding')
     timer.current = setTimeout(() => setHold('armed'), HOLD_CONFIRM_MS)
   }
-  /** Lifted too soon: nothing happens but a wiggle — "hold me". */
+  /** Let go: armed → clear. Lifted too soon → nothing but a wiggle — "hold me". */
   const releaseHold = () => {
-    if (hold === 'armed') return
+    if (holdRef.current === 'armed') return commit()
+    if (holdRef.current === 'idle') return
     stop()
     setHold('idle')
     setWiggle((w) => w + 1)
   }
-  /**
-   * The finger left the button (or the system took the pointer). Not armed: start over. Armed: on touch
-   * `pointerleave` fires just BEFORE the click that commits, so give that click a moment — then disarm,
-   * or a stray tap much later would clear without a hold.
-   */
+  /** The finger slid off the button (or the system took the pointer): start over, clear nothing. */
   const abandonHold = () => {
     stop()
-    if (hold !== 'armed') return setHold('idle')
-    timer.current = setTimeout(() => setHold('idle'), 400)
+    setHold('idle')
   }
   const commit = () => {
-    if (hold !== 'armed') return
+    if (holdRef.current !== 'armed') return
     stop()
     setHold('idle')
     onFresh()
