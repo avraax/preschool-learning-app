@@ -2,7 +2,7 @@ import React, { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Box } from '@mui/material'
 import { TAP_SLOP_DISTANCE } from '../../common/dnd/dragActivation'
 import { BlockScene, type FaceArt } from './engine/BlockScene'
-import { CAMERA, dragTurn, homePose, pinchZoom, type Pose } from './cameraRig'
+import { CAMERA, clampPose, dragTurn, homePose, pinchZoom, type Pose } from './cameraRig'
 import type { Block, Cell, Target } from './blockWorld'
 
 // The 3D stage (Krea PRD-03 §4.4): one canvas, one BlockScene, and the gesture split on it.
@@ -83,6 +83,8 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
   const [lost, setLost] = useState(false)
   const onPoseRef = useRef(onPose)
   onPoseRef.current = onPose
+  const disabledRef = useRef(disabled)
+  disabledRef.current = disabled
   const onPreviewRef = useRef(onPreview)
   onPreviewRef.current = onPreview
   const holdRef = useRef({ onHoldStart, onHoldMove, onHoldEnd })
@@ -208,7 +210,20 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     host.addEventListener('touchmove', stop, { passive: false })
     host.addEventListener('gesturestart', stop, { passive: false })
     host.addEventListener('gesturechange', stop, { passive: false })
+    // No zoom buttons (owner 2026-11-07): a pinch zooms on touch, the wheel (or a trackpad pinch) with a mouse.
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const scene = sceneRef.current
+      if (!scene || disabledRef.current) return
+      const p = scene.getPose()
+      const next = clampPose({ ...p, zoom: p.zoom * Math.exp(Math.max(-60, Math.min(60, e.deltaY)) * 0.004) })
+      scene.setPose(next)
+      scene.settleShadow()
+      onPoseRef.current?.(next)
+    }
+    host.addEventListener('wheel', wheel, { passive: false })
     return () => {
+      host.removeEventListener('wheel', wheel)
       host.removeEventListener('touchmove', stop)
       host.removeEventListener('gesturestart', stop)
       host.removeEventListener('gesturechange', stop)

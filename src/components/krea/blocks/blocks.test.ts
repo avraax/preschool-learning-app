@@ -79,12 +79,22 @@ test('render on demand: no animation loop, and every requestAnimationFrame is a 
 test('a turn costs one draw: no React render per camera move, no shadow pass per frame', () => {
   const game = read(GAME)
   assert.doesNotMatch(game, /useState<Pose>/, 'the camera pose is React state — every turn move re-renders the game')
-  assert.match(game, /const onPose = useCallback\(\(p: Pose\) => \{\s+setCanIn\(canZoom\(p, 1\)\)\s+setCanOut\(canZoom\(p, -1\)\)/)
-  assert.match(game, /onPose=\{onPose\}/)
+  // No zoom buttons any more (owner 2026-11-07), so nothing in the game listens to the pose at all.
+  assert.doesNotMatch(game, /onPose=/, 'the game re-renders on camera moves again')
   const scene = read(SCENE)
   assert.match(scene, /this\.renderer\.shadowMap\.autoUpdate = false/, 'the shadow map re-renders on every frame of a turn')
   const setBlocks = scene.slice(scene.indexOf('  setBlocks('), scene.indexOf('  setGhost('))
   assert.match(setBlocks, /this\.renderer\.shadowMap\.needsUpdate = true/, 'a block change no longer refreshes the shadow')
+})
+
+// Owner 2026-11-07: three tools only — Viskelæder, Fortryd, Ny. A pinch (or the wheel) zooms; no + / − / home.
+test('the panel holds three tools, and the camera zooms by pinch or wheel', () => {
+  const game = read(GAME)
+  for (const id of ['eraser', 'undo', 'new-build']) assert.match(game, new RegExp(`dataId="${id}"`), `${id} is gone`)
+  for (const id of ['zoom-in', 'zoom-out', 'home']) assert.doesNotMatch(game, new RegExp(`dataId="${id}"`), `${id} is back`)
+  const stage = read('components/krea/blocks/BlockStage.tsx')
+  assert.match(stage, /host\.addEventListener\('wheel', wheel, \{ passive: false \}\)/, 'a mouse cannot zoom')
+  assert.match(stage, /pinchZoom\(g\.pinchPose/, 'a pinch no longer zooms')
 })
 
 // §4.1: exactly one WebGLRenderer, created in an effect on a fresh canvas, disposed with its context.

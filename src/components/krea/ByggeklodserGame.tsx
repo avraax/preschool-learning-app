@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, ButtonBase } from '@mui/material'
+import { Box } from '@mui/material'
 import { DndContext, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import GameShell from '../common/GameShell'
 import { useOccludeWorld } from '../common/scene/worldOcclusion'
@@ -19,7 +19,7 @@ import { BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../config/kreaBlocks'
 import { KREA_ART } from '../../assets/games/krea'
 import { BLOCK_FACE_ART } from '../../assets/games/krea/blocks'
 import { CRAYON_HEX } from './canvas/brushes'
-import { PlusBadge, pressHandlers, StudioButton } from './studio/StudioControls'
+import { PlusBadge, StudioButton } from './studio/StudioControls'
 import { reportBlocksBuilt } from '../../services/usagePing'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
@@ -49,7 +49,7 @@ import {
   type MaterialKind,
   type Target,
 } from './blocks/blockWorld'
-import { CAMERA, canZoom, homePose, towardsCamera, zoomBy, type Pose } from './blocks/cameraRig'
+import { CAMERA, towardsCamera } from './blocks/cameraRig'
 
 // Byggeklodser (`krea.blocks`, Krea PRD-03), staging-only behind `blocksGate.ts`. Free build: cubes in
 // the 13 crayon colours, five material boxes (træ, mursten, sten, metal, glas), vindue and dør; eraser, undo, "Ny byggeplade?". Models come in W3–W4.
@@ -119,15 +119,6 @@ const ByggeklodserGame: React.FC = () => {
   const toolRef = useRef(tool)
   toolRef.current = tool
   const [confirmOpen, setConfirmOpen] = useState(false)
-  // Only what the buttons need, as PRIMITIVES: a turn reports its pose ~60×/s, and React bails out on an
-  // unchanged boolean — a pose object here re-rendered the whole game every frame of a turn (measured:
-  // 85% busy at a 4× CPU throttle).
-  const [canIn, setCanIn] = useState(() => canZoom(CAMERA.home, 1))
-  const [canOut, setCanOut] = useState(() => canZoom(CAMERA.home, -1))
-  const onPose = useCallback((p: Pose) => {
-    setCanIn(canZoom(p, 1))
-    setCanOut(canZoom(p, -1))
-  }, [])
   const [drag, setDrag] = useState<Held | null>(null)
   const stage = useRef<BlockStageHandle>(null)
   // DEV/harness probe hook: where a cell is on screen, so rung 1/2 drivers aim at real squares on every
@@ -348,25 +339,6 @@ const ByggeklodserGame: React.FC = () => {
     setConfirmOpen(false)
   }
 
-  // ----- zoom buttons (every level turns with a finger; the buttons zoom) --------------------------------
-  /** Horizon: glide back to the middle, at the starting angle (the way home after panning far out). */
-  const goHome = () => {
-    const s = stage.current
-    if (!s) return
-    touched()
-    sfx.play('tap')
-    s.animateTo(homePose(true))
-  }
-
-  const zoom = (dir: 1 | -1) => {
-    const s = stage.current
-    if (!s) return
-    touched()
-    const next = zoomBy(s.getPose(), dir)
-    s.setPose(next)
-    sfx.play('tap')
-  }
-
   // ----- the floating controls (owner 2026-11-06: the building area fullscreen, controls on top) --------
   // The plate is fitted to the screen MINUS the header and the panel, measured, never a tuned percentage:
   // the orientation says which edge the panel covers (right in landscape, bottom in portrait), its rect how much.
@@ -482,8 +454,6 @@ const ByggeklodserGame: React.FC = () => {
   const blocks = useMemo(() => blockList(movePreview ?? world), [world, movePreview])
   const canUndo = world.actions.length > 0
   const hasBlocks = blockCount(world) > 0
-  /** Tool buttons in the panel: eraser, undo, zoom in/out, Ny — and on the horizon the way home. */
-  const tools = tuning.horizon ? 6 : 5
   const newBuildPicture = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       <Box sx={{ position: 'absolute', inset: '6%' }}>
@@ -525,7 +495,6 @@ const ByggeklodserGame: React.FC = () => {
               onHoldStart={onHoldStart}
               onHoldMove={onHoldMove}
               onHoldEnd={onHoldEnd}
-              onPose={onPose}
             />
           </DroppableZone>
         </Box>
@@ -596,31 +565,25 @@ const ByggeklodserGame: React.FC = () => {
                 </Box>
               ))}
             </Box>
-            {/* Eraser, undo, zoom in, zoom out, then "Ny", zoom in/out (and home): rows of 3 — + and − side by side in a landscape column; ONE row in
-                portrait; ONE column beside the tray on a phone in landscape (too short to stack them). */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(3, ${SIDE_BTN})`, gap: '6px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(${tools}, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(${tuning.horizon ? 2 : 1}, ${SIDE_BTN})`, gap: '6px' } }}>
-              <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
-                <Img src={KREA_ART.eraser} />
-              </StudioButton>
-              <StudioButton dataId="undo" label="Fortryd" size={SIDE_BTN} disabled={!canUndo} onPress={doUndo}>
-                <Img src={KREA_ART.undo} />
-              </StudioButton>
-              <Box sx={{ visibility: hasBlocks ? 'visible' : 'hidden'}}>
+            {/* Three tools (owner 2026-11-07: no zoom or home buttons — a pinch zooms, the edge holds the view).
+                Viskelæder + Fortryd side by side (the editing pair); "Ny" apart from them with a wider gap, so the
+                button that clears everything never sits where a kid reaches for the ones used all the time.
+                Landscape column: the pair, then "Ny" under it. Portrait row: pair · gap · Ny. Phone landscape:
+                one column beside the tray. */}
+            <Box data-blocks-tools sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '22px', '@media (orientation: landscape)': { flexDirection: 'column', gap: '16px' }, [PHONE_LANDSCAPE]: { gap: '12px' } }}>
+              <Box sx={{ display: 'flex', gap: '8px', [PHONE_LANDSCAPE]: { flexDirection: 'column', gap: '6px' } }}>
+                <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
+                  <Img src={KREA_ART.eraser} />
+                </StudioButton>
+                <StudioButton dataId="undo" label="Fortryd" size={SIDE_BTN} disabled={!canUndo} onPress={doUndo}>
+                  <Img src={KREA_ART.undo} />
+                </StudioButton>
+              </Box>
+              <Box sx={{ visibility: hasBlocks ? 'visible' : 'hidden' }}>
                 <StudioButton dataId="new-build" label="Ny byggeplade" size={SIDE_BTN} disabled={!hasBlocks || confirmOpen} onPress={askNewBuild}>
                   {newBuildPicture}
                 </StudioButton>
               </Box>
-              <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canIn} onPress={() => zoom(1)}>
-                <PlusMinus plus />
-              </IconPress>
-              <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
-                <PlusMinus plus={false} />
-              </IconPress>
-              {tuning.horizon ? (
-                <IconPress label="Tilbage til midten" dataId="home" onPress={goHome}>
-                  <HomeMark />
-                </IconPress>
-              ) : null}
             </Box>
           </Box>
         </Box>
@@ -699,43 +662,6 @@ const PlatePicture: React.FC = () => (
       <path d="M50 34 L92 56 L50 78 L8 56 Z" fill={BLOCK_PLATE.top} stroke="rgba(0,0,0,0.08)" />
     </svg>
   </Box>
-)
-
-const IconPress: React.FC<{ label: string; dataId: string; disabled?: boolean; onPress: () => void; children: React.ReactNode }> = ({ label, dataId, disabled, onPress, children }) => (
-  <ButtonBase
-    aria-label={label}
-    data-krea-control={dataId}
-    disabled={disabled}
-    {...pressHandlers(onPress)}
-    sx={{
-      width: SIDE_BTN,
-      height: SIDE_BTN,
-      borderRadius: '50%',
-      background: 'radial-gradient(circle at 35% 30%, #FFFFFF, #F1E6D6 70%)',
-      boxShadow: 'inset 0 -4px 0 rgba(120,90,50,0.25), 0 3px 6px rgba(60,40,20,0.3)',
-      opacity: disabled ? 0.4 : 1,
-      touchAction: 'manipulation',
-      '&:active': { transform: 'scale(0.94)' },
-    }}
-  >
-    {children}
-  </ButtonBase>
-)
-
-/** The way home on the horizon ground: a little house, drawn in code. */
-const HomeMark: React.FC = () => (
-  <svg viewBox="0 0 48 48" width="58%" height="58%" aria-hidden>
-    <path d="M8 24 L24 9 L40 24" fill="none" stroke="#5A8F3A" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M13 22 V39 H35 V22" fill="none" stroke="#5A8F3A" strokeWidth="5" strokeLinejoin="round" />
-    <rect x="21" y="29" width="6" height="10" rx="1.5" fill="#5A8F3A" />
-  </svg>
-)
-
-const PlusMinus: React.FC<{ plus: boolean }> = ({ plus }) => (
-  <svg viewBox="0 0 48 48" width="55%" height="55%" aria-hidden>
-    <rect x="8" y="20" width="32" height="8" rx="4" fill="#5A8F3A" />
-    {plus ? <rect x="20" y="8" width="8" height="32" rx="4" fill="#5A8F3A" /> : null}
-  </svg>
 )
 
 export default ByggeklodserGame

@@ -140,6 +140,7 @@ const Art: React.FC<{ src: string }> = ({ src }) => (
 export const PlusBadge: React.FC = () => (
     <Box
       aria-hidden
+      data-plus-badge
       sx={{
         position: 'absolute',
         right: '-14%',

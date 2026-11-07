@@ -34,7 +34,7 @@
   window.__progress.setDifficulty({ global: 'let' })
   await waitFor(() => window.__blocks && window.__blocks.size === 14 && host()?.querySelector('canvas[data-blocks-frames]'))
   await sleep(500)
-  check('let: a plate, no home button', !document.querySelector('[data-krea-control=home]'))
+  check('let: three tools, no zoom or home buttons', !!document.querySelector('[data-krea-control=undo]') && !document.querySelector('[data-krea-control=home],[data-krea-control=zoom-in],[data-krea-control=zoom-out]'))
   check('let: no roof, no theme picker', !document.querySelector('[data-blocks-special=roof]') && !document.querySelector('[data-blocks-theme-pick]'))
   const c = 7
   press('[data-blocks-special=brick]'); await sleep(80)
@@ -81,7 +81,7 @@
 
   // ---------------- NORMAL: the open world ----------------
   window.__progress.setDifficulty({ global: 'normal' })
-  await waitFor(() => window.__blocks && window.__blocks.size === 128 && document.querySelector('[data-krea-control=home]'))
+  await waitFor(() => window.__blocks && window.__blocks.size === 128 && host()?.querySelector('canvas[data-blocks-frames]'))
   await sleep(800)
   const W = 64
   press('[data-blocks-chip=roed]'); await sleep(80)
@@ -99,8 +99,12 @@
   const cn = count()
   await tap(at(W + 6, 0, W))
   check('normal: build after a pan', count() === cn + 1, count())
-  press('[data-krea-control=home]'); await sleep(700)
-  check('normal: home glides back', Math.abs(at(W, 0, W).x - p0.x) < 25)
+  // The wheel zooms (no buttons): rolling down moves the view out, so the block's square sits nearer the middle.
+  const cx = innerWidth / 2, cy = innerHeight / 2, d0 = Math.hypot(at(W, 0, W).x - cx, at(W, 0, W).y - cy)
+  for (let k = 0; k < 6; k++) { host().dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 60, clientX: cx, clientY: cy })); await sleep(30) }
+  await sleep(200)
+  const d1 = Math.hypot(at(W, 0, W).x - cx, at(W, 0, W).y - cy)
+  check('normal: the wheel zooms out', d1 < d0 * 0.8, `${Math.round(d0)}→${Math.round(d1)}`)
   const before2 = count()
   await tap(at(127 + 3, 0, W))
   check('normal: a tap outside the build area bounces', count() === before2, count())

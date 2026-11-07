@@ -79,7 +79,8 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
   `anchor` refs). Clears are actions (`clearWorld`) so Fortryd undoes them.
 - Render on demand only (`blocks.test.ts` counts the rAF sites); one renderer, fresh canvas per mount,
   dispose the DFG LUT. Let = a plate; Normal + Svær = the same 128² open world, two-finger pan,
-  `MAX_BLOCKS` sizes the instance buffers. Everything is outdoors (sky, hills, sun).
+  `MAX_BLOCKS` sizes the instance buffers. Everything is outdoors (sky, hills, sun). Three tools only
+  (Viskelæder, Fortryd, Ny apart): no + / − / home — a pinch or the wheel zooms, the edge holds the view.
 - iPad GPU traps, each seen on device: a grid LAYER over the ground z-fights far out (bake it into the
   ground); giant triangles crossing the near plane garble textures (subdivide); one-texel-per-cell grids
   crawl (mipmapped tile); WebKit draws a decal under the ground on polygonOffset alone (lift it 1 cm).

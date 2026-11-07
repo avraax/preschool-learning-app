@@ -54,6 +54,9 @@ test('the new-piece question clears only after a hold', () => {
   // iOS fires no click after a long press: LETTING GO of an armed button must clear by itself.
   assert.match(dialog, /const releaseHold = \(\) => \{\s+if \(holdRef\.current === 'armed'\) return commit\(\)/, 'the iPad never clears (click-only commit)')
   assert.match(dialog, /onPointerUp=\{releaseHold\}/)
+  // The ring has its OWN room round the button (it lay over the corners, the + badge and the title).
+  assert.match(dialog, /width: ringBox,\s+height: ringBox,/, 'the ring overlays the button again')
+  assert.match(dialog, /'& \[data-plus-badge\]': \{ display: 'none' \}/, 'the + badge sits on the ring again')
   assert.match(dialog, /onPress=\{commit\}/)
   assert.doesNotMatch(dialog, /onPress=\{onFresh\}/)
 })

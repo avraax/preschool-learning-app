@@ -89,7 +89,10 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onClos
     setHold('idle')
     onFresh()
   }
-  const big = 'clamp(88px, 18vmin, 150px)'
+  const big = 'clamp(80px, 15vmin, 128px)'
+  /** The ring's own room round the button (owner 2026-11-07: the ring lay over the button's corners, its
+   *  + badge and nearly the title). 1.7× keeps the ring's inner edge clear of a square picture's corners. */
+  const ringBox = `calc(${big} * 1.7)`
   const close = 'clamp(48px, 8vmin, 64px)'
   return (
     <Box
@@ -134,6 +137,13 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onClos
           onContextMenu={(e) => e.preventDefault()}
           sx={{
             position: 'relative',
+            width: ringBox,
+            height: ringBox,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            // The question already says "new": the button's + badge would only sit on the ring.
+            '& [data-plus-badge]': { display: 'none' },
             touchAction: 'none',
             WebkitTouchCallout: 'none',
             userSelect: 'none',
@@ -150,7 +160,7 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onClos
             {freshPicture ?? <PICTURES.NewPaper />}
           </StudioButton>
           {/* The ring that fills while the finger holds; full = let go to clear. */}
-          <Box component="svg" viewBox="0 0 100 100" aria-hidden sx={{ position: 'absolute', inset: '-14%', width: '128%', height: '128%', pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
+          <Box component="svg" viewBox="0 0 100 100" aria-hidden sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
             <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(79,168,58,0.18)" strokeWidth="5" />
             <Box
               component="circle"
