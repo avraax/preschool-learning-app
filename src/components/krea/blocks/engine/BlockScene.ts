@@ -242,9 +242,9 @@ function sunTexture(px = 128): Texture {
   const g = c.getContext('2d')!
   const r = g.createRadialGradient(px / 2, px / 2, 0, px / 2, px / 2, px / 2)
   r.addColorStop(0, BLOCK_SUN.color)
-  r.addColorStop(0.22, BLOCK_SUN.color)
-  r.addColorStop(0.3, `${BLOCK_SUN.glow}cc`)
-  r.addColorStop(0.55, `${BLOCK_SUN.glow}33`)
+  r.addColorStop(0.3, BLOCK_SUN.color)
+  r.addColorStop(0.38, `${BLOCK_SUN.glow}cc`)
+  r.addColorStop(0.62, `${BLOCK_SUN.glow}33`)
   r.addColorStop(1, `${BLOCK_SUN.glow}00`)
   g.fillStyle = r
   g.fillRect(0, 0, px, px)
@@ -414,7 +414,7 @@ export class BlockScene {
       this.textures.push(glow)
       const sun = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial({ map: glow, transparent: true, depthWrite: false, fog: false }))
       // Sized so the whole glow fits in the start view's sky with the disc up high (owner: "a bit higher").
-      const size = Math.tan((5.2 * Math.PI) / 180) * SUN_DIST
+      const size = Math.tan((6.2 * Math.PI) / 180) * SUN_DIST
       sun.scale.set(size, size, 1)
       sun.renderOrder = -0.5
       sun.name = 'sun'

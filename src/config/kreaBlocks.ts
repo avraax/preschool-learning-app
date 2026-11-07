@@ -45,7 +45,7 @@ export const BLOCK_HILLS = [
  * height above the horizon; `lightDeg`: the light's own height (higher than the disc, so shadows stay
  * short enough to read under a block).
  */
-export const BLOCK_SUN = { leftDeg: 8, discDeg: 6.8, lightDeg: 42, color: '#FFF4D6', glow: '#FFE9B0' } as const
+export const BLOCK_SUN = { leftDeg: 8, discDeg: 6.3, lightDeg: 42, color: '#FFF4D6', glow: '#FFE9B0' } as const
 
 /** Outside the build area: the SAME grid, nearly as strong, its edges softened (N24MG: "the surface of the buildable area just with a hint of blur"). */
 export const BLOCK_OUTSIDE_GRID = 0.85
