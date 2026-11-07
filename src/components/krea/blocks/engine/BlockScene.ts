@@ -194,6 +194,30 @@ function hillRing(r: { radius: number; minDeg: number; maxDeg: number; foot: str
   return g
 }
 
+/** A contact shadow: darkest under the block's middle, fading out just past its edges (a rounded square). */
+function contactTexture(px = 64): Texture {
+  const c = document.createElement('canvas')
+  c.width = c.height = px
+  const g = c.getContext('2d')!
+  const img = g.createImageData(px, px)
+  for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) {
+    // Distance from the centre in a soft "squircle" norm, 0 at the middle, 1 at the quad's edge.
+    const u = Math.abs((x + 0.5) / px * 2 - 1), v = Math.abs((y + 0.5) / px * 2 - 1)
+    const d = Math.pow(Math.pow(u, 4) + Math.pow(v, 4), 0.25)
+    // Full under the block (d ≤ 0.5 = its edge on a 2-cell quad), fading out half a block beyond it.
+    const a = d < 0.52 ? 1 : Math.max(0, 1 - (d - 0.52) / 0.48)
+    const o = (y * px + x) * 4
+    img.data[o] = 40
+    img.data[o + 1] = 50
+    img.data[o + 2] = 30
+    img.data[o + 3] = Math.round(Math.pow(a, 1.6) * 0.62 * 255)
+  }
+  g.putImageData(img, 0, 0)
+  const t = new CanvasTexture(c)
+  t.colorSpace = SRGBColorSpace
+  return t
+}
+
 /** How far the sun disc sits from the camera (inside the sky dome, beyond the mountains). */
 const SUN_DIST = 1300
 
@@ -276,6 +300,8 @@ export class BlockScene {
   private readonly cubeMat: MeshStandardMaterial
   private readonly cubes: Layer
   private readonly windows: Layer
+  /** The contact shadows under boxes on the ground (not pickable). */
+  private readonly contact: Layer
   /** One layer per material box: its painted surface on the rounded cube. */
   private readonly materials: Record<MaterialKind, Layer>
   private readonly doors: Layer
@@ -387,7 +413,8 @@ export class BlockScene {
       const glow = sunTexture()
       this.textures.push(glow)
       const sun = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial({ map: glow, transparent: true, depthWrite: false, fog: false }))
-      const size = Math.tan((7 * Math.PI) / 180) * SUN_DIST
+      // Sized so the whole glow fits in the start view's sky with the disc up high (owner: "a bit higher").
+      const size = Math.tan((5.2 * Math.PI) / 180) * SUN_DIST
       sun.scale.set(size, size, 1)
       sun.renderOrder = -0.5
       sun.name = 'sun'
@@ -396,9 +423,11 @@ export class BlockScene {
     }
     this.key.castShadow = true
     this.key.shadow.mapSize.set(1024, 1024)
-    this.key.shadow.radius = 5
-    this.key.shadow.bias = -0.0006
-    this.key.shadow.normalBias = 0.02
+    // Tight enough that a block's shadow starts AT its foot (owner 2026-11-07: blocks "look floating" —
+    // a wide blur and a large normal bias opened a light gap between a block and its shadow).
+    this.key.shadow.radius = 3
+    this.key.shadow.bias = -0.0003
+    this.key.shadow.normalBias = 0.012
     Object.assign(this.key.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 0.5, far: lit * 4 + heightCap * 2 })
     this.key.shadow.camera.updateProjectionMatrix()
     this.scene.add(this.key)
@@ -519,7 +548,16 @@ export class BlockScene {
       mats[k] = layer
     }
     this.materials = mats
-    this.layers = [this.cubes, ...MATERIAL_KINDS.map((k) => mats[k]), this.windows, this.doors]
+    // CONTACT SHADOWS: a soft dark patch on the ground under every box that stands on it — the darkening
+    // where an object meets the floor is what makes it look grounded (owner: they "look floating"). One
+    // instanced quad per box, no lights, no shadow pass; drawn ON the ground by a depth offset.
+    const aoTex = contactTexture()
+    this.textures.push(aoTex)
+    const aoMat = new MeshBasicMaterial({ map: aoTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })
+    this.contact = new Layer(inst(new PlaneGeometry(2, 2).rotateX(-Math.PI / 2), aoMat, false), false)
+    this.contact.mesh.castShadow = false
+    this.contact.mesh.receiveShadow = false
+    this.layers = [this.cubes, ...MATERIAL_KINDS.map((k) => mats[k]), this.windows, this.doors, this.contact]
     for (const l of this.layers) this.scene.add(l.mesh)
 
     // ----- the ghosts: where a block would land (a door needs two), or what the eraser would take
@@ -603,6 +641,12 @@ export class BlockScene {
       if (this.lifted.has(`${cell.x},${cell.y},${cell.z}`)) p.y += this.liftY
       // Turn the +z-facing shape to the block's facing, then move it to its cell.
       m.makeRotationY(facingAngle(block.facing)).setPosition(p.x, p.y, p.z)
+      // A box on the ground gets its contact shadow (panels are thin, they don't need one).
+      if (cell.y === 0 && (block.kind === 'cube' || isMaterial(block.kind))) {
+        const q = this.centre(cell)
+        // 1 cm up as well as the depth offset: WebKit drew it UNDER the grass with the offset alone.
+        this.contact.add(cell, new Matrix4().makeTranslation(q.x, 0.012, q.z))
+      }
       switch (block.kind as BlockKind) {
         case 'cube':
           this.cubes.add(cell, m, col.set(CRAYON_HEX[block.color]))
