@@ -57,8 +57,11 @@ export const comparisonPairs = (): Array<[number, number]> => {
 
 // --- Math ---------------------------------------------------------------------------------------
 /** The spoken question: "Hvad er tre plus fire". */
+// "Hvad er … tre, plus fire": a `|` pause before the problem and a comma after the first number, the
+// same shape as Bogstav Quiz (owner 2026-11-07, auditioned against the flat line and against a
+// pause-before-only variant).
 export const mathPromptText = (op: MathOp, a: number, b: number): string =>
-  `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} ${getDanishNumberText(a)} ${
+  `${DANISH_PHRASES.gamePrompts.mathQuestion.prefix} | ${getDanishNumberText(a)}, ${
     op === 'addition' ? DANISH_PHRASES.math.plus : DANISH_PHRASES.math.minus
   } ${getDanishNumberText(b)}`
 

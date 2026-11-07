@@ -32,7 +32,7 @@ import { mascotBus } from '../../services/mascotBus'
 import { useDifficulty } from '../../hooks/useDifficulty'
 import { isIOS } from '../../utils/deviceDetection'
 import { devFx } from '../../utils/devHarness'
-import { POP, DWELL_FACT, EXIT_FAST, motionOr } from '../../theme/motion'
+import { POP, DWELL_FACT, EXIT_FAST, motionOr, speechHoldMs } from '../../theme/motion'
 import { darken, hexToRgba, tileSurface } from '../../theme/tokens/helpers'
 import { softShadow } from '../../theme/depth'
 import { shuffle } from '../../utils/shuffle'
@@ -378,7 +378,13 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
 
     // Auto-advance after a short celebration window (correct only; wrong stays for retry).
     if (isCorrect) {
-      advanceTimerRef.current = setTimeout(() => {
+      const advance = (held: boolean) => {
+        // Never cut the fact off: hold once for whatever is still to be spoken (theme/motion.ts).
+        const hold = held ? 0 : speechHoldMs(audio)
+        if (hold) {
+          advanceTimerRef.current = setTimeout(() => advance(true), hold)
+          return
+        }
         advanceTimerRef.current = null
         stopCelebration()
 
@@ -395,7 +401,8 @@ const MathOperationGame: React.FC<MathOperationGameProps> = ({ operation }) => {
         // A fixed celebration window from the tap. The correct branch always speaks a sentence fact,
         // so it always gets DWELL_FACT — long enough that the next problem's prompt only cancels the
         // clip's trailing silence, never the spoken fact.
-      }, DWELL_FACT)
+      }
+      advanceTimerRef.current = setTimeout(() => advance(false), DWELL_FACT)
     }
   }
 

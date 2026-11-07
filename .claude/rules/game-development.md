@@ -66,12 +66,11 @@ internally, so only hand-rolled games can drift (this drift has bitten several g
 - **Never `await` narration in a tap handler.** Resolve the answer synchronously — score,
   `celebrateTier`, any reveal — then fire the echo/fact with `void audio.speak(…).catch(() => {})` and
   schedule the advance on a fixed dwell from the tap: `DWELL_FACT` if a sentence was spoken, else
-  `DWELL_CORRECT()` (`src/theme/motion.ts` documents the measured basis). Awaiting had put the whole
+  `DWELL_CORRECT()` (`src/theme/motion.ts`), **then hold once for `speechHoldMs(audio)`** (words left). Awaiting had put the whole
   celebration AFTER the clip — measured 4s on Plus Opgaver, whose confetti and answer-reveal then landed
   in the same frame as the next problem. The Farver drag games were always the correct pattern; copy
-  those. Two bonuses: the advance timer is now created synchronously, so the unmount cleanup always has
-  it to clear (PRD-02 P4's `mountedRef` guard is retired in the games that no longer await), and a
-  `.catch` on the promise keeps a rejection from reaching the crash reporter.
+  those. Bonuses: the timer is created synchronously, so unmount cleanup always has it to clear, and a
+  `.catch` keeps a rejection from the crash reporter.
 - **An `AnimatePresence mode="wait"` swap must exit on a TWEEN, never a spring** — use `EXIT_FAST`
   (`src/theme/motion.ts`). `mode="wait"` holds the incoming element until the outgoing one's animation
   completes, and a spring on `opacity: 0` takes ~1s to settle: Plus Opgaver's `?`→answer reveal was

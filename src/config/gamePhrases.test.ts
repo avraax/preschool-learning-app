@@ -39,12 +39,12 @@ import { collectNarrationClips } from '../../shared-narration-clips.js'
 //      falls back to live Azure and is never auditioned.
 
 test('spoken math/comparison/sequence/colour lines are exactly these strings', () => {
-  assert.equal(mathPromptText('addition', 3, 4), 'Hvad er tre plus fire')
+  assert.equal(mathPromptText('addition', 3, 4), 'Hvad er | tre, plus fire')
   assert.equal(mathFactText('addition', 3, 4, 7), 'tre plus fire er syv')
-  assert.equal(mathPromptText('subtraction', 7, 3), 'Hvad er syv minus tre')
+  assert.equal(mathPromptText('subtraction', 7, 3), 'Hvad er | syv, minus tre')
   assert.equal(mathFactText('subtraction', 7, 3, 4), 'syv minus tre er fire')
   // Number 1 stays "en", never "et" (owner ruling, PRD-11) — a change here re-bakes ~200 clips.
-  assert.equal(mathPromptText('addition', 1, 1), 'Hvad er en plus en')
+  assert.equal(mathPromptText('addition', 1, 1), 'Hvad er | en, plus en')
   assert.equal(COMPARE_PROMPT, 'Tryk på det største tal.')
   assert.equal(comparisonFactText(17, 9), 'sytten er større end ni')
   assert.equal(HVAD_MANGLER_PROMPT, 'Hvad mangler?')

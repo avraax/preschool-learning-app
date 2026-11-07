@@ -40,6 +40,19 @@ const loadPrebakedManifest = (): void => {
 loadPrebakedManifest()
 
 /**
+ * Where the speech ends in each prebaked clip (ms from the file's start, measured at prebake —
+ * `prebakedSpeechEnd.ts`). Loaded the same lazy, never-awaited way as the manifest.
+ */
+let speechEndMs: Record<string, number> | null = null
+void import('../config/prebakedSpeechEnd')
+  .then((m) => {
+    speechEndMs = m.PREBAKED_SPEECH_END_MS
+  })
+  .catch(() => { /* best-effort: no table → no extension, the games' fixed dwells stand */ })
+/** The shared <audio> element's startup before a prebaked clip sounds (measured ~0.25 s, motion.ts). */
+const PLAY_STARTUP_MS = 250
+
+/**
  * The prebaked file for a cache key, or `undefined` — including while the manifest is still loading.
  * NEVER async: see rule 1 above.
  */
@@ -190,6 +203,7 @@ export class TtsClient {
   stopCurrentAudio(): void {
     // Invalidate any in-flight synth/fetch so it can't resolve and play after this stop (P2).
     this.epoch++
+    this.speechEndsAt = 0
     if (this.currentCancel) {
       const cancel = this.currentCancel
       this.currentCancel = null
@@ -211,6 +225,19 @@ export class TtsClient {
         /* ignore */
       }
     }
+  }
+
+  /** performance.now() at which the current prebaked line's WORDS end; 0 = nothing known to be speaking. */
+  private speechEndsAt = 0
+
+  /**
+   * How much of the line now playing is still to be SPOKEN (ms; 0 when nothing is, or it's unknown —
+   * live/Web Speech text). A game's advance timer waits this out so it never cuts a line off — read
+   * synchronously when the timer fires, never awaited (audio-system.md step 8). The trailing silence is
+   * not included, so the next prompt only ever cancels silence.
+   */
+  speechRemainingMs(): number {
+    return this.speechEndsAt ? Math.max(0, this.speechEndsAt - performance.now()) : 0
   }
 
   // ===== playback =====
@@ -422,6 +449,7 @@ export class TtsClient {
   ): Promise<void> {
     // Claim this generation; a later speak/stop bumps epoch and we bail after our fetch resolves.
     const gen = ++this.epoch
+    this.speechEndsAt = 0
     const lang = (TTS_CONFIG.voices[voiceType] ?? TTS_CONFIG.voices.primary).lang
     const { cacheKey } = this.resolveRequest(text, voiceType, opts?.speakingRate)
 
@@ -429,8 +457,11 @@ export class TtsClient {
     //    no first-tap latency.
     const prebakedFile = prebakedFor(cacheKey)
     if (prebakedFile) {
+      const end = speechEndMs?.[prebakedFile.replace(/\.mp3$/, '')]
+      this.speechEndsAt = end ? performance.now() + PLAY_STARTUP_MS + end : 0
       try {
         await this.play(prebakedUrl(prebakedFile))
+        if (gen === this.epoch) this.speechEndsAt = 0
         return
       } catch (playErr) {
         const name = (playErr as { name?: string })?.name

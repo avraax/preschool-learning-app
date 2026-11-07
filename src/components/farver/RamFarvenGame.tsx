@@ -18,7 +18,7 @@ import { primaryColors, possibleTargets, mixingRules, makeTargetBag, TARGET_PRIO
 import { colorMixQuestionText, colorMixResultText } from '../../config/gamePhrases'
 import { makeFormatBag, type FormatBag } from '../../config/formatBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
-import { BOUNCE } from '../../theme/motion'
+import { BOUNCE, speechHoldMs } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
 import { useTaskRun } from '../../hooks/useTaskRun'
 import { progressStore } from '../../services/progressStore'
@@ -395,7 +395,13 @@ const RamFarvenGame: React.FC = () => {
     audio.speak(colorMixResultText(c1.colorName, c2.colorName, result.name!)).catch(() => {})
 
     if (commitTimer.current) clearTimeout(commitTimer.current)
-    commitTimer.current = setTimeout(() => {
+    const advance = (held: boolean) => {
+      // Never cut the recipe line off: hold once for whatever is still to be spoken (theme/motion.ts).
+      const hold = held ? 0 : speechHoldMs(audio)
+      if (hold) {
+        commitTimer.current = setTimeout(() => advance(true), hold)
+        return
+      }
       setRecipe(null)
       // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next target is set
       // up, with `committing` still true so the bench is inert under the overlay.
@@ -406,7 +412,8 @@ const RamFarvenGame: React.FC = () => {
         mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
       }
       run.thenContinue(() => setupTarget(true, result.name))
-    }, reduce ? 1200 : REVEAL_MS)
+    }
+    commitTimer.current = setTimeout(() => advance(false), reduce ? 1200 : REVEAL_MS)
   }
 
   const handleWrongMix = (result?: TargetColor) => {

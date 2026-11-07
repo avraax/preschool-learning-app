@@ -29,7 +29,7 @@ import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
 import { sfx } from '../../services/sfxClient'
 import { mascotBus } from '../../services/mascotBus'
 import { useReducedMotion } from '../../hooks/useReducedMotion'
-import { DWELL_CORRECT, DWELL_FACT } from '../../theme/motion'
+import { DWELL_CORRECT, DWELL_FACT, speechHoldMs } from '../../theme/motion'
 import { devFx } from '../../utils/devHarness'
 // Simplified audio system
 import { useSimplifiedAudioHook } from '../../hooks/useSimplifiedAudio'
@@ -579,7 +579,13 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
 
     // Auto-advance after a short celebration window (correct only; wrong stays for retry).
     if (isCorrect) {
-      advanceTimerRef.current = setTimeout(() => {
+      const advance = (held: boolean) => {
+        // The dwell is up, but the fact may still be speaking (a long sequence): hold once, never cut it.
+        const hold = held ? 0 : speechHoldMs(audio)
+        if (hold) {
+          advanceTimerRef.current = setTimeout(() => advance(true), hold)
+          return
+        }
         advanceTimerRef.current = null
         stopCelebration()
 
@@ -601,7 +607,8 @@ const UnifiedQuizGame: React.FC<UnifiedQuizGameProps> = ({ config }) => {
         // old "timer scheduled after an await, so unmount had nothing to clear" ghost-prompt hazard).
         // The next question's own prompt delay (200/300ms) sits on top, so it only ever cancels the
         // narration's trailing silence.
-      }, spokeFact ? DWELL_FACT : DWELL_CORRECT())
+      }
+      advanceTimerRef.current = setTimeout(() => advance(false), spokeFact ? DWELL_FACT : DWELL_CORRECT())
     }
   }
 

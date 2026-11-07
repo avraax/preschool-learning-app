@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { speechHoldMs } from '../../theme/motion'
 import { Box, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { motion } from 'framer-motion'
@@ -407,7 +408,13 @@ const FarvejagtGame: React.FC = () => {
     setBoardFlourish(true)
     celebrateTier('streak') // board-complete: bigger confetti burst timed with the ring spin
     if (flourishTimer.current) clearTimeout(flourishTimer.current)
-    flourishTimer.current = setTimeout(() => {
+    const advance = (held: boolean) => {
+      // The last drop's "{objektet} er {farve}" may still be speaking: hold once (theme/motion.ts).
+      const hold = held ? 0 : speechHoldMs(audio)
+      if (hold) {
+        flourishTimer.current = setTimeout(() => advance(true), hold)
+        return
+      }
       setBoardFlourish(false)
       // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next board is dealt,
       // with the advance guard still held.
@@ -418,7 +425,8 @@ const FarvejagtGame: React.FC = () => {
         mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
       }
       run.thenContinue(() => setupBoard(true))
-    }, reduce ? 250 : FLOURISH_MS)
+    }
+    flourishTimer.current = setTimeout(() => advance(false), reduce ? 250 : FLOURISH_MS)
   }
 
   // Handle drag start — the draggable LIFTS (§6C shared drag juice) via `activeId` in the render.

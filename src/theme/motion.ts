@@ -75,3 +75,7 @@ export const DWELL_CORRECT = (): number => (isIOS() ? 1100 : 1400)
 export const DWELL_FACT = 2000
 /** Wrong answers NEVER auto-advance (retry-until-right feel). */
 export const DWELL_WRONG = 0
+
+// …but never cut a line off: `speechHoldMs` (src/config/speechHold.ts) holds an advance once for words
+// a long line still has to say.
+export { speechHoldMs, SPEECH_HOLD_CAP_MS } from '../config/speechHold'

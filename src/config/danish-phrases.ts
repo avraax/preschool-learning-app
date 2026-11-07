@@ -51,7 +51,9 @@ export const DANISH_PHRASES = {
   // Game prompts and instructions
   gamePrompts: {
     findLetter: (letter: string) => `Find bogstavet ${letter}`,
-    findNumber: (number: number) => `Find tallet ${number}`,
+    // `|` = a short spoken pause before the number (owner 2026-11-07, auditioned) — PAUSE_MARK in
+    // shared-azure-tts.js. The number is the whole task here, so it stands apart.
+    findNumber: (number: number) => `Find tallet | ${number}`,
     mathQuestion: {
       prefix: 'Hvad er'
     }

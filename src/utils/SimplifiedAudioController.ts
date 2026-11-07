@@ -264,6 +264,11 @@ export class SimplifiedAudioController {
     this.ttsClient.warmDynamic(text)
   }
 
+  /** How much of the current line is still to be SPOKEN, ms (0 = nothing/unknown). See `speechHoldMs`. */
+  speechRemainingMs(): number {
+    return this.ttsClient.speechRemainingMs()
+  }
+
   async speakNumber(number: number, customSpeed?: number): Promise<string> {
     // Speaking number
     

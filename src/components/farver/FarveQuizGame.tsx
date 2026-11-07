@@ -22,7 +22,7 @@ import { colorQuizPromptPool, quizObjectKey } from '../../config/promptPools'
 import { usePromptBag } from '../../hooks/usePromptBag'
 import { hexToRgba } from '../../theme/tokens/helpers'
 import { PHONE_LANDSCAPE } from '../../theme/phoneMedia'
-import { SNAP } from '../../theme/motion'
+import { SNAP, speechHoldMs } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
 import GameShell from '../common/GameShell'
 import type { GuideReaction } from '../common/ThemeMascot'
@@ -265,7 +265,13 @@ const FarveQuizGame: React.FC = () => {
       audio.speak(colorObjectFactText(current.objectNameDefinite, spokenColor(current.color, current.neuter))).catch(() => {})
 
       if (advanceTimer.current) clearTimeout(advanceTimer.current)
-      advanceTimer.current = setTimeout(() => {
+      const advance = (held: boolean) => {
+        // Never cut the fact off: hold once for whatever is still to be spoken (theme/motion.ts).
+        const hold = held ? 0 : speechHoldMs(audio)
+        if (hold) {
+          advanceTimer.current = setTimeout(() => advance(true), hold)
+          return
+        }
         stopCelebration()
         // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next question is
         // set up, with the advance guard still held.
@@ -276,7 +282,8 @@ const FarveQuizGame: React.FC = () => {
           mascotBus.emit('streak') // mascot does its streak pose, matching the shared quiz engine
         }
         run.thenContinue(() => setupQuestion(true))
-      }, isIOS() ? 1200 : 1500)
+      }
+      advanceTimer.current = setTimeout(() => advance(false), isIOS() ? 1200 : 1500)
     } else {
       // Wrong — object springs back (automatic) + gentle SFX + the wrong swatch shakes.
       firstAttemptRef.current = false

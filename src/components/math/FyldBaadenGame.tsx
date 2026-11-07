@@ -21,7 +21,7 @@ import { mascotBus } from '../../services/mascotBus'
 import { BOAT_SEND_HINT, boatCountText, boatLoadedText, fillBoatPrompt } from '../../config/gamePhrases'
 import { BOAT_RECENT_WINDOW, pickBoatNumber } from '../../config/mathProblems'
 import { MATH_BOAT } from '../../config/difficulty'
-import { DWELL_CORRECT } from '../../theme/motion'
+import { DWELL_CORRECT, speechHoldMs } from '../../theme/motion'
 import { idleFloat } from '../../theme/idleMotion'
 import { DEV } from '../../utils/devHarness'
 import { useOccludeWorld } from '../common/scene/worldOcclusion'
@@ -361,12 +361,16 @@ const FyldBaadenGame: React.FC = () => {
       celebrateTier('micro')
       reactGuide('cheer')
       later('number', HORN_MS, () => void audio.speakNumber(n).catch(() => {}))
-      later('sail', HORN_MS + DWELL_CORRECT(), () => {
+      const sail = (held: boolean) => {
+        // A long number word ("syvogtredive") can outrun the dwell: hold once until it's said.
+        const hold = held ? 0 : speechHoldMs(audio)
+        if (hold) return later('sail', hold, () => sail(true))
         sfx.play('splash')
         // …and opens up again as it leaves (departure 1.8 s), fading as it goes off-screen.
         sfx.swell('boat-motor', { fadeInMs: 300, holdMs: 500, fadeOutMs: 1400 })
         setPhaseBoth('sailing')
-      })
+      }
+      later('sail', HORN_MS + DWELL_CORRECT(), () => sail(false))
       return
     }
     // Wrong: the boat bobs back, the narrator names what IS loaded, then re-asks the target.

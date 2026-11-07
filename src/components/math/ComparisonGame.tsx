@@ -27,6 +27,7 @@ import {
   CHARGE_IN_SCALE,
   DWELL_FACT,
   EXIT_FAST,
+  speechHoldMs,
   POP,
   motionOr,
 } from '../../theme/motion'
@@ -318,7 +319,13 @@ const ComparisonGame: React.FC = () => {
       setRevealSymbol(true) // `?` → the resolved `>`/`<`, completing the sentence
       celebrateTier('micro')
 
-      advanceTimerRef.current = setTimeout(() => {
+      const advance = (held: boolean) => {
+        // Never cut the fact off: hold once for whatever is still to be spoken (theme/motion.ts).
+        const hold = held ? 0 : speechHoldMs(audio)
+        if (hold) {
+          advanceTimerRef.current = setTimeout(() => advance(true), hold)
+          return
+        }
         advanceTimerRef.current = null
         stopCelebration()
         // THE SEAM (Endless Play PRD-01 §4.1) — the ceremony plays here, before the next problem is
@@ -333,7 +340,8 @@ const ComparisonGame: React.FC = () => {
         // A fixed celebration window from the tap. The correct branch always speaks a sentence fact,
         // so it always gets DWELL_FACT — long enough that the next problem's prompt only cancels the
         // clip's trailing silence, never the spoken fact.
-      }, DWELL_FACT)
+      }
+      advanceTimerRef.current = setTimeout(() => advance(false), DWELL_FACT)
     } else {
       // Gentle, non-punishing: break the first-try flag, soft SFX, `?` stays put, retry. After the
       // 2nd wrong the correct tile pulses (never-fail hint) — those wrongs already broke first-try, so
