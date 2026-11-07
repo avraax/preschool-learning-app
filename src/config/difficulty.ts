@@ -619,14 +619,20 @@ export const KREA_BEADS: Record<DifficultyLevel, KreaBeadsTuning> = {
  * The model half (model size range, model plate, plate help, card) joins in W3/W4.
  */
 export interface KreaBlocksTuning {
-  /** Free island, cells per side. */
+  /** Buildable cells per side (a plate at Let/Normal; the horizon ground's build area at Svær). */
   island: number
   heightCap: number
+  /**
+   * Svær only (owner 2026-11-07, G9BA8): no plate — grass to the horizon under a soft sky, panned with two
+   * fingers. The build area is big because the cost is in BLOCKS, not area (`MAX_BLOCKS`, blockWorld.ts):
+   * the ground is one plane and the world is stored sparsely.
+   */
+  horizon?: boolean
 }
 export const KREA_BLOCKS: Record<DifficultyLevel, KreaBlocksTuning> = {
   let: { island: 12, heightCap: 8 },
   normal: { island: 14, heightCap: 8 },
-  svaer: { island: 16, heightCap: 8 },
+  svaer: { island: 128, heightCap: 8, horizon: true },
 }
 
 // ================================================================================================

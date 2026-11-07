@@ -13,7 +13,10 @@ import type { Block, Cell, Target } from './blockWorld'
 //   - While the finger is down and still a tap, `onPreview` shows WHERE the block will land (owner,
 //     JYJ5F: "difficult to see where to put the blocks"); lifting places it, turning cancels it. A mouse
 //     previews on hover.
-//   - Two pointers → pinch zoom. The pending tap is cancelled and nothing places until every finger lifts.
+//   - Two pointers → pinch zoom, and on the HORIZON ground (Svær) also a PAN: the two fingers grab the
+//     ground and slide it (owner 2026-11-07, research: 4–6-year-olds manage two-finger gestures; a corner
+//     joystick sits where small wrists rest). The pending tap is cancelled and nothing places until every
+//     finger lifts. A mouse pans with the right button (desktop testing).
 //   - Every level turns and zooms the same way (owner 2026-11-06); levels differ only by plate size.
 //
 // `touch-action: none` + non-passive touchmove/gesture* preventDefault (iOS page zoom), as in the Krea
@@ -35,6 +38,8 @@ export interface BlockStageProps {
   islandSize: number
   heightCap: number
   faces: FaceArt
+  /** Svær: the horizon ground, panned with two fingers. */
+  horizon?: boolean
   /** CSS px of the stage covered by floating controls; the plate centres in what is left. */
   insets: { top: number; right: number; bottom: number; left: number }
   blocks: { cell: Cell; block: Block }[]
@@ -50,7 +55,7 @@ export interface BlockStageProps {
 type Pt = { x: number; y: number }
 
 const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function BlockStage(
-  { islandSize, heightCap, faces, insets, blocks, onTap, onPreview, onPose, disabled },
+  { islandSize, heightCap, faces, horizon, insets, blocks, onTap, onPreview, onPose, disabled },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -84,6 +89,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
         islandSize,
         heightCap,
         faces,
+        horizon,
         onContextLost: () => setLost(true),
         // Rebuild from the pure world: the GPU held nothing that isn't also there.
         onContextRestored: () => {
@@ -119,7 +125,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       canvasRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [islandSize, heightCap])
+  }, [islandSize, heightCap, horizon])
 
   useEffect(() => {
     sceneRef.current?.setBlocks(blocks)
@@ -162,7 +168,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
 
   // ----- gestures ----------------------------------------------------------------------------------------
   const pointers = useRef(new Map<number, Pt>())
-  const gesture = useRef<{ start: Pt; pose: Pose; turning: boolean; multi: boolean; pinchD: number; pinchPose: Pose } | null>(null)
+  const gesture = useRef<{ start: Pt; pose: Pose; turning: boolean; multi: boolean; pinchD: number; pinchPose: Pose; mid: Pt; mousePan: boolean } | null>(null)
   const hoverRaf = useRef(0)
   useEffect(() => () => cancelAnimationFrame(hoverRaf.current), [])
 
@@ -190,7 +196,8 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (disabled) return
-    if (e.pointerType === 'mouse' && e.button !== 0) return
+    const mousePan = e.pointerType === 'mouse' && e.button === 2 && !!sceneRef.current?.isHorizon
+    if (e.pointerType === 'mouse' && e.button !== 0 && !mousePan) return
     const scene = sceneRef.current
     if (!scene) return
     try {
@@ -201,14 +208,15 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     const p = local(e)
     pointers.current.set(e.pointerId, p)
     if (pointers.current.size === 1) {
-      gesture.current = { start: p, pose: scene.getPose(), turning: false, multi: false, pinchD: 0, pinchPose: scene.getPose() }
-      preview(p)
+      gesture.current = { start: p, pose: scene.getPose(), turning: false, multi: mousePan, pinchD: 0, pinchPose: scene.getPose(), mid: p, mousePan }
+      if (!mousePan) preview(p)
     } else if (gesture.current) {
       // A second finger: this is a pinch, never a tap.
       const [a, b] = [...pointers.current.values()]
       gesture.current.multi = true
       gesture.current.pinchD = Math.max(1, dist(a, b))
       gesture.current.pinchPose = scene.getPose()
+      gesture.current.mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
       preview(null)
     }
   }
@@ -228,11 +236,22 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     if (!g || !scene || !pointers.current.has(e.pointerId)) return
     const p = local(e)
     pointers.current.set(e.pointerId, p)
+    if (g.mousePan) {
+      const next = scene.pan(g.mid, p)
+      g.mid = p
+      onPoseRef.current?.(next)
+      return
+    }
     if (g.multi) {
       if (pointers.current.size < 2) return
       const [a, b] = [...pointers.current.values()]
-      const next = pinchZoom(g.pinchPose, dist(a, b) / g.pinchD)
-      scene.setPose(next)
+      // Zoom from the pinch's start, but keep wherever the pan has got to.
+      const zoom = pinchZoom(g.pinchPose, dist(a, b) / g.pinchD).zoom
+      scene.setPose({ ...scene.getPose(), zoom })
+      let next = scene.getPose()
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+      if (scene.isHorizon) next = scene.pan(g.mid, mid)
+      g.mid = mid
       onPoseRef.current?.(next)
       return
     }
@@ -274,6 +293,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
       onPointerMove={onPointerMove}
       onPointerUp={(e) => end(e, false)}
       onPointerCancel={(e) => end(e, true)}
+      onContextMenu={(e) => e.preventDefault()}
       onPointerLeave={(e) => {
         if (e.pointerType === 'mouse' && !gesture.current) preview(null)
       }}

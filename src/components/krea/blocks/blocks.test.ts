@@ -144,3 +144,15 @@ test('the built entry chunk and its preloads do not contain three', (t) => {
   for (const f of eager) assert.ok(!withThree.includes(f), `${f} is loaded on first paint and contains three`)
   assert.ok(withThree.every((f) => f.startsWith('ByggeklodserGame-')), `three leaked into ${withThree.join(', ')}`)
 })
+
+// Svær's horizon (owner G9BA8): only Svær has it, the GPU buffers are bounded by MAX_BLOCKS (never the
+// 128×128×8 area), and only the horizon pans.
+test('the horizon ground is Svær-only, its buffers are bounded by MAX_BLOCKS, and only it pans', () => {
+  const diff = readFileSync(new URL('../../../config/difficulty.ts', import.meta.url), 'utf8')
+  const table = diff.slice(diff.indexOf('export const KREA_BLOCKS'), diff.indexOf('}', diff.indexOf('svaer:', diff.indexOf('export const KREA_BLOCKS'))) + 1)
+  assert.equal((table.match(/horizon: true/g) ?? []).length, 1)
+  assert.match(table, /svaer: \{[^}]*horizon: true/)
+  const scene = readFileSync(new URL('./engine/BlockScene.ts', import.meta.url), 'utf8')
+  assert.match(scene, /const capacity = Math\.min\(islandSize \* islandSize \* heightCap, MAX_BLOCKS\)/)
+  assert.match(scene, /pan\(from: \{ x: number; y: number \}, to: \{ x: number; y: number \}\): Pose \{\s+if \(!this\.horizon\) return this\.getPose\(\)/)
+})

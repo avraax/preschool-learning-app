@@ -9,6 +9,8 @@ import {
   fitDistance,
   horizontalRelation,
   lerpPose,
+  clampPose,
+  clampTarget,
   pinchZoom,
   towardsCamera,
   zoomBy,
@@ -97,4 +99,13 @@ test('"foran" is always the side nearest the camera, whichever way the build is 
   p = { ...p, azimuth: p.azimuth + Math.PI / 2 } // camera on +x
   assert.equal(horizontalRelation(p, { x: 1, z: 0 }), 'foran')
   assert.equal(horizontalRelation(p, { x: 0, z: 1 }), 'ved siden af')
+})
+
+test('horizon pan: the look-at point eases home and stays over the build area', () => {
+  const far = { ...home, tx: 40, tz: -30 }
+  const back = lerpPose(far, { ...home, tx: 0, tz: 0 }, 1)
+  assert.equal(back.tx, 0)
+  assert.equal(back.tz, 0)
+  assert.deepEqual([clampTarget({ ...home, tx: 99, tz: -99 }, 64).tx, clampTarget({ ...home, tx: 99, tz: -99 }, 64).tz], [64, -64])
+  assert.equal(clampPose({ ...home, tx: 5 }).tx, 5, 'clamping the angle keeps the pan')
 })

@@ -21,5 +21,13 @@ export const BLOCK_PLATE = {
   checkerAlpha: 0.32,
 } as const
 
+/**
+ * Svær's HORIZON ground (owner 2026-11-07, G9BA8): the same sage as the plate out to the horizon, under a
+ * SUBTLE sky ("not too much visual impact, just for the feeling"), the haze at the horizon matching the
+ * sky's foot so the ground melts into it. `edge` is the thin strip that marks where building stops.
+ */
+export const BLOCK_SKY = { top: '#BFDDF0', horizon: '#EEF3EC' } as const
+export const BLOCK_EDGE = '#8DA571'
+
 /** The studio the plate stands in (the floor fades into the wall). */
 export const BLOCK_STUDIO = { wall: '#F3EEE6', floor: '#EDE6DB' } as const

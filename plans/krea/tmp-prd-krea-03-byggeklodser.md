@@ -557,6 +557,24 @@ before play). Owner's decisions, commit `e6fae32`:
   regression probe (17 checks incl. a door into brick) on 3 Chrome sizes + WebKit; the usage count fires
   once at the 5th block (rung 1, fetch intercepted). Look on the iPad: UNKNOWN (rung 3).
 
+### After the fourth look (2026-11-07, QHYV8 / 6BC2N / G9BA8 / HRJ4H)
+- **Nothing replaces a block** (QHYV8): a window/door goes in the empty cell across the tapped face; panels
+  hang at the BACK of their cell, against what they were tapped onto. "Into the wall" is gone.
+- **Door 2 wide × 3 tall** (6BC2N): an anchor cell (bottom-left from the front) + five cells carrying
+  `anchor`; erase/hit/ghost cover all six (`doorCells`, `wholeBlockCells`).
+- **Tilt down to 5°** (G9BA8: "couldn't tilt down to the ground").
+- **"New" dialogs** (HRJ4H): one picture button + a red close X on the card's corner, all five Krea games.
+- **Svær = the HORIZON ground** (G9BA8): `KREA_BLOCKS.svaer = { island: 128, horizon: true }`. One sage
+  ground plane to a soft sky dome + matching haze; a 36-cell grid patch travels with the look-at point,
+  fades at its rim and is clipped to the build area; a thin darker strip marks the edge (outside: same
+  grass, a tap bounces softly). **Two fingers grab and slide the ground** (+ pinch zoom; right mouse on
+  desktop) — research: 4–6-year-olds manage two-finger gestures, a corner joystick sits where wrists rest
+  and virtual-joystick patents exist; a house button glides home. The limit is `MAX_BLOCKS` = 3000 (the
+  instance buffers' size), not area. Shadow covers the view and travels with it.
+- Verified rung 1+2: pan follows the fingers 1:1 (200 px drag → 200 px), build after pan, home, edge
+  bounce, edge cell builds, 0 frames at rest; Svær panel clean on all 17 viewports; Normal regression
+  (incl. close X) on Chrome + WebKit. UNKNOWN (rung 3): pan feel, shadow cost while panning on the A10X.
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-03-byggeklodser.md` (Byggeklodser, the 3D block game in Krea).

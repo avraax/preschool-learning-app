@@ -1,7 +1,8 @@
 // Byggeklodser's camera (Krea PRD-03 §2.3, §4.4, §4.13) — PURE maths, no three.js. Our own rig, not
 // OrbitControls: that captures the pointer and can't tell a placing tap from a turn (§4.2).
 //
-// The camera always looks at the island's centre (no panning). Azimuth spins around it, tilt is held
+// The camera looks at the island's centre — or, on the HORIZON ground (Svær, owner G9BA8), at a point the
+// child slides with two fingers (`tx`/`tz`, clamped by the scene to the buildable area). Azimuth spins around it, tilt is held
 // between low and high (never under the island), and zoom is a MULTIPLE OF THE FIT DISTANCE — the
 // distance at which the island's bounding sphere fills the measured stage — so the clamps hold on every
 // screen (§4.13).
@@ -13,6 +14,9 @@ export interface Pose {
   tilt: number
   /** Distance as a multiple of the fit distance; < 1 is closer (zoomed in). */
   zoom: number
+  /** Where the camera looks on the ground, in world units from the centre (horizon mode pans it). */
+  tx?: number
+  tz?: number
 }
 
 const DEG = Math.PI / 180
@@ -47,10 +51,14 @@ export const CAMERA = {
 export const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v))
 
 export const clampPose = (p: Pose): Pose => ({
+  ...p,
   azimuth: p.azimuth,
   tilt: clamp(p.tilt, CAMERA.tiltMin, CAMERA.tiltMax),
   zoom: clamp(p.zoom, CAMERA.zoomMin, CAMERA.zoomMax),
 })
+
+/** Keep the look-at point over the buildable ground: `half` world units either side of the centre. */
+export const clampTarget = (p: Pose, half: number): Pose => ({ ...p, tx: clamp(p.tx ?? 0, -half, half), tz: clamp(p.tz ?? 0, -half, half) })
 
 /** A one-finger turn: horizontal drag spins, vertical drag tilts. Dragging right turns the build right. */
 export const dragTurn = (p: Pose, dxPx: number, dyPx: number): Pose =>
@@ -126,7 +134,14 @@ export const lerpPose = (a: Pose, b: Pose, t: number): Pose => {
   const s = t * t * (3 - 2 * t)
   let d = b.azimuth - a.azimuth
   d = Math.atan2(Math.sin(d), Math.cos(d))
-  return { azimuth: a.azimuth + d * s, tilt: a.tilt + (b.tilt - a.tilt) * s, zoom: a.zoom + (b.zoom - a.zoom) * s }
+  const ax = a.tx ?? 0, az = a.tz ?? 0
+  return {
+    azimuth: a.azimuth + d * s,
+    tilt: a.tilt + (b.tilt - a.tilt) * s,
+    zoom: a.zoom + (b.zoom - a.zoom) * s,
+    tx: ax + ((b.tx ?? 0) - ax) * s,
+    tz: az + ((b.tz ?? 0) - az) * s,
+  }
 }
 
 /**

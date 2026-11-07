@@ -5,6 +5,7 @@ import {
   blockAt,
   blockCount,
   doorCells,
+  MAX_BLOCKS,
   emptyWorld,
   facingFor,
   previewCells,
@@ -190,4 +191,16 @@ test('a stale, older or corrupt session degrades to what still fits, never a cra
   const w = restoreWorld(fresh, raw)
   assert.equal(blockCount(w), 1)
   assert.deepEqual(blockAt(w, { x: 1, y: 0, z: 1 }), { kind: 'cube', color: 'gul', facing: 'pz' })
+})
+
+// Svær's horizon ground is limited by BLOCKS, not area (owner G9BA8): the instance buffers are sized to it.
+test('a world holds at most MAX_BLOCKS — the next one bounces, unchanged', () => {
+  const size = 128
+  let w = emptyWorld(size, 1)
+  const cells: Record<string, { kind: 'cube'; color: 'roed'; facing: 'pz' }> = {}
+  for (let i = 0; i < MAX_BLOCKS; i++) cells[`${i % size},0,${Math.floor(i / size)}`] = { kind: 'cube', color: 'roed', facing: 'pz' }
+  w = { ...w, cells }
+  assert.equal(blockCount(w), MAX_BLOCKS)
+  const r = resolvePlacement(w, { on: 'island', x: 127, z: 127 }, red, T)
+  assert.ok('bounce' in r && r.bounce === 'full' && r.world === w)
 })

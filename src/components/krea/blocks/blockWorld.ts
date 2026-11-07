@@ -73,7 +73,14 @@ export interface BlockWorld {
   readonly actions: readonly Action[]
 }
 
-export type BounceReason = 'outside' | 'too-high' | 'occupied' | 'no-attach' | 'no-room'
+export type BounceReason = 'outside' | 'too-high' | 'occupied' | 'no-attach' | 'no-room' | 'full'
+
+/**
+ * The most blocks one world holds. On a plate it never binds (16×16×8 = 2048 cells); on the horizon
+ * ground it is THE limit, instead of the area — every block is an instance the old iPad draws each
+ * frame, and each shape's instance buffer is sized to this (BlockScene).
+ */
+export const MAX_BLOCKS = 3000
 export type PlaceResult = { placed: BlockWorld; cell: Cell } | { bounce: BounceReason; world: BlockWorld }
 
 export const cellKey = (c: Cell): string => `${c.x},${c.y},${c.z}`
@@ -158,6 +165,7 @@ const plan = (w: BlockWorld, t: Target, held: Held, towardsCamera: { x: number; 
   const base = targetCell(t)
   if (!inBounds(w, base)) return base.y >= w.heightCap ? 'too-high' : 'outside'
   if (blockAt(w, base)) return 'occupied'
+  if (blockCount(w) >= MAX_BLOCKS) return 'full'
   const block: Block = { kind: held.kind, color: held.color, facing }
   if (held.kind !== 'door') return [change(base, undefined, block)]
   // A door needs all six cells free and inside the plate.

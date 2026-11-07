@@ -31,6 +31,10 @@ import {
   MeshBasicMaterial,
   BoxGeometry,
   PlaneGeometry,
+  SphereGeometry,
+  Float32BufferAttribute,
+  BackSide,
+  Plane,
   BufferGeometry,
   CanvasTexture,
   Matrix4,
@@ -48,11 +52,11 @@ import {
   type Object3D,
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
-import { DOOR_H, DOOR_W, MATERIAL_KINDS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
-import { BLOCK_PLATE, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
+import { DOOR_H, DOOR_W, MATERIAL_KINDS, MAX_BLOCKS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
+import { BLOCK_EDGE, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
 import { facingAngle } from './geometry.ts'
 import { clayNormalMap, loadTexture, materialTexture } from './textures.ts'
-import { CAMERA, cameraPosition, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
+import { CAMERA, cameraPosition, clampTarget, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
 import { CRAYON_HEX } from '../../canvas/brushes.ts'
 
 /** Device-pixel cap (§4.1). 2 is the iPad's own; the spike may lower it to 1.5 if the A10X runs hot. */
@@ -63,6 +67,13 @@ const RADIUS = 0.08
 const SLAB_DEPTH = 0.6
 /** The camera always looks here: the plate's centre, a little above its top (§2.3: no panning). */
 const TARGET = { x: 0, y: 0.5, z: 0 }
+/** Horizon mode: the box (cells either side of the look-at point) that fills the view at zoom 1. */
+const VIEW_HALF = 8
+/** Horizon mode: the grid patch that travels with the look-at point, in cells (even: the checker keeps its parity). */
+const GRID = 36
+/** Horizon mode: half the shadow's square, around the look-at point (the shadow travels with the view). */
+const SHADOW_REACH = 26
+const SKY_RADIUS = 1500
 /** Window and door panels: thin slabs, framed in these colours on their edges. */
 const PANEL_DEPTH = 0.16
 /** Panels hang at the BACK of their cell, against whatever they were tapped onto (owner QHYV8: nothing
@@ -109,6 +120,20 @@ class Layer {
   }
 }
 
+/** Horizon grid patch: opaque in the middle, fading to nothing at its rim (an alpha map: green channel). */
+function radialFade(size = 128): Texture {
+  const c = document.createElement('canvas')
+  c.width = c.height = size
+  const g = c.getContext('2d')!
+  const r = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  r.addColorStop(0, '#fff')
+  r.addColorStop(0.3, '#fff')
+  r.addColorStop(1, '#000')
+  g.fillStyle = r
+  g.fillRect(0, 0, size, size)
+  return new CanvasTexture(c)
+}
+
 /** The squares as a checker (owner JYJ5F: the thin lines were hard to see). One texel per cell, crisp. */
 function checkerTexture(n: number): Texture {
   const c = document.createElement('canvas')
@@ -130,6 +155,8 @@ export interface BlockSceneOptions {
   heightCap: number
   /** The owner's window and door renders (URLs). */
   faces: FaceArt
+  /** Svær: grass to the horizon, a soft sky, a panned camera — no plate (owner G9BA8). */
+  horizon?: boolean
   /** The GPU went away: show the static studio; the world state is untouched. */
   onContextLost?: () => void
   /** The GPU came back: the caller re-applies the world (`setBlocks`) and the pose. */
@@ -151,6 +178,11 @@ export class BlockScene {
   private readonly layers: Layer[]
   private readonly textures: Texture[] = []
   private readonly island: Mesh
+  private readonly horizon: boolean
+  /** Horizon mode: the sky dome (it follows the camera) and the grid patch (it follows the look-at point). */
+  private readonly sky: Mesh | null = null
+  private readonly grid: Mesh | null = null
+  private readonly groundPlane = new Plane(new Vector3(0, 1, 0), 0)
   private readonly ghosts: Mesh[]
   private readonly key: DirectionalLight
   private readonly half: number
@@ -187,53 +219,107 @@ export class BlockScene {
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
 
-    // ----- the studio: a plain wall colour, and a floor that fades into it (fog), so there is no horizon
-    this.scene.background = new Color(BLOCK_STUDIO.wall)
-    this.scene.fog = new Fog(BLOCK_STUDIO.wall, 40, 120)
-    const floor = new Mesh(new PlaneGeometry(600, 600).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_STUDIO.floor, roughness: 1, metalness: 0 }))
-    floor.position.y = -SLAB_DEPTH
-    floor.receiveShadow = true
-    floor.name = 'floor'
-    this.scene.add(floor)
+    this.horizon = !!opts.horizon
+    if (this.horizon) {
+      // ----- the horizon: a SUBTLE sky dome (pale blue overhead, near-white at its foot) and a haze of
+      // the same foot colour, so the grass melts into the sky with no hard line (owner G9BA8).
+      this.camera.near = 0.2
+      this.camera.far = SKY_RADIUS * 2
+      const dome = new SphereGeometry(SKY_RADIUS, 32, 16)
+      const pos = dome.getAttribute('position')
+      const top = new Color(BLOCK_SKY.top), foot = new Color(BLOCK_SKY.horizon), c = new Color()
+      const cols = new Float32Array(pos.count * 3)
+      for (let i = 0; i < pos.count; i++) {
+        c.copy(foot).lerp(top, Math.pow(Math.max(0, pos.getY(i) / SKY_RADIUS), 0.6))
+        cols.set([c.r, c.g, c.b], i * 3)
+      }
+      dome.setAttribute('color', new Float32BufferAttribute(cols, 3))
+      this.sky = new Mesh(dome, new MeshBasicMaterial({ vertexColors: true, side: BackSide, fog: false, depthWrite: false }))
+      this.sky.name = 'sky'
+      this.sky.renderOrder = -1
+      this.scene.add(this.sky)
+      this.scene.background = foot
+      this.scene.fog = new Fog(BLOCK_SKY.horizon, 60, 400)
+    } else {
+      // ----- the studio: a plain wall colour, and a floor that fades into it (fog), so there is no horizon
+      this.scene.background = new Color(BLOCK_STUDIO.wall)
+      this.scene.fog = new Fog(BLOCK_STUDIO.wall, 40, 120)
+      const floor = new Mesh(new PlaneGeometry(600, 600).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_STUDIO.floor, roughness: 1, metalness: 0 }))
+      floor.position.y = -SLAB_DEPTH
+      floor.receiveShadow = true
+      floor.name = 'floor'
+      this.scene.add(floor)
+    }
 
     // ----- light: hemisphere + one key from the top-left (the art style's key light) + one soft shadow
     this.scene.add(new HemisphereLight(0xfffaf0, 0x9a8a76, 1.5))
     this.scene.add(new AmbientLight(0xffffff, 0.3))
     this.key = new DirectionalLight(0xffffff, 1.5)
-    const reach = islandSize * 0.95 + heightCap * 0.4
-    this.key.position.set(-islandSize * 0.6, islandSize * 1.3 + heightCap, islandSize * 0.5)
+    // On the horizon the shadow covers the VIEW, not the world, and travels with the look-at point.
+    const lit = this.horizon ? 16 : islandSize
+    const reach = this.horizon ? SHADOW_REACH : islandSize * 0.95 + heightCap * 0.4
+    this.key.position.set(-lit * 0.6, lit * 1.3 + heightCap, lit * 0.5)
     this.key.castShadow = true
     this.key.shadow.mapSize.set(1024, 1024)
     this.key.shadow.radius = 5
     this.key.shadow.bias = -0.0006
     this.key.shadow.normalBias = 0.02
-    Object.assign(this.key.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 0.5, far: islandSize * 4 + heightCap * 2 })
+    Object.assign(this.key.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach, near: 0.5, far: lit * 4 + heightCap * 2 })
     this.key.shadow.camera.updateProjectionMatrix()
     this.scene.add(this.key)
+    this.scene.add(this.key.target)
 
     // ----- the plate: a clay slab resting on the floor (it casts its own soft shadow onto it). Per-face
     // materials: [+x, −x, +y top, −y bottom, +z, −z].
-    const span = islandSize + 0.4
-    const topMat = new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 })
-    const s = new MeshStandardMaterial({ color: BLOCK_PLATE.side, roughness: 0.95, metalness: 0 })
-    const bottomMat = new MeshStandardMaterial({ color: BLOCK_PLATE.bottom, roughness: 1, metalness: 0 })
-    this.island = new Mesh(new RoundedBoxGeometry(span, SLAB_DEPTH, span, 3, 0.18), [s, s, topMat, bottomMat, s, s])
-    this.island.position.y = -SLAB_DEPTH / 2
-    this.island.receiveShadow = true
-    this.island.castShadow = true
-    this.island.name = 'island'
-    this.scene.add(this.island)
+    if (this.horizon) {
+      // ----- the ground: ONE plane of the plate's sage, far past the haze. Building stops at the build
+      // area's edge, marked by a thin darker strip just outside it (owner: "a subtle indicator").
+      this.island = new Mesh(new PlaneGeometry(SKY_RADIUS * 2.5, SKY_RADIUS * 2.5).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 }))
+      this.island.receiveShadow = true
+      this.island.name = 'island'
+      this.scene.add(this.island)
+      const b = islandSize / 2, wEdge = 0.35
+      const edgeMat = new MeshBasicMaterial({ color: BLOCK_EDGE, transparent: true, opacity: 0.55, depthWrite: false })
+      for (const [w, d, x, z] of [[islandSize + 2 * wEdge, wEdge, 0, -b - wEdge / 2], [islandSize + 2 * wEdge, wEdge, 0, b + wEdge / 2], [wEdge, islandSize, -b - wEdge / 2, 0], [wEdge, islandSize, b + wEdge / 2, 0]]) {
+        const strip = new Mesh(new PlaneGeometry(w, d).rotateX(-Math.PI / 2), edgeMat)
+        strip.position.set(x, 0.004, z)
+        strip.name = 'edge'
+        this.scene.add(strip)
+      }
+    } else {
+      const span = islandSize + 0.4
+      const topMat = new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 })
+      const s = new MeshStandardMaterial({ color: BLOCK_PLATE.side, roughness: 0.95, metalness: 0 })
+      const bottomMat = new MeshStandardMaterial({ color: BLOCK_PLATE.bottom, roughness: 1, metalness: 0 })
+      this.island = new Mesh(new RoundedBoxGeometry(span, SLAB_DEPTH, span, 3, 0.18), [s, s, topMat, bottomMat, s, s])
+      this.island.position.y = -SLAB_DEPTH / 2
+      this.island.receiveShadow = true
+      this.island.castShadow = true
+      this.island.name = 'island'
+      this.scene.add(this.island)
+    }
 
     // ----- the squares: a checker a hair above the top, DARKER than the plate (research 2026-11-07: a
     // faint light grid on a pale plate was the hard-to-see one, JYJ5F)
-    const chk = checkerTexture(islandSize)
+    // On the horizon the checker is a PATCH that travels with the look-at point and fades out at its rim
+    // (the grid is "faint, only near you"), clipped to the build area so it never promises ground that
+    // can't be built on.
+    const n = this.horizon ? GRID : islandSize
+    const chk = checkerTexture(n)
     this.textures.push(chk)
-    const checker = new Mesh(
-      new PlaneGeometry(islandSize, islandSize).rotateX(-Math.PI / 2).translate(0, 0.006, 0),
-      new MeshBasicMaterial({ map: chk, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false }),
-    )
+    const chkMat = new MeshBasicMaterial({ map: chk, color: BLOCK_PLATE.checker, opacity: BLOCK_PLATE.checkerAlpha, transparent: true, depthWrite: false })
+    if (this.horizon) {
+      const fade = radialFade()
+      this.textures.push(fade)
+      chkMat.alphaMap = fade
+      const b = islandSize / 2
+      chkMat.clippingPlanes = [new Plane(new Vector3(1, 0, 0), b), new Plane(new Vector3(-1, 0, 0), b), new Plane(new Vector3(0, 0, 1), b), new Plane(new Vector3(0, 0, -1), b)]
+      this.renderer.localClippingEnabled = true
+    }
+    const checker = new Mesh(new PlaneGeometry(n, n).rotateX(-Math.PI / 2).translate(0, 0.006, 0), chkMat)
     checker.name = 'checker'
     this.scene.add(checker)
+    if (this.horizon) this.grid = checker
 
     // ----- the blocks: one instanced mesh per SHAPE, colour per instance, a shared seeded clay grain
     const redraw = () => this.requestRender()
@@ -245,7 +331,8 @@ export class BlockScene {
       new MeshStandardMaterial({ roughness: 0.88, metalness: 0, normalMap: grain, normalScale: new Vector2(CLAY_GRAIN, CLAY_GRAIN), ...extra })
     this.cubeGeo = new RoundedBoxGeometry(1, 1, 1, 2, RADIUS)
     this.cubeMat = clay()
-    const capacity = islandSize * islandSize * heightCap
+    // Sized to what the world can hold: the cells on a plate, MAX_BLOCKS on the horizon ground.
+    const capacity = Math.min(islandSize * islandSize * heightCap, MAX_BLOCKS)
     const inst = (geo: BufferGeometry, mat: Material | Material[], colored: boolean) => {
       const m = new InstancedMesh(geo, mat, capacity)
       if (colored) m.setColorAt(0, new Color(1, 1, 1))
@@ -372,12 +459,52 @@ export class BlockScene {
   }
 
   private applyPose(p: Pose): void {
+    const moved = (p.tx ?? 0) !== (this.pose.tx ?? 0) || (p.tz ?? 0) !== (this.pose.tz ?? 0)
     this.pose = { ...p }
-    const target = TARGET
+    const target = this.horizon ? { x: p.tx ?? 0, y: TARGET.y, z: p.tz ?? 0 } : TARGET
     const c = cameraPosition(p, target, this.fit)
     this.camera.position.set(c.x, c.y, c.z)
     this.camera.lookAt(target.x, target.y, target.z)
+    if (this.horizon) {
+      this.sky?.position.copy(this.camera.position)
+      // The grid patch steps in whole PAIRS of cells, so each square keeps its shade as it travels.
+      this.grid?.position.set(Math.round(target.x / 2) * 2, 0, Math.round(target.z / 2) * 2)
+      if (moved) {
+        this.key.position.set(target.x - 16 * 0.6, 16 * 1.3 + this.opts.heightCap, target.z + 16 * 0.5)
+        this.key.target.position.set(target.x, 0, target.z)
+        this.key.target.updateMatrixWorld()
+        this.renderer.shadowMap.needsUpdate = true
+      }
+    }
     this.requestRender()
+  }
+
+  /** Is this the Svær horizon ground (panning on)? */
+  get isHorizon(): boolean {
+    return this.horizon
+  }
+
+  /**
+   * Horizon mode: slide the ground so the point under `from` ends up under `to` (stage CSS px) — the
+   * child GRABS the ground with two fingers. Clamped to the build area. Returns the new pose.
+   */
+  pan(from: { x: number; y: number }, to: { x: number; y: number }): Pose {
+    if (!this.horizon) return this.getPose()
+    const a = this.groundAt(from)
+    const b = this.groundAt(to)
+    if (!a || !b) return this.getPose()
+    const next = clampTarget({ ...this.pose, tx: (this.pose.tx ?? 0) - (b.x - a.x), tz: (this.pose.tz ?? 0) - (b.z - a.z) }, this.opts.islandSize / 2)
+    this.setPose(next)
+    return next
+  }
+
+  /** Where a stage point meets the ground — null near the horizon, where a hair of finger is miles of grass. */
+  private groundAt(pt: { x: number; y: number }): Vector3 | null {
+    const ndc = new Vector2((pt.x / this.width) * 2 - 1, -(pt.y / this.height) * 2 + 1)
+    this.raycaster.setFromCamera(ndc, this.camera)
+    const hit = this.raycaster.ray.intersectPlane(this.groundPlane, new Vector3())
+    if (!hit) return null
+    return hit.distanceTo(this.camera.position) > this.fit * 4 ? null : hit
   }
 
   /** Ease to a pose over `ms` — frames run only for the length of the move. */
@@ -441,11 +568,19 @@ export class BlockScene {
     const fill = { x: 0.92 * Math.max(0.2, (w - i.left - i.right) / w), y: 0.92 * Math.max(0.2, (h - i.top - i.bottom) / h) }
     // The plate (its slab, plus two layers of building) fills the free area at zoom 1, judged from the
     // starting angle — so the fit never changes while the child turns (no pulsing plate).
-    this.fit = fitBox(CAMERA.home, { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }, TARGET, aspect, fill)
-    // The floor fades into the wall well beyond the plate at every zoom, so there is no horizon line.
+    // On the horizon there is no plate to fit: a VIEW_HALF box around the look-at point fills the view.
+    const box = this.horizon ? { half: VIEW_HALF, bottom: 0, top: 2 } : { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }
+    this.fit = fitBox(CAMERA.home, box, TARGET, aspect, fill)
     const fog = this.scene.fog as Fog
-    fog.near = this.fit * (CAMERA.zoomMax + 0.4)
-    fog.far = this.fit * (CAMERA.zoomMax + 2.2)
+    if (this.horizon) {
+      // The grass stays clear around the build and hazes into the sky far out — the horizon is soft.
+      fog.near = this.fit * 2
+      fog.far = this.fit * 9
+    } else {
+      // The floor fades into the wall well beyond the plate at every zoom, so there is no horizon line.
+      fog.near = this.fit * (CAMERA.zoomMax + 0.4)
+      fog.far = this.fit * (CAMERA.zoomMax + 2.2)
+    }
     this.applyPose(this.pose)
   }
 

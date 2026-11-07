@@ -272,6 +272,15 @@ const ByggeklodserGame: React.FC = () => {
   }
 
   // ----- zoom buttons (every level turns with a finger; the buttons zoom) --------------------------------
+  /** Horizon: glide back to the middle, at the starting angle (the way home after panning far out). */
+  const goHome = () => {
+    const s = stage.current
+    if (!s) return
+    touched()
+    sfx.play('tap')
+    s.animateTo({ ...CAMERA.home, tx: 0, tz: 0 })
+  }
+
   const zoom = (dir: 1 | -1) => {
     const s = stage.current
     if (!s) return
@@ -396,6 +405,8 @@ const ByggeklodserGame: React.FC = () => {
   const blocks = useMemo(() => blockList(world), [world])
   const canUndo = world.actions.length > 0
   const hasBlocks = blockCount(world) > 0
+  /** Tool buttons in the panel: eraser, undo, zoom in/out, Ny — and on the horizon the way home. */
+  const tools = tuning.horizon ? 6 : 5
   const newBuildPicture = (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
       <Box sx={{ position: 'absolute', inset: '6%' }}>
@@ -428,6 +439,7 @@ const ByggeklodserGame: React.FC = () => {
               ref={stage}
               islandSize={tuning.island}
               heightCap={tuning.heightCap}
+              horizon={tuning.horizon}
               faces={BLOCK_FACE_ART}
               insets={insets}
               blocks={blocks}
@@ -505,7 +517,7 @@ const ByggeklodserGame: React.FC = () => {
             </Box>
             {/* Eraser, undo, zoom in, zoom out, then "Ny": a 2x2 block in a landscape column; ONE row in
                 portrait; ONE column beside the tray on a phone in landscape (too short to stack them). */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(5, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(1, ${SIDE_BTN})`, gap: '6px' } }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(${tools}, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(${tuning.horizon ? 2 : 1}, ${SIDE_BTN})`, gap: '6px' } }}>
               <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
                 <Img src={KREA_ART.eraser} />
               </StudioButton>
@@ -518,7 +530,12 @@ const ByggeklodserGame: React.FC = () => {
               <IconPress label="Zoom ud" dataId="zoom-out" disabled={!canOut} onPress={() => zoom(-1)}>
                 <PlusMinus plus={false} />
               </IconPress>
-              <Box sx={{ gridColumn: '1 / -1', visibility: hasBlocks ? 'visible' : 'hidden', '@media (orientation: portrait)': { gridColumn: 'auto' }, [PHONE_LANDSCAPE]: { gridColumn: 'auto' } }}>
+              {tuning.horizon ? (
+                <IconPress label="Tilbage til midten" dataId="home" onPress={goHome}>
+                  <HomeMark />
+                </IconPress>
+              ) : null}
+              <Box sx={{ gridColumn: tuning.horizon ? 'auto' : '1 / -1', visibility: hasBlocks ? 'visible' : 'hidden', '@media (orientation: portrait)': { gridColumn: 'auto' }, [PHONE_LANDSCAPE]: { gridColumn: 'auto' } }}>
                 <StudioButton dataId="new-build" label="Ny byggeplade" size={SIDE_BTN} disabled={!hasBlocks || confirmOpen} onPress={askNewBuild}>
                   {newBuildPicture}
                 </StudioButton>
@@ -622,6 +639,15 @@ const IconPress: React.FC<{ label: string; dataId: string; disabled?: boolean; o
   >
     {children}
   </ButtonBase>
+)
+
+/** The way home on the horizon ground: a little house, drawn in code. */
+const HomeMark: React.FC = () => (
+  <svg viewBox="0 0 48 48" width="58%" height="58%" aria-hidden>
+    <path d="M8 24 L24 9 L40 24" fill="none" stroke="#5A8F3A" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M13 22 V39 H35 V22" fill="none" stroke="#5A8F3A" strokeWidth="5" strokeLinejoin="round" />
+    <rect x="21" y="29" width="6" height="10" rx="1.5" fill="#5A8F3A" />
+  </svg>
 )
 
 const PlusMinus: React.FC<{ plus: boolean }> = ({ plus }) => (
