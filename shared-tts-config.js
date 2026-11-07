@@ -45,4 +45,4 @@ export const TTS_CONFIG = {
 //
 // So this is the same discipline as a content-hashed asset: change the file, change the name. The
 // long max-age is CORRECT for an immutable URL — it is only wrong for a mutable one.
-export const LEXICON_FILE = 'da-DK-v2.pls';
+export const LEXICON_FILE = 'da-DK-v3.pls';

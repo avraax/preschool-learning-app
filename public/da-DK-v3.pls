@@ -105,4 +105,14 @@
   <lexeme><grapheme>Fire</grapheme><phoneme>ˈfiːɐ</phoneme></lexeme>
   <lexeme><grapheme>Tog</grapheme><phoneme>tɒwʔ</phoneme></lexeme>
 
+  <!-- "dør" (door) was read like the VERB ("jeg dør", dies) — owner, 2026-11-07, Byggeklodser. Every
+       "dør" the app says is the noun (Byggeklodser, Bogstav Quiz, Ordleg, Engelsk, the sticker).
+       Auditioned by the owner's ear in three rounds (.audition/dor, not committed):
+         rejected  bare "dør" (Azure's default), ˈdøʔɐ, ˈdøɐʔ, ˈdøɐ (all verb-like), "en dør",
+                   ˈdøːɐ, ˈdøːʔɐ, ˈdøːʁ;  ˈdœːɐ had the right vowel but an audible "e" ("dør'e")
+         chosen    ˈdœːʁ — the open ø of "døren", no trailing vowel
+       Both cases, per the case-sensitivity note above ("Dør" in Bogstav Quiz and the sticker). -->
+  <lexeme><grapheme>dør</grapheme><phoneme>ˈdœːʁ</phoneme></lexeme>
+  <lexeme><grapheme>Dør</grapheme><phoneme>ˈdœːʁ</phoneme></lexeme>
+
 </lexicon>
