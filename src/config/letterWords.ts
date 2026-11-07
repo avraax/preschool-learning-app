@@ -140,9 +140,10 @@ export const startsWithPhrase = (letter: string, word: string): string =>
  * for the same reason as the two above: `shared-narration-clips.js` calls it too, so the baked clip
  * and the runtime request can't drift (drift = a silent fall back to live Azure, never auditioned).
  */
-// The `|` marks are short spoken pauses (owner 2026-11-07): the word to listen to stands apart —
-// "Hvad starter … raket … med?" — instead of one flat, fast run. See `PAUSE_MARK` in shared-azure-tts.js.
-export const startsWithQuestion = (word: string): string => `Hvad starter | ${word} | med?`
+// The `|` is a short spoken pause (owner 2026-11-07): "Hvad starter … raket med?" sets the word apart
+// instead of one flat, fast run. A second pause AFTER the word was tried and dropped by the owner the same
+// day — keep only this one. See `PAUSE_MARK` in shared-azure-tts.js.
+export const startsWithQuestion = (word: string): string => `Hvad starter | ${word} med?`
 
 // Letters Bogstav Quiz asks about (the correct answer is one of these). W, X and Å are asked too
 // (owner request — they have honest picturable words: Wienerbrød / Xylofon / Å-stream). Only Q stays

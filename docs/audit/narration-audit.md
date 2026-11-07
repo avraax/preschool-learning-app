@@ -3,9 +3,9 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-11-07T18:18:21.388Z
+Last updated: 2026-11-07T18:23:50.217Z
 
-**3612 OK · 1 wrong · 0 unaudited** (of 3613 clips)
+**3671 OK · 1 wrong · 0 unaudited** (of 3672 clips)
 
 ## Bogstaver
 
@@ -53,64 +53,123 @@ Last updated: 2026-11-07T18:18:21.388Z
 | ✅ | Hund starter med H | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hus starter med H | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Abe \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Abe med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Agurk \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Agurk med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Appelsin \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Appelsin med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ballon \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ballon med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Banan \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Banan med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Bil \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Bil med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Bog \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Bog med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Bus \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Bus med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Cykel \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Cykel med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Drage \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Drage med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Dør \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Dør med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Elefant \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Elefant med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Fisk \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Fisk med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Fugl \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Fugl med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ged \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ged med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Giraf \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Giraf med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Gris \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Gris med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Græskar \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Græskar med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Gulerod \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Gulerod med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Haj \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Haj med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Hat \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Hat med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Hest \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Hest med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Hund \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Hund med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Hus \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Hus med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Is \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Is med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Jordbær \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Jordbær med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Jul \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Jul med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Kage \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Kage med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Kat \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Kat med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ko \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ko med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Kop \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Kop med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Løg \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Løg med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Løve \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Løve med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Majs \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Majs med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Mus \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Mus med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Måne \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Måne med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Næsehorn \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Næsehorn med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Orm \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Orm med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ost \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ost med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Panda \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Panda med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Raket \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Raket med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ræv \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ræv med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Seng \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Seng med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Sko \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Sko med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Sol \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Sol med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Stjerne \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Stjerne med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Stol \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Stol med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Tog \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Tog med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Træ \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Træ med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ugle \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ugle med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Vulkan \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Vulkan med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Wienerbrød \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Wienerbrød med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Xylofon \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Xylofon med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Yoyo \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Yoyo med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Zebra \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Zebra med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Æble \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Æble med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Æg \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Æg med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ørn \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ørn med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter \| Ål \| med? | Bulk-approved (PRD-11 owner listen pass) |  |
+| ✅ | Hvad starter \| Ål med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter Abe med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter Agurk med? | Bulk-approved (PRD-11 owner listen pass) |  |
 | ✅ | Hvad starter Appelsin med? | Bulk-approved (PRD-11 owner listen pass) |  |
