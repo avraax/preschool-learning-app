@@ -40,7 +40,6 @@ import {
   CanvasTexture,
   Matrix4,
   Color,
-  Fog,
   Raycaster,
   Vector2,
   Vector3,
@@ -57,7 +56,7 @@ import {
 } from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { DOOR_H, DOOR_W, MATERIAL_KINDS, MAX_BLOCKS, isMaterial, type Block, type BlockKind, type Cell, type MaterialKind, type Target } from '../blockWorld.ts'
-import { BLOCK_EDGE, BLOCK_HILLS, BLOCK_SUN, BLOCK_OUTSIDE_GRID, BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../../../config/kreaBlocks.ts'
+import { BLOCK_EDGE, BLOCK_HILLS, BLOCK_SUN, BLOCK_OUTSIDE_GRID, BLOCK_PLATE, BLOCK_SKY } from '../../../../config/kreaBlocks.ts'
 import { facingAngle } from './geometry.ts'
 import { clayNormalMap, loadTexture, materialTexture } from './textures.ts'
 import { CAMERA, cameraPosition, clampTarget, fitBox, lerpPose, type Pose } from '../cameraRig.ts'
@@ -78,6 +77,8 @@ const GROUND = 3744
 /** Horizon mode: half the shadow's square, around the look-at point (the shadow travels with the view). */
 const SHADOW_REACH = 26
 const SKY_RADIUS = 1500
+/** How far the view may travel before the shadow is redrawn round it (well inside SHADOW_REACH). */
+const SHADOW_STEP = 8
 /** A block picked up to move (T59B2) floats this far above its cell, held AND dragged alike. */
 const LIFT = 0.3
 /** The pick-up rise, so the hold visibly turns into "you're holding it now". */
@@ -358,7 +359,9 @@ export class BlockScene {
     this.renderer.shadowMap.needsUpdate = true
 
     this.horizon = !!opts.horizon
-    if (this.horizon) {
+    // EVERY level is outdoors now (owner 2026-11-07): Let's plate stands on the grass under the same sky,
+    // hills and sun as the open world of Normal and Svær. (The beige studio is gone.)
+    {
       // ----- the horizon: a SUBTLE sky dome (pale blue overhead, near-white at its foot) and a haze of
       // the same foot colour, so the grass melts into the sky with no hard line (owner G9BA8).
       // A tighter depth range: the camera never comes closer than ~10 units (zoomMin × fit).
@@ -385,30 +388,21 @@ export class BlockScene {
         hills.name = 'hills'
         this.scene.add(hills)
       }
-    } else {
-      // ----- the studio: a plain wall colour, and a floor that fades into it (fog), so there is no horizon
-      this.scene.background = new Color(BLOCK_STUDIO.wall)
-      this.scene.fog = new Fog(BLOCK_STUDIO.wall, 40, 120)
-      const floor = new Mesh(new PlaneGeometry(600, 600).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: BLOCK_STUDIO.floor, roughness: 1, metalness: 0 }))
-      floor.position.y = -SLAB_DEPTH
-      floor.receiveShadow = true
-      floor.name = 'floor'
-      this.scene.add(floor)
     }
 
     // ----- light: hemisphere + one key from the top-left (the art style's key light) + one soft shadow
     // On the horizon the sun is in FRONT (so it's in view), which leaves the faces towards the child out
     // of its light: a little more sky fill keeps them bright, and a warmer, stronger sun makes the
     // shadows (towards the child) read clearly.
-    this.scene.add(new HemisphereLight(0xfffaf0, 0x9a8a76, this.horizon ? 1.7 : 1.5))
-    this.scene.add(new AmbientLight(0xffffff, this.horizon ? 0.45 : 0.3))
-    this.key = new DirectionalLight(this.horizon ? 0xfff3dc : 0xffffff, this.horizon ? 1.8 : 1.5)
+    this.scene.add(new HemisphereLight(0xfffaf0, 0x9a8a76, 1.7))
+    this.scene.add(new AmbientLight(0xffffff, 0.45))
+    this.key = new DirectionalLight(0xfff3dc, 1.8)
     // On the horizon the shadow covers the VIEW, not the world, and travels with the look-at point.
     const lit = this.horizon ? 16 : islandSize
     const reach = this.horizon ? SHADOW_REACH : islandSize * 0.95 + heightCap * 0.4
-    this.key.position.set(-lit * 0.6, lit * 1.3 + heightCap, lit * 0.5)
-    if (this.horizon) {
-      this.key.position.copy(this.sunOffset(24))
+    {
+      // From the sun's direction; far enough out that the whole plate (Let) or the view (the open world) is lit.
+      this.key.position.copy(this.sunOffset(this.horizon ? 24 : Math.max(24, lit * 1.7)))
       // The disc: a soft glow on a billboard at "infinity" (it rides with the camera like the sky).
       const glow = sunTexture()
       this.textures.push(glow)
@@ -474,6 +468,13 @@ export class BlockScene {
         this.scene.add(strip)
       }
     } else {
+      // Let: the plate stands on PLAIN grass, a shade deeper than the plate — no squares outside it, so the
+      // plate is plainly the place to build.
+      const grass = new Mesh(new PlaneGeometry(GROUND, GROUND, GROUND / 48, GROUND / 48).rotateX(-Math.PI / 2), new MeshStandardMaterial({ color: mix(BLOCK_PLATE.top, BLOCK_PLATE.checker, 0.3), roughness: 0.95, metalness: 0 }))
+      grass.position.y = -SLAB_DEPTH
+      grass.receiveShadow = true
+      grass.name = 'grass'
+      this.scene.add(grass)
       const span = islandSize + 0.4
       const topMat = new MeshStandardMaterial({ color: BLOCK_PLATE.top, roughness: 0.95, metalness: 0 })
       const s = new MeshStandardMaterial({ color: BLOCK_PLATE.side, roughness: 0.95, metalness: 0 })
@@ -714,20 +715,38 @@ export class BlockScene {
     const c = cameraPosition(p, target, this.fit)
     this.camera.position.set(c.x, c.y, c.z)
     this.camera.lookAt(target.x, target.y, target.z)
-    if (this.horizon) {
-      this.sky?.position.copy(this.camera.position)
-      if (this.sun) {
-        const d = sunDir(BLOCK_SUN.discDeg)
-        this.sun.position.set(this.camera.position.x + d.x * SUN_DIST, this.camera.position.y + d.y * SUN_DIST, this.camera.position.z + d.z * SUN_DIST)
-        this.sun.lookAt(this.camera.position)
-      }
-      if (moved) {
-        this.key.position.copy(this.sunOffset(24)).add(new Vector3(target.x, 0, target.z))
-        this.key.target.position.set(target.x, 0, target.z)
-        this.key.target.updateMatrixWorld()
-        this.renderer.shadowMap.needsUpdate = true
-      }
+    // The sky and the sun sit at "infinity": they ride with the camera, on every level.
+    this.sky?.position.copy(this.camera.position)
+    if (this.sun) {
+      const d = sunDir(BLOCK_SUN.discDeg)
+      this.sun.position.set(this.camera.position.x + d.x * SUN_DIST, this.camera.position.y + d.y * SUN_DIST, this.camera.position.z + d.z * SUN_DIST)
+      this.sun.lookAt(this.camera.position)
     }
+    // PANNING COST (the heaviest thing a pan did): the shadow covers ±SHADOW_REACH round where it was last
+    // drawn, so a pan redraws it only once the view has travelled SHADOW_STEP — not on every frame. A
+    // gesture's end re-centres it exactly (`settleShadow`).
+    if (this.horizon && moved) {
+      const t = { x: target.x, z: target.z }
+      if (Math.hypot(t.x - this.shadowAt.x, t.z - this.shadowAt.z) > SHADOW_STEP) this.centreShadow(t)
+    }
+    this.requestRender()
+  }
+
+  private shadowAt = { x: 0, z: 0 }
+  private centreShadow(t: { x: number; z: number }): void {
+    this.shadowAt = { ...t }
+    this.key.position.copy(this.sunOffset(24)).add(new Vector3(t.x, 0, t.z))
+    this.key.target.position.set(t.x, 0, t.z)
+    this.key.target.updateMatrixWorld()
+    this.renderer.shadowMap.needsUpdate = true
+  }
+
+  /** A pan (or the glide home) ended: centre the shadow on the view once, exactly. */
+  settleShadow(): void {
+    if (!this.horizon) return
+    const t = { x: this.pose.tx ?? 0, z: this.pose.tz ?? 0 }
+    if (t.x === this.shadowAt.x && t.z === this.shadowAt.z) return
+    this.centreShadow(t)
     this.requestRender()
   }
 
@@ -773,6 +792,7 @@ export class BlockScene {
       else {
         this.animation = 0
         this.pose = { ...to }
+        this.settleShadow()
         done?.()
       }
     }
@@ -822,13 +842,7 @@ export class BlockScene {
     // starting angle — so the fit never changes while the child turns (no pulsing plate).
     // On the horizon there is no plate to fit: a VIEW_HALF box around the look-at point fills the view.
     const box = this.horizon ? { half: VIEW_HALF, bottom: 0, top: 2 } : { half: this.opts.islandSize / 2 + 0.2, bottom: -SLAB_DEPTH, top: 2 }
-    this.fit = fitBox(CAMERA.home, box, TARGET, aspect, fill)
-    const fog = this.scene.fog as Fog | null
-    if (fog) {
-      // The floor fades into the wall well beyond the plate at every zoom, so there is no horizon line.
-      fog.near = this.fit * (CAMERA.zoomMax + 0.4)
-      fog.far = this.fit * (CAMERA.zoomMax + 2.2)
-    }
+    this.fit = fitBox(this.horizon ? CAMERA.home : CAMERA.plateHome, box, TARGET, aspect, fill)
     this.applyPose(this.pose)
   }
 

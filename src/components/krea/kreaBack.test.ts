@@ -59,6 +59,7 @@ for (const [file, restore] of [
   ['./TegnMedMigGame.tsx', /setCleared\(\{ id: subjectId, piece \}\)/],
   ['./FarvelaegGame.tsx', /setCleared\(\{ id: pageId, piece \}\)/],
   ['./ByggeklodserGame.tsx', /setWorld\(clearWorld\(worldRef\.current\)\)/],
+  ['./PerlepladeGame.tsx', /if \(board\) remember\(board\)/],
 ] as const) {
   test(`${file}: "Ny" is undoable — Fortryd brings the piece back`, () => {
     const code = src(file)
@@ -66,3 +67,10 @@ for (const [file, restore] of [
     assert.match(fresh, restore, 'the clear keeps nothing to undo back to')
   })
 }
+
+// Perleplade had no Fortryd at all (owner 2026-11-07): every board change is remembered and undone one by one.
+test('Perleplade: Fortryd undoes bead changes, and is a real button while building', () => {
+  const code = src('./PerlepladeGame.tsx')
+  assert.match(code, /if \(landed\(r\)\) remember\(b\)/, 'a placed bead is not undoable')
+  assert.match(code, /dataId="undo" label="Fortryd"[^>]*onPress=\{doUndo\}/)
+})

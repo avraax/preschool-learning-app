@@ -5,7 +5,7 @@ paths:
   - "scripts/krea-regions.mjs"
 ---
 
-# Krea — `krea.draw` (Fri Tegning) · `krea.guide` (Tegn med Mig) · `krea.color` (Farvelæg) · `krea.beads` (Perleplade)
+# Krea — `krea.draw` (Fri Tegning) · `krea.guide` (Tegn med Mig) · `krea.color` (Farvelæg) · `krea.beads` (Perleplade) · `krea.blocks` (Byggeklodser, staging-only, `blocksGate.ts`)
 
 The 6th section, behind `kreaGate.ts` until the owner releases it — and with it the four front-page
 doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redirects; `doors.ts`). PRD + progress log:
@@ -73,7 +73,21 @@ doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redi
   sizes its picture from what the measured legend leaves — never a shrinkable flex item (its legend hung
   out of it in WebKit) or a fixed px picture. No "choose another board/picture" button in ANY open piece: back does it (owner; `kreaBack.test`).
 
+## Byggeklodser (`blocks/`, three.js, PRD-03 §10)
+- Pure `blockWorld.ts` is the truth; `BlockScene` only draws it. ONE resolver (`resolvePlacement`) +
+  `moveBlock` (hold 450 ms → drag; one undoable action). Nothing REPLACES a block; a door is 2×3 (anchor +
+  `anchor` refs). Clears are actions (`clearWorld`) so Fortryd undoes them.
+- Render on demand only (`blocks.test.ts` counts the rAF sites); one renderer, fresh canvas per mount,
+  dispose the DFG LUT. Let = a plate; Normal + Svær = the same 128² open world, two-finger pan,
+  `MAX_BLOCKS` sizes the instance buffers. Everything is outdoors (sky, hills, sun).
+- iPad GPU traps, each seen on device: a grid LAYER over the ground z-fights far out (bake it into the
+  ground); giant triangles crossing the near plane garble textures (subdivide); one-texel-per-cell grids
+  crawl (mipmapped tile); WebKit draws a decal under the ground on polygonOffset alone (lift it 1 cm).
+- Probe: `.claude/skills/ui-screenshot/blocks-probe.js` (Let + Normal, `FAILED: []`).
+
 ## Persistence & controls
+- **"Ny …?" clears only after a HOLD** (`HOLD_CONFIRM_MS`, a ring fills; a tap wiggles) and every game's
+  Fortryd brings a cleared piece back (owner 2026-11-07: kids cleared by accident).
 - **Session only** (`kreaSession`, sessionStorage per child × game × item; cleared on detach/reset). No
   localStorage/IndexedDB "for safety" — the privacy text says nothing is stored.
 - Studio controls act on the PRESS (`pressHandlers` — `click` dropped fast undo taps); a blocking

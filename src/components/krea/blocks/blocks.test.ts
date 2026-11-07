@@ -147,13 +147,15 @@ test('the built entry chunk and its preloads do not contain three', (t) => {
   assert.ok(withThree.every((f) => f.startsWith('ByggeklodserGame-')), `three leaked into ${withThree.join(', ')}`)
 })
 
-// Svær's horizon (owner G9BA8): only Svær has it, the GPU buffers are bounded by MAX_BLOCKS (never the
-// 128×128×8 area), and only the horizon pans.
-test('the horizon ground is Svær-only, its buffers are bounded by MAX_BLOCKS, and only it pans', () => {
+// The open world (owner G9BA8, then 2026-11-07: Normal and Svær are the same world, Let a plate): the
+// GPU buffers are bounded by MAX_BLOCKS (never the 128×128×8 area), and only the open world pans.
+test('the open world is Normal + Svær, Let a plate; buffers bounded by MAX_BLOCKS; only the world pans', () => {
   const diff = readFileSync(new URL('../../../config/difficulty.ts', import.meta.url), 'utf8')
   const table = diff.slice(diff.indexOf('export const KREA_BLOCKS'), diff.indexOf('}', diff.indexOf('svaer:', diff.indexOf('export const KREA_BLOCKS'))) + 1)
-  assert.equal((table.match(/horizon: true/g) ?? []).length, 1)
+  assert.equal((table.match(/horizon: true/g) ?? []).length, 2)
+  assert.match(table, /normal: \{[^}]*horizon: true/)
   assert.match(table, /svaer: \{[^}]*horizon: true/)
+  assert.doesNotMatch(table, /let: \{[^}]*horizon/)
   const scene = readFileSync(new URL('./engine/BlockScene.ts', import.meta.url), 'utf8')
   assert.match(scene, /const capacity = Math\.min\(islandSize \* islandSize \* heightCap, MAX_BLOCKS\)/)
   assert.match(scene, /pan\(from: \{ x: number; y: number \}, to: \{ x: number; y: number \}\): Pose \{\s+if \(!this\.horizon\) return this\.getPose\(\)/)
@@ -168,4 +170,13 @@ test('hold-to-move: an unmoved hold puts the block back; a second finger cancels
   assert.match(stage, /if \(gesture\.current\.holding\) \{\s+gesture\.current\.holding = false\s+holdRef\.current\.onHoldEnd\?\.\(null\)/)
   const game = readFileSync(new URL('../ByggeklodserGame.tsx', import.meta.url), 'utf8')
   assert.match(game, /if \(t\.on !== 'block' \|\| toolRef\.current !== 'block' \|\| confirmOpen\) return false/, 'the eraser (or an open question) can pick blocks up')
+})
+
+// Panning cost (owner 2026-11-07, "optimisations"): the shadow map is redrawn only once the view has
+// travelled SHADOW_STEP, and re-centred when the gesture ends — never on every frame of a pan.
+test('a pan redraws the shadow only every SHADOW_STEP, and settles it at the end', () => {
+  const scene = readFileSync(new URL('./engine/BlockScene.ts', import.meta.url), 'utf8')
+  assert.match(scene, /if \(Math\.hypot\(t\.x - this\.shadowAt\.x, t\.z - this\.shadowAt\.z\) > SHADOW_STEP\) this\.centreShadow\(t\)/)
+  const stage = readFileSync(new URL('./BlockStage.tsx', import.meta.url), 'utf8')
+  assert.match(stage, /if \(g\.multi \|\| g\.mousePan\) sceneRef\.current\?\.settleShadow\(\)/)
 })

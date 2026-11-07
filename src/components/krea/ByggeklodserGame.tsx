@@ -15,7 +15,7 @@ import { kreaSession } from '../../services/kreaSession'
 import { KREA_BLOCKS } from '../../config/difficulty'
 import { PALETTE_13, type CrayonColor } from '../../config/kreaPalette'
 import { BLOCK_MATERIAL_NAME, BLOCK_SPECIAL_NAME, KREA_COLOR_NAME, NEW_BUILD_LINE, NEW_BUILD_TITLE } from '../../config/kreaPhrases'
-import { BLOCK_PLATE, BLOCK_STUDIO } from '../../config/kreaBlocks'
+import { BLOCK_PLATE, BLOCK_SKY, BLOCK_STUDIO } from '../../config/kreaBlocks'
 import { KREA_ART } from '../../assets/games/krea'
 import { BLOCK_FACE_ART } from '../../assets/games/krea/blocks'
 import { CRAYON_HEX } from './canvas/brushes'
@@ -218,28 +218,48 @@ const ByggeklodserGame: React.FC = () => {
     if (!cells.length) return false
     touched()
     moving.current = { from: cells[0], drawn: cells }
+    lastDrop.current = ''
     sfx.play('krea-pick')
     // It rises into the dragged look the moment the hold takes: lifted, in its halo (owner 2026-11-07).
     stage.current?.setLifted(cells)
     stage.current?.setGhost(cells, HALO, true)
     return true
   }
+  // At most ONE redraw a frame, and only when the landing spot changes: every move used to re-render the
+  // game and re-instance the whole build (a large build made dragging heavy).
+  const holdPoint = useRef<{ x: number; y: number } | null>(null)
+  const holdRaf = useRef(0)
+  const lastDrop = useRef('')
+  useEffect(() => () => cancelAnimationFrame(holdRaf.current), [])
   const onHoldMove = (p: { x: number; y: number }) => {
-    const m = moving.current
-    if (!m) return
-    const r = moveTo(p)
-    if (r && 'placed' in r) {
-      m.drawn = wholeBlockCells(r.placed, r.cell)
-      setMovePreview(r.placed)
-    } else {
-      // Nowhere it can go: it waits at home.
-      m.drawn = wholeBlockCells(worldRef.current, m.from)
-      setMovePreview(null)
-    }
-    stage.current?.setLifted(m.drawn)
-    stage.current?.setGhost(m.drawn, HALO, true)
+    holdPoint.current = p
+    if (holdRaf.current) return
+    holdRaf.current = requestAnimationFrame(() => {
+      holdRaf.current = 0
+      const m = moving.current
+      const pt = holdPoint.current
+      if (!m || !pt) return
+      const r = moveTo(pt)
+      const drop = r && 'placed' in r ? wholeBlockCells(r.placed, r.cell) : null
+      const key = drop ? drop.map((c) => `${c.x},${c.y},${c.z}`).join(' ') : 'home'
+      if (key === lastDrop.current) return
+      lastDrop.current = key
+      if (r && 'placed' in r && drop) {
+        m.drawn = drop
+        setMovePreview(r.placed)
+      } else {
+        // Nowhere it can go: it waits at home.
+        m.drawn = wholeBlockCells(worldRef.current, m.from)
+        setMovePreview(null)
+      }
+      stage.current?.setLifted(m.drawn)
+      stage.current?.setGhost(m.drawn, HALO, true)
+    })
   }
   const onHoldEnd = (p: { x: number; y: number } | null) => {
+    cancelAnimationFrame(holdRaf.current)
+    holdRaf.current = 0
+    lastDrop.current = ''
     const r = p ? moveTo(p) : null
     moving.current = null
     setMovePreview(null)
@@ -488,7 +508,7 @@ const ByggeklodserGame: React.FC = () => {
           data-blocks-kinds={Object.entries(world.cells).map(([k, b]) => `${k}:${b.kind}:${b.facing}${b.anchor ? ':part' : ''}`).sort().join(' ')}
           data-blocks-level={level}
           data-blocks-held={`${held.kind}:${held.color}`}
-          sx={{ position: 'fixed', inset: 0, zIndex: 1, background: BLOCK_STUDIO.wall }}
+          sx={{ position: 'fixed', inset: 0, zIndex: 1, background: BLOCK_SKY.horizon }}
         >
           {/* ONE droppable: the whole stage. The cell comes from the raycast, not from dnd-kit. */}
           <DroppableZone id="stage" overColor="transparent" style={{ position: 'absolute', inset: 0 }}>

@@ -630,8 +630,10 @@ export interface KreaBlocksTuning {
   horizon?: boolean
 }
 export const KREA_BLOCKS: Record<DifficultyLevel, KreaBlocksTuning> = {
-  let: { island: 12, heightCap: 8 },
-  normal: { island: 14, heightCap: 8 },
+  // Owner 2026-11-07: Let is a plate (the size Normal had), under the same sky; Normal and Svær are the
+  // SAME open world — free building has nothing to grade, so the level only picks plate or world.
+  let: { island: 14, heightCap: 8 },
+  normal: { island: 128, heightCap: 8, horizon: true },
   svaer: { island: 128, heightCap: 8, horizon: true },
 }
 
@@ -681,6 +683,7 @@ export const EXEMPT: Record<string, string> = {
   'colors.learn': 'ungraded browse — all 6 hues and their shades at every level',
   'krea.draw': 'creative tool — only the palette widens, 9 crayons at Let, 13 above; nothing to grade',
   'krea.color': 'colour-in — any colour counts and a tap fills a whole region; only the palette widens, 9 at Let, 13 above',
+  'krea.blocks': 'free building, nothing to grade — Let is a plate, Normal and Svær the same open world (owner 2026-11-07)',
 }
 
 /**

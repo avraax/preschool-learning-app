@@ -52,10 +52,15 @@ export const CAMERA = {
    * horizon but not too low"), and a little closer, so the squares near you stay a finger's size.
    */
   horizonHome: { azimuth: 45 * DEG, tilt: 11.5 * DEG, zoom: 0.85, tx: 0, tz: 0 } as Pose,
+  /**
+   * Let's plate, outdoors (owner 2026-11-07): low enough that the hills and the sky show over it, high
+   * enough that every square of the plate is easy to hit. The fit is judged from THIS angle.
+   */
+  plateHome: { azimuth: 45 * DEG, tilt: 15 * DEG, zoom: 1 } as Pose,
 } as const
 
-/** Where a level starts and where the home button returns: the horizon pose on Svær's ground. */
-export const homePose = (horizon: boolean | undefined): Pose => ({ ...(horizon ? CAMERA.horizonHome : CAMERA.home) })
+/** Where a level starts and where the home button returns: the open world's pose, or Let's plate pose. */
+export const homePose = (horizon: boolean | undefined): Pose => ({ ...(horizon ? CAMERA.horizonHome : CAMERA.plateHome) })
 
 export const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v))
 

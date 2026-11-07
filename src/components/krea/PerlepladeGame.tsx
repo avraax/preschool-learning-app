@@ -61,6 +61,7 @@ import { PatternCard } from './beads/PatternCard'
 import { flyHome, popOff } from './beads/beadMotion'
 import { StudioBackdrop } from './studio/StudioScene'
 import { PICTURES, PlusBadge, SIDE_TOP_CLEARANCE, StudioButton } from './studio/StudioControls'
+import { KREA_ART } from '../../assets/games/krea'
 import NewPaperConfirm from './studio/NewPaperConfirm'
 import { swapPaper } from './studio/alive'
 import { KreaPicker } from './studio/KreaPicker'
@@ -209,6 +210,7 @@ const PerlepladeGame: React.FC = () => {
   // A level change re-shapes every board (10 / 13 / 16) and every pattern: reload the open one.
   useEffect(() => {
     if (!itemId) return
+    forget()
     setBoard(loadBoard(itemId))
     setHeld(null)
     setHint(null)
@@ -236,6 +238,31 @@ const PerlepladeGame: React.FC = () => {
       else kreaSession.clearItem(GAME_ID, itemId)
     })
   }, [board, itemId])
+
+  // ----- Fortryd (owner 2026-11-07): every change the child makes to the board can be taken back, one
+  // at a time — and "Ny plade" too, so a clear by accident is never final (like the drawing games). The
+  // history is the boards BEFORE each change, for the board that is open; opening another forgets it.
+  const history = useRef<BeadBoard[]>([])
+  const [undoCount, setUndoCount] = useState(0)
+  const remember = (before: BeadBoard) => {
+    history.current.push(before)
+    if (history.current.length > 300) history.current.shift()
+    setUndoCount(history.current.length)
+  }
+  const forget = () => {
+    history.current = []
+    setUndoCount(0)
+  }
+  const doUndo = () => {
+    const prev = history.current.pop()
+    setUndoCount(history.current.length)
+    if (!prev) return
+    markInteracted()
+    sfx.play('krea-undo')
+    setHint(null)
+    setHeld(null)
+    setBoard(prev)
+  }
 
   // ----- THE resolver: every bead that lands on a peg, from either gesture, comes through here -------
   const resolve = (base: BeadBoard, colour: BeadColor, peg: number): PlaceResult => {
@@ -289,6 +316,7 @@ const PerlepladeGame: React.FC = () => {
     const peg = pegAt(g, x, y)
     if (held) {
       const r = resolve(b, held, peg)
+      if (landed(r)) remember(b)
       // A tap that missed the board keeps the bead in hand; anything else used it up.
       if (r !== 'outside') setHeld(null)
       return
@@ -296,6 +324,7 @@ const PerlepladeGame: React.FC = () => {
     if (peg >= 0 && b.beads[peg]) {
       // Off the board and home to its bowl: shown lifted there briefly, then it settles (never in hand).
       const lifted = removeBead(b, peg)
+      remember(b)
       setBoard(lifted.board)
       showReturn(lifted.colour)
       sfx.play('bead-pick')
@@ -418,14 +447,16 @@ const PerlepladeGame: React.FC = () => {
     const peg = overBowls ? -1 : landingPeg(x, y)
     const lift = liftNow()
     if (g.from === 'bowl') {
-      if (peg >= 0) resolve(b, g.colour, peg)
-      else {
+      if (peg >= 0) {
+        if (landed(resolve(b, g.colour, peg))) remember(b)
+      } else {
         sfx.play('bead-back')
         flyHome(g.colour, { x, y: y - lift }, heldBeadPx(beadPx), reduce)
       }
       return
     }
     if (overBowls) {
+      remember(b)
       setBoard(removeBead(b, g.peg).board)
       sfx.play('bead-back')
       return
@@ -438,6 +469,7 @@ const PerlepladeGame: React.FC = () => {
     // the board back exactly as it was.
     const lifted = removeBead(b, g.peg).board
     if (!landed(resolve(lifted, g.colour, peg))) setBoard(b)
+    else remember(b)
   }
 
   // ----- the grid and the way on -------------------------------------------------------------------
@@ -446,6 +478,7 @@ const PerlepladeGame: React.FC = () => {
     audio.updateUserInteraction()
     audio.cancelCurrentAudio()
     sfx.play('krea-paper')
+    forget()
     setBoard(loadBoard(id))
     setHeld(null)
     setHint(null)
@@ -466,6 +499,7 @@ const PerlepladeGame: React.FC = () => {
     setHeld(null)
     setHint(null)
     setItemId(null)
+    forget()
     setBoard(null)
     setConfirmOpen(false)
     setParams((prev) => {
@@ -488,6 +522,8 @@ const PerlepladeGame: React.FC = () => {
     setConfirmOpen(false)
     if (!item || !itemId) return
     sfx.play('krea-paper')
+    // Undoable (owner 2026-11-07): Fortryd brings the whole board back.
+    if (board) remember(board)
     kreaSession.clearItem(GAME_ID, itemId)
     setHint(null)
     setSwapping(true)
@@ -736,6 +772,11 @@ const PerlepladeGame: React.FC = () => {
             }}
           >
             {landscape ? card : null}
+            {stage === 'building' ? (
+              <StudioButton dataId="undo" label="Fortryd" size={phone ? '48px' : '64px'} disabled={!enabled || undoCount === 0} onPress={doUndo}>
+                <Box component="img" src={KREA_ART.undo} alt="" draggable={false} sx={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }} />
+              </StudioButton>
+            ) : null}
             {wayOn}
           </Box>
         </Box>

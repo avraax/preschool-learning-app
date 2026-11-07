@@ -590,6 +590,22 @@ before play). Owner's decisions, commit `e6fae32`:
 - Verified rung 1+2 (Chrome + WebKit): move onto another block's top, undo, tap still places, unmoved
   hold unchanged; horizon probe; Normal regression. UNKNOWN (rung 3): whether 450 ms feels right.
 
+### After the sixth look (2026-11-07) — the current shape, read this first
+- **Levels:** Let = a 14² plate standing on plain grass; **Normal and Svær = the same 128² open world**
+  (owner: "Normal and Svær see the same game"; `krea.blocks` is in difficulty `EXEMPT`). Every level is
+  outdoors: sky dome, two hill rings, a sun in view on entering (light + shadows from its direction).
+  Start poses: Let 15° (`plateHome`), open world 11.5° zoom 0.85 (`horizonHome`); tilt down to 1.5°.
+- **Moves & safety:** hold a block 450 ms to lift it (it rises into the dragged look) and drag; "Ny …?"
+  needs a 1.5 s HOLD in all five Krea games, and Fortryd undoes the clear (Perleplade got a Fortryd).
+- **Look fixes, each from an on-device report:** grid baked into the ground (a layer z-fought → flicker),
+  ground subdivided (giant triangles → bare wedge, NGNDA), mipmapped plate grid, contact shadows + a
+  tight shadow (blocks "floated"), no fog (sharp horizon).
+- **Cost:** a pan redraws the shadow only every 8 units and settles it at the gesture's end; a held
+  block redraws once a frame and only when its landing cell changes; 0 frames at rest everywhere.
+- **Probe:** `.claude/skills/ui-screenshot/blocks-probe.js` — Let + Normal end to end, `FAILED: []` on
+  Chrome (1024×768, 844×390, 390×844) and WebKit. UNKNOWN (rung 3): everything on the child's A10X
+  iPad on 17.7 — the owner's reports so far come from an M1 iPad.
+
 ## 9. Kickoff prompt for a fresh session
 
 > Implement `plans/krea/tmp-prd-krea-03-byggeklodser.md` (Byggeklodser, the 3D block game in Krea).

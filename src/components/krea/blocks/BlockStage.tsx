@@ -332,6 +332,7 @@ const BlockStage = React.forwardRef<BlockStageHandle, BlockStageProps>(function 
     if (pointers.current.size > 0) return
     gesture.current = null
     clearHold()
+    if (g.multi || g.mousePan) sceneRef.current?.settleShadow()
     if (g.holding) {
       // A hold that never moved puts the block back where it was (no 1-cell nudge from the release).
       holdRef.current.onHoldEnd?.(cancelled || !g.holdMoved ? null : local(e))
