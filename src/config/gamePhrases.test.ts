@@ -52,7 +52,7 @@ test('spoken math/comparison/sequence/colour lines are exactly these strings', (
   assert.equal(NUANCER_INSTRUCTION, 'Sæt farverne fra lys til mørk')
   assert.equal(colorMixTargetText('lilla'), 'Lav lilla farve ved at blande farverne')
   assert.equal(colorMixResultText('rød', 'blå', 'lilla'), 'rød og blå bliver lilla')
-  assert.equal(startsWithQuestion('Æble'), 'Hvad starter | Æble, med?')
+  assert.equal(startsWithQuestion('Æble'), 'Hvad starter | Æble med?')
   assert.equal(fillBoatPrompt(37), 'Fyld båden med syvogtredive fisk')
   assert.equal(fillBoatPrompt(1), 'Fyld båden med en fisk')
   assert.equal(fillBoatPrompt(100), 'Fyld båden med et hundrede fisk')

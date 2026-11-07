@@ -3,7 +3,7 @@
 > AUTO-GENERATED (by the `/audit` harness via the dev-server, or `npm run audit:approve-all`).
 > Do not hand-edit — source of truth is `narration-audit.json`.
 
-Last updated: 2026-11-07T18:45:23.467Z
+Last updated: 2026-11-07T19:46:37.621Z
 
 **4140 OK · 1 wrong · 0 unaudited** (of 4141 clips)
 

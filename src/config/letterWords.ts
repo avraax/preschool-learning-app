@@ -140,11 +140,10 @@ export const startsWithPhrase = (letter: string, word: string): string =>
  * for the same reason as the two above: `shared-narration-clips.js` calls it too, so the baked clip
  * and the runtime request can't drift (drift = a silent fall back to live Azure, never auditioned).
  */
-// Pauses set the word apart instead of one flat, fast run (owner 2026-11-07). Before the word a `|` break
-// (~0.44 s heard, `PAUSE_MARK` in shared-azure-tts.js); after it a COMMA — the smallest gap Azure makes
-// (~0.28 s measured). Tried and rejected by the owner the same day: a `|` after too (two equal pauses,
-// too slow), nothing after (too fast). x-weak/20/50 ms breaks measured 0.35–0.58 s, not smaller.
-export const startsWithQuestion = (word: string): string => `Hvad starter | ${word}, med?`
+// A pause BEFORE the word sets it apart (owner 2026-11-07): a `|` break (~0.44 s heard, `PAUSE_MARK` in
+// shared-azure-tts.js). Nothing after it — the owner's final call the same day, after trying a `|` after
+// (too slow) and a comma after (~0.28 s; also removed). x-weak/20/50 ms breaks measured 0.35–0.58 s.
+export const startsWithQuestion = (word: string): string => `Hvad starter | ${word} med?`
 
 // Letters Bogstav Quiz asks about (the correct answer is one of these). W, X and Å are asked too
 // (owner request — they have honest picturable words: Wienerbrød / Xylofon / Å-stream). Only Q stays
