@@ -23,9 +23,10 @@ const DEG = Math.PI / 180
 
 export const CAMERA = {
   fovDeg: 35,
-  // Low enough to look in UNDER a block (owner G9BA8: his son couldn't tilt down to the ground); never
-  // below the horizon line, or the floor fills the screen.
-  tiltMin: 5 * DEG,
+  // ALMOST AT THE GROUND (owner 2026-11-07: "almost at the ground"; G9BA8: his son couldn't tilt down to
+  // look in under a block). The look-at point is half a cell up, so even here the camera stays above the
+  // grass; never below the horizon line, or the floor fills the screen.
+  tiltMin: 1.5 * DEG,
   tiltMax: 70 * DEG,
   /**
    * Closest and farthest, as multiples of the fit distance (the whole island filling the stage). The
