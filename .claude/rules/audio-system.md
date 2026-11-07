@@ -237,6 +237,9 @@ overrides — components AND `shared-narration-clips.js` call the same builders,
 - **The oracle is the owner's ear**, auditioned in `/voicelab` in **full sentence context** — never as
   bare tokens, which is exactly the reading that isn't broken. Vary tempo too (the Tempo control), since
   "too fast / no depth" is a real defect shape for a clipped letter name.
+- **Azure is no longer byte-deterministic** (2026-11-07: the same request twice gave different bytes),
+  so "lexicon applied?" can't be a byte compare any more (`lexicon:check` assumes it can). Compare the
+  DECODED audio: duration + RMS envelope matched the forced-IPA clip exactly for the `dør` fix.
 - **Record the rejected variants** in a comment beside the fix. These strings look like typos
   (a stray comma, a "misspelled" letter, an odd article), so without the negative results someone
   tidies them away and silently regresses the pronunciation.
