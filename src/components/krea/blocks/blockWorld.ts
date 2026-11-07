@@ -236,6 +236,16 @@ export const removeBlock = (w: BlockWorld, cell: Cell): BlockWorld | null => {
   return { ...w, cells: apply(w, changes, 'after'), actions: [...w.actions, { t: 'remove', changes }] }
 }
 
+/**
+ * "Ny byggeplade" as ONE undoable action (owner 2026-11-07: a clear by accident must never be final) —
+ * every block removed, Fortryd puts them all back. An empty world is returned unchanged.
+ */
+export const clearWorld = (w: BlockWorld): BlockWorld => {
+  const changes = Object.entries(w.cells).map(([k, b]) => change(parseKey(k), b))
+  if (!changes.length) return w
+  return { ...w, cells: {}, actions: [...w.actions, { t: 'remove', changes }] }
+}
+
 /** Undo the last place or removal (§2.2.11: unlimited). Restores every cell's "before". */
 export const undo = (w: BlockWorld): BlockWorld | null => {
   const last = w.actions[w.actions.length - 1]

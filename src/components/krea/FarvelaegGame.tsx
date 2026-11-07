@@ -281,9 +281,18 @@ const FarvelaegGame: React.FC = () => {
     if (t === 'crayon' || t === 'eraser') setTool(t)
   }
 
+  // This page as it was before "Nyt papir" — Fortryd brings it back once the new sheet has nothing left
+  // to undo (owner 2026-11-07). Tied to the page, so another page never inherits it.
+  const [cleared, setCleared] = useState<{ id: string; piece: Piece } | null>(null)
+  const restorable = cleared && cleared.id === pageId ? cleared.piece : null
   const doUndo = () => {
     markInteracted()
     sfx.play('krea-undo')
+    if (!piece.actions.length && restorable) {
+      setPiece(restorable)
+      setCleared(null)
+      return
+    }
     setPiece((p) => (p.actions.length && !p.done ? { ...p, actions: p.actions.slice(0, -1) } : p))
   }
 
@@ -298,6 +307,7 @@ const FarvelaegGame: React.FC = () => {
     audio.cancelCurrentAudio()
     setConfirmOpen(false)
     sfx.play('krea-paper')
+    if (pageId) setCleared({ id: pageId, piece })
     if (pageId) kreaSession.clearItem(GAME_ID, pageId)
     setBusy(true)
     void swapPaper(paperRef.current, reduce, () => setPiece(freshPiece())).then(() => {
@@ -354,7 +364,7 @@ const FarvelaegGame: React.FC = () => {
         tools={
           // The same left column as Fri Tegning: the crayon (in hand), the eraser and undo — and, as there,
           // the crayon row shows only while the crayon is picked (empty for the eraser).
-          <ToolRow tool={tool} color={color} available={['crayon', 'eraser']} onTool={pickTool} onUndo={doUndo} canUndo={piece.actions.length > 0} disabled={!enabled} direction={landscape ? 'column' : 'row'} />
+          <ToolRow tool={tool} color={color} available={['crayon', 'eraser']} onTool={pickTool} onUndo={doUndo} canUndo={piece.actions.length > 0 || !!restorable} disabled={!enabled} direction={landscape ? 'column' : 'row'} />
         }
         paper={
           <Paper paperRef={paperRef} aspect={1}>

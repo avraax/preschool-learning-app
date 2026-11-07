@@ -44,3 +44,25 @@ test('GameShell hands onBackWithin to the back arrow, which prefers it over the 
   assert.match(src('../common/GameShell.tsx'), /<BackButton to=\{backRoute\} variant="game" onBack=\{onBackWithin\} \/>/)
   assert.match(src('../common/BackButton.tsx'), /onClick=\{\(\) => \(onBack \? onBack\(\) : goBack\(to\)\)\}/)
 })
+
+// Owner 2026-11-07: kids can clear by accident. The fresh button must be HELD (a full ring only arms it;
+// the click that ends the hold clears), and the clear is undoable in every game with Fortryd.
+test('the new-piece question clears only after a hold', () => {
+  const dialog = src('./studio/NewPaperConfirm.tsx')
+  assert.match(dialog, /export const HOLD_CONFIRM_MS = 1500/)
+  assert.match(dialog, /const commit = \(\) => \{\s+if \(hold !== 'armed'\) return/, 'a tap clears without the hold')
+  assert.match(dialog, /onPress=\{commit\}/)
+  assert.doesNotMatch(dialog, /onPress=\{onFresh\}/)
+})
+for (const [file, restore] of [
+  ['./FriTegningGame.tsx', /setCleared\(drawing\)/],
+  ['./TegnMedMigGame.tsx', /setCleared\(\{ id: subjectId, piece \}\)/],
+  ['./FarvelaegGame.tsx', /setCleared\(\{ id: pageId, piece \}\)/],
+  ['./ByggeklodserGame.tsx', /setWorld\(clearWorld\(worldRef\.current\)\)/],
+] as const) {
+  test(`${file}: "Ny" is undoable — Fortryd brings the piece back`, () => {
+    const code = src(file)
+    const fresh = code.slice(code.indexOf('const confirmFresh'), code.indexOf('const confirmKeep'))
+    assert.match(fresh, restore, 'the clear keeps nothing to undo back to')
+  })
+}

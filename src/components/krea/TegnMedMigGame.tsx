@@ -331,9 +331,18 @@ const TegnMedMigGame: React.FC = () => {
   // Undo takes back the LAST LINE, always — also the one that finished a step: the step then goes back
   // with it (its guide returns). Only a finished, shown piece can't be undone.
   const canUndoStep = !piece.done && (piece.drawing.strokes.length > piece.start || piece.starts.length > 0)
+  // This subject as it was before "Nyt papir" — Fortryd brings it back once the new sheet has nothing
+  // left to undo (owner 2026-11-07). Tied to the subject, so another picture never inherits it.
+  const [cleared, setCleared] = useState<{ id: string; piece: Piece } | null>(null)
+  const restorable = cleared && cleared.id === subjectId ? cleared.piece : null
   const doUndo = () => {
     markInteracted()
     sfx.play('krea-undo')
+    if (!canUndoStep && restorable) {
+      setPiece(restorable)
+      setCleared(null)
+      return
+    }
     setPiece((p) => undoPiece(p))
   }
 
@@ -348,6 +357,7 @@ const TegnMedMigGame: React.FC = () => {
     audio.cancelCurrentAudio()
     setConfirmOpen(false)
     sfx.play('krea-paper')
+    if (subjectId) setCleared({ id: subjectId, piece })
     if (subjectId) kreaSession.clearItem(GAME_ID, subjectId)
     setBusy(true)
     void swapPaper(paperRef.current, reduce, () => {
@@ -415,7 +425,7 @@ const TegnMedMigGame: React.FC = () => {
         landscape={landscape}
         tools={
           // The same left column as Fri Tegning: tools only — here the crayon (in hand) and undo.
-          <ToolRow tool={tool} color={color} available={['crayon']} onTool={pickTool} onUndo={doUndo} canUndo={canUndoStep} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
+          <ToolRow tool={tool} color={color} available={['crayon']} onTool={pickTool} onUndo={doUndo} canUndo={canUndoStep || !!restorable} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
         }
         paper={
           <Paper paperRef={paperRef}>

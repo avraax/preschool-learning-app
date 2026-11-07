@@ -29,6 +29,7 @@ import { MATERIAL_BASE, materialChipUrl } from './blocks/materialArt'
 import {
   blockCount,
   blockList,
+  clearWorld,
   emptyWorld,
   isMaterial,
   MATERIAL_KINDS,
@@ -79,7 +80,9 @@ const SAVE_DEBOUNCE_MS = 500
 /** On touch the drop aims this far ABOVE the finger, so the fingertip doesn't hide the cell (§4.3). */
 const TOUCH_AIM_LIFT_PX = 56
 const CHIP = 'clamp(44px, 6.4vmin, 58px)'
-const SIDE_BTN = 'clamp(44px, 7.6vmin, 68px)'
+// The tools match the chips (owner 2026-11-07: a narrower panel, more room to build) — three of either
+// fill one row of the landscape column.
+const SIDE_BTN = CHIP
 /** Air between the floating panel and the plate's free area / the header. */
 const PANEL_GAP_PX = 8
 /** What the ghost wears for the fixed-look specials and for the eraser's pick. */
@@ -312,8 +315,8 @@ const ByggeklodserGame: React.FC = () => {
     audio.cancelCurrentAudio()
     setConfirmOpen(false)
     sfx.play('krea-paper')
-    kreaSession.clearItem(GAME_ID, ITEM_ID)
-    setWorld(fresh())
+    // Undoable (owner 2026-11-07): Fortryd brings the whole build back.
+    setWorld(clearWorld(worldRef.current))
   }
   const confirmKeep = () => {
     audio.cancelCurrentAudio()
@@ -547,7 +550,7 @@ const ByggeklodserGame: React.FC = () => {
           >
             {/* The 13 colours, then the 5 materials and the 2 specials on their own row (held tools on the right, owner rule).
                 Tap = the sticky pick; drag = one block. */}
-            <Box data-blocks-tray sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CHIP})`, gap: '6px', '@media (orientation: landscape)': { gridTemplateColumns: `repeat(4, ${CHIP})` }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(5, ${CHIP})`, gap: '4px' } }}>
+            <Box data-blocks-tray sx={{ display: 'grid', gridTemplateColumns: `repeat(7, ${CHIP})`, gap: '6px', '@media (orientation: landscape)': { gridTemplateColumns: `repeat(3, ${CHIP})` }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(5, ${CHIP})`, gap: '4px' } }}>
               {PALETTE_13.map((c) => (
                 <DraggableItem key={c} id={`chip:${c}`} inline onActivate={() => pickColor(c)} lift={{ scale: 1.12, rotate: 0 }}>
                   <ClayChip color={c} selected={tool === 'block' && held.color === c && held.kind === 'cube'} />
@@ -560,23 +563,29 @@ const ByggeklodserGame: React.FC = () => {
                   </DraggableItem>
                 </Box>
               ))}
-              {SPECIAL_KINDS.map((k) => (
-                <Box key={k}>
+              {SPECIAL_KINDS.map((k, i) => (
+                // Window and door start their own row in the landscape column (3 wide), after the materials.
+                <Box key={k} sx={i === 0 ? { '@media (orientation: landscape)': { gridColumnStart: 1 } } : undefined}>
                   <DraggableItem id={`special:${k}`} inline onActivate={() => pickSpecial(k)} lift={{ scale: 1.12, rotate: 0 }}>
                     <SpecialChip kind={k} selected={tool === 'block' && held.kind === k} />
                   </DraggableItem>
                 </Box>
               ))}
             </Box>
-            {/* Eraser, undo, zoom in, zoom out, then "Ny": a 2x2 block in a landscape column; ONE row in
+            {/* Eraser, undo, zoom in, zoom out, then "Ny", zoom in/out (and home): rows of 3 — + and − side by side in a landscape column; ONE row in
                 portrait; ONE column beside the tray on a phone in landscape (too short to stack them). */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(2, ${SIDE_BTN})`, gap: '10px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(${tools}, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(${tuning.horizon ? 2 : 1}, ${SIDE_BTN})`, gap: '6px' } }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(3, ${SIDE_BTN})`, gap: '6px', justifyItems: 'center', '@media (orientation: portrait)': { gridTemplateColumns: `repeat(${tools}, ${SIDE_BTN})`, gap: '8px' }, [PHONE_LANDSCAPE]: { gridTemplateColumns: `repeat(${tuning.horizon ? 2 : 1}, ${SIDE_BTN})`, gap: '6px' } }}>
               <StudioButton dataId="eraser" label="Viskelæder" selected={tool === 'eraser'} size={SIDE_BTN} onPress={pickEraser}>
                 <Img src={KREA_ART.eraser} />
               </StudioButton>
               <StudioButton dataId="undo" label="Fortryd" size={SIDE_BTN} disabled={!canUndo} onPress={doUndo}>
                 <Img src={KREA_ART.undo} />
               </StudioButton>
+              <Box sx={{ visibility: hasBlocks ? 'visible' : 'hidden'}}>
+                <StudioButton dataId="new-build" label="Ny byggeplade" size={SIDE_BTN} disabled={!hasBlocks || confirmOpen} onPress={askNewBuild}>
+                  {newBuildPicture}
+                </StudioButton>
+              </Box>
               <IconPress label="Zoom ind" dataId="zoom-in" disabled={!canIn} onPress={() => zoom(1)}>
                 <PlusMinus plus />
               </IconPress>
@@ -588,11 +597,6 @@ const ByggeklodserGame: React.FC = () => {
                   <HomeMark />
                 </IconPress>
               ) : null}
-              <Box sx={{ gridColumn: tuning.horizon ? 'auto' : '1 / -1', visibility: hasBlocks ? 'visible' : 'hidden', '@media (orientation: portrait)': { gridColumn: 'auto' }, [PHONE_LANDSCAPE]: { gridColumn: 'auto' } }}>
-                <StudioButton dataId="new-build" label="Ny byggeplade" size={SIDE_BTN} disabled={!hasBlocks || confirmOpen} onPress={askNewBuild}>
-                  {newBuildPicture}
-                </StudioButton>
-              </Box>
             </Box>
           </Box>
         </Box>

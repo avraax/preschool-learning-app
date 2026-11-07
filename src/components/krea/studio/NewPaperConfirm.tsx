@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Box, ButtonBase, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { PICTURES, StudioButton } from './StudioControls'
@@ -12,8 +12,13 @@ import { NEW_PAPER_TITLE } from '../../../config/kreaPhrases'
 // red close X on the card's corner closes the question and keeps everything. There is no second "no, keep it"
 // picture any more — two big pictures side by side read as two equal choices.
 //
+// HOLD TO CLEAR (owner 2026-11-07: "a lot of kids could accidentally get to this modal and click new"):
+// the picture button must be HELD for `HOLD_CONFIRM_MS` while a ring fills round it; a quick tap only
+// wiggles it. And every game makes the clear UNDOABLE (Fortryd brings the piece back) — two safety nets.
+//
 // Both close on `onClick` only, never on pointerdown: a blocking overlay closed on pointerdown passes the
-// same tap through to the paper underneath (memory: audio-modal tap-through).
+// same tap through to the paper underneath (memory: audio-modal tap-through). So a full ring only ARMS the
+// button; the click that ends the hold is what clears.
 
 export interface NewPaperConfirmProps {
   open: boolean
@@ -30,10 +35,56 @@ export interface NewPaperConfirmProps {
 
 /** The close mark's red, and its ring. */
 const CLOSE_RED = '#E0463B'
+/** How long the fresh button must be held (a tap is ~100–200 ms; a deliberate hold is well past it). */
+export const HOLD_CONFIRM_MS = 1500
+const RING_GREEN = '#4FA83A'
+const RING_C = 2 * Math.PI * 46
 
 const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onClose, title = NEW_PAPER_TITLE, freshPicture, freshLabel = 'Ja, nyt papir' }) => {
   const theme = useTheme()
+  const [hold, setHold] = useState<'idle' | 'holding' | 'armed'>('idle')
+  const [wiggle, setWiggle] = useState(0)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stop = () => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = null
+  }
+  useEffect(() => stop, [])
+  useEffect(() => {
+    if (!open) {
+      stop()
+      setHold('idle')
+    }
+  }, [open])
   if (!open) return null
+  const startHold = () => {
+    stop()
+    setHold('holding')
+    timer.current = setTimeout(() => setHold('armed'), HOLD_CONFIRM_MS)
+  }
+  /** Lifted too soon: nothing happens but a wiggle — "hold me". */
+  const releaseHold = () => {
+    if (hold === 'armed') return
+    stop()
+    setHold('idle')
+    setWiggle((w) => w + 1)
+  }
+  /**
+   * The finger left the button (or the system took the pointer). Not armed: start over. Armed: on touch
+   * `pointerleave` fires just BEFORE the click that commits, so give that click a moment — then disarm,
+   * or a stray tap much later would clear without a hold.
+   */
+  const abandonHold = () => {
+    stop()
+    if (hold !== 'armed') return setHold('idle')
+    timer.current = setTimeout(() => setHold('idle'), 400)
+  }
+  const commit = () => {
+    if (hold !== 'armed') return
+    stop()
+    setHold('idle')
+    onFresh()
+  }
   const big = 'clamp(88px, 18vmin, 150px)'
   const close = 'clamp(48px, 8vmin, 64px)'
   return (
@@ -70,9 +121,50 @@ const NewPaperConfirm: React.FC<NewPaperConfirmProps> = ({ open, onFresh, onClos
         }}
       >
         <Typography sx={{ fontFamily: theme.titleFontFamily, fontWeight: 700, fontSize: 'clamp(1.6rem, 5vmin, 2.6rem)', color: '#4A3420' }}>{title}</Typography>
-        <StudioButton dataId="confirm-fresh" label={freshLabel} size={big} activateOn="click" onPress={onFresh}>
-          {freshPicture ?? <PICTURES.NewPaper />}
-        </StudioButton>
+        <Box
+          data-krea-hold={hold}
+          onPointerDown={startHold}
+          onPointerUp={releaseHold}
+          onPointerLeave={abandonHold}
+          onPointerCancel={abandonHold}
+          onContextMenu={(e) => e.preventDefault()}
+          sx={{
+            position: 'relative',
+            touchAction: 'none',
+            WebkitTouchCallout: 'none',
+            userSelect: 'none',
+            '@keyframes kreaHoldWiggle': {
+              '0%, 100%': { transform: 'rotate(0deg)' },
+              '25%': { transform: 'rotate(-6deg)' },
+              '75%': { transform: 'rotate(6deg)' },
+            },
+            ...(wiggle ? { animation: 'kreaHoldWiggle 0.35s cubic-bezier(0.4, 0, 0.2, 1) 1' } : {}),
+          }}
+          key={wiggle}
+        >
+          <StudioButton dataId="confirm-fresh" label={freshLabel} size={big} activateOn="click" onPress={commit}>
+            {freshPicture ?? <PICTURES.NewPaper />}
+          </StudioButton>
+          {/* The ring that fills while the finger holds; full = let go to clear. */}
+          <Box component="svg" viewBox="0 0 100 100" aria-hidden sx={{ position: 'absolute', inset: '-14%', width: '128%', height: '128%', pointerEvents: 'none', transform: 'rotate(-90deg)' }}>
+            <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(79,168,58,0.18)" strokeWidth="5" />
+            <Box
+              component="circle"
+              cx="50"
+              cy="50"
+              r="46"
+              fill="none"
+              stroke={RING_GREEN}
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeDasharray={RING_C}
+              sx={{
+                strokeDashoffset: hold === 'idle' ? RING_C : 0,
+                transition: hold === 'holding' ? `stroke-dashoffset ${HOLD_CONFIRM_MS}ms linear` : hold === 'armed' ? 'none' : 'stroke-dashoffset 150ms ease-out',
+              }}
+            />
+          </Box>
+        </Box>
         {/* The close X sits ON the card's top-right corner, half outside it — where a close mark is expected. */}
         <ButtonBase
           aria-label="Luk"

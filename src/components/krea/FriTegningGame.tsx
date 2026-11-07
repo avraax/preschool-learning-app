@@ -174,9 +174,17 @@ const FriTegningGame: React.FC = () => {
     void audio.speak(KREA_RAINBOW_NAME).catch(() => {})
   }
 
+  // The paper as it was before "Nyt papir" — Fortryd brings it back once the new sheet has nothing left
+  // to undo (owner 2026-11-07: a clear by accident must never be final).
+  const [cleared, setCleared] = useState<Drawing | null>(null)
   const doUndo = () => {
     markInteracted()
     sfx.play('krea-undo')
+    if (!canUndo(drawing) && cleared) {
+      setDrawing(cleared)
+      setCleared(null)
+      return
+    }
     setDrawing((d) => undo(d))
   }
 
@@ -201,6 +209,7 @@ const FriTegningGame: React.FC = () => {
   const confirmFresh = () => {
     audio.cancelCurrentAudio()
     setConfirmOpen(false)
+    setCleared(drawing)
     freshPaper()
   }
   const confirmKeep = () => {
@@ -271,7 +280,7 @@ const FriTegningGame: React.FC = () => {
         }}
       >
         <Box sx={{ gridArea: 'tools', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
-          <ToolRow tool={tool} color={color} stampSrc={STAMP_URLS[stamp]} onTool={pickTool} onUndo={doUndo} canUndo={canUndo(drawing)} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
+          <ToolRow tool={tool} color={color} stampSrc={STAMP_URLS[stamp]} onTool={pickTool} onUndo={doUndo} canUndo={canUndo(drawing) || !!cleared} disabled={!drawingEnabled} direction={landscape ? 'column' : 'row'} />
         </Box>
         <Paper paperRef={paperRef}>
           <DrawingSurface

@@ -7,6 +7,7 @@ import {
   doorCells,
   MAX_BLOCKS,
   moveBlock,
+  clearWorld,
   emptyWorld,
   facingFor,
   previewCells,
@@ -233,4 +234,14 @@ test('moving a block lifts it whole and lands it like a new one; undo puts it ba
   assert.ok('bounce' in bad && bad.world === before)
   // A serialised session with a move round-trips.
   assert.deepEqual(restoreWorld(emptyWorld(8, 8), serialiseWorld(m)).cells, m.cells)
+})
+
+test('"Ny byggeplade" is one undoable action — Fortryd brings every block back', () => {
+  let w = emptyWorld(8, 8)
+  w = put(w, { on: 'island', x: 1, z: 1 }, red)
+  w = put(w, { on: 'island', x: 3, z: 3 }, door)
+  const c = clearWorld(w)
+  assert.equal(blockCount(c), 0)
+  assert.deepEqual(undo(c)!.cells, w.cells)
+  assert.equal(clearWorld(emptyWorld(8, 8)).actions.length, 0, 'an empty plate adds no action')
 })
