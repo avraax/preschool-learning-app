@@ -341,10 +341,14 @@ only on the device for the current session — nothing is saved, uploaded, share
 else; there is no gallery, export or chat. The settings area gains a "Bedøm appen" row that opens the App
 Store's review page; like every external link it sits behind the parental gate."*
 
-### 1.4e "Nyheder" / "What's New" — 1.3.1 (written to ASC 2026-11-05, read back)
+### 1.4e "Nyheder" / "What's New" — 1.3.1 (written to ASC 2026-11-05, extended 2026-11-08, read back)
 
 Description, keywords, screenshots order and header carried over from 1.3 unchanged; all 12 shots
-re-taken (in-game name pill, centred titles, new pier, the grouped Perleplade picker).
+re-taken 11-05 (in-game name pill, centred titles, new pier, the grouped Perleplade picker). Re-shot
+again 11-08 at bee99af and diffed: only random quiz letters / animation frames moved, so the 11-05 set
+stands. **1.3.1 ships from bee99af or later, not build 44** (owner: "prepare the release", 11-08), so it
+also carries the narration pauses + wait-for-the-voice, "dør" lexicon v3, Krea undo/hold-to-clear and
+iPad landscape-only (e12798a). **Byggeklodser stays behind `blocksGate.ts`** — no iPad pass yet.
 
 ```
 Flere billeder i Krea — og mange små forbedringer.
@@ -352,9 +356,12 @@ Flere billeder i Krea — og mange små forbedringer.
 • Krea har fået mange flere billeder: flere tegninger i Tegn med Mig og Farvelæg, og flere mønstre og plader i Perleplade.
 • Beige er kommet med blandt farverne.
 • Tegn: træk med et stempel for at lave en hel række.
+• Fortryd virker nu i alle Krea-spil, også Perleplade. Hold "Ny …" nede for at starte forfra.
 • Perleplade: større mønsterbillede, og perlen svæver lige over fingeren.
 • Fyld Båden: kajen og båden står bedre, og hornet kan trykkes.
+• Stemmen holder en lille pause i spørgsmålene, og en ny opgave venter, til stemmen er færdig.
 • Barnets navn vises nu også inde i spillene.
+• På iPad vises appen nu altid på langs og i fuld skærm.
 • Mange små rettelser i layout på iPhone og iPad.
 ```
 
