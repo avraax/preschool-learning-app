@@ -129,6 +129,9 @@ const GameShell: React.FC<GameShellProps> = ({
 
   return (
     <Box
+      // The game's name as data, for probes: a `fullBleed` game draws no title (owner 2026-11-06), so the
+      // sweep's "this route shows its own Danish title" check reads this instead of the screen text.
+      data-game-name={title}
       sx={{
         position: 'relative',
         isolation: 'isolate', // lets GameMotif's z-index:-1 backdrop sit above the gradient base

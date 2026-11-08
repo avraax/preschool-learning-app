@@ -115,7 +115,8 @@ const ROUTES = inventory().filter((r, i, a) => a.findIndex((x) => x.route === r.
   .filter((r) => !ONLY || (ONLY.startsWith('=') ? r.route === ONLY.slice(1) : r.route.includes(ONLY)))
 
 // ---- the page-side guard. Returns the facts; the runner decides pass/fail.
-const GUARD = `(()=>{const t=(document.body.innerText||'');
+// `data-game-name` (GameShell) is prepended for the same reason as in BOUNDS below: a fullBleed game draws no title.
+const GUARD = `(()=>{const t=[...document.querySelectorAll('[data-game-name]')].map(e=>e.getAttribute('data-game-name')).join(' ')+' '+(document.body.innerText||'');
  return JSON.stringify({
   crashed: /Noget gik galt|Ups!/.test(t),
   notFound: /Denne side findes ikke/.test(t),
@@ -137,7 +138,9 @@ const GUARD = `(()=>{const t=(document.body.innerText||'');
 // The union of DESCENDANT rects is the right measure: it follows the translate on Farvejagt, and still
 // covers a card's text labels, which an <img>-only rule would have missed — that rule would have hidden
 // the real Lær Engelsk overflow, where the clipped part was the label rows.
-const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=(document.body.innerText||'');
+// The title text is the screen's own; a `fullBleed` game draws none (Byggeklodser), so GameShell's
+// `data-game-name` is appended — present only on a mounted GameShell, so a crash or a 404 still can't pass.
+const BOUNDS = `(()=>{const bad=[];const W=innerWidth,H=innerHeight;const t=[...document.querySelectorAll('[data-game-name]')].map(e=>e.getAttribute('data-game-name')).join(' ')+' '+(document.body.innerText||'');
  const visualRect=(e)=>{const kids=e.querySelectorAll('*');
    if(!kids.length) return e.getBoundingClientRect();
    let l=Infinity,tp=Infinity,rt=-Infinity,b=-Infinity,seen=0;

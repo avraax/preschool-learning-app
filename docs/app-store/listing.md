@@ -190,13 +190,13 @@ the paste landed** — the API round-trip is in `.claude/rules/ios-shell.md`. Re
 verified byte-identical on read-back, all four sections present.
 
 ```
-Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fire døre, 25 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
+Børnelæring er en rolig, dansk læringsapp til børn i førskolealderen og i 0. og 1. klasse. Fire døre, 26 spil og en tydelig dansk stemme, der læser alt højt — så barnet kan spille selv, også før det kan læse.
 
 FIRE DØRE
 • Bogstaver og Ord — find bogstaver, hør deres lyd, stav og læs korte ord
 • Tal — tæl, sammenlign, plus og minus, og fyld båden med tiere og enere
 • Engelsk — de første engelske ord, læst op af en engelsk stemme
-• Farver og Krea — kend farverne og bland dem, tegn frit eller trin for trin, farvelæg og lav perleplader
+• Farver og Krea — kend farverne og bland dem, tegn frit eller trin for trin, farvelæg, lav perleplader og byg med klodser
 
 EN BOG FULD AF BELØNNINGER
 Barnet samler klistermærker i sin egen bog. Der er én vej og én belønning ad gangen, så det er let at se, hvad der kommer næst. Ingen point, der forsvinder, og ingen konkurrence mod andre.
@@ -348,11 +348,18 @@ re-taken 11-05 (in-game name pill, centred titles, new pier, the grouped Perlepl
 again 11-08 at bee99af and diffed: only random quiz letters / animation frames moved, so the 11-05 set
 stands. **1.3.1 ships from bee99af or later, not build 44** (owner: "prepare the release", 11-08), so it
 also carries the narration pauses + wait-for-the-voice, "dør" lexicon v3, Krea undo/hold-to-clear and
-iPad landscape-only (e12798a). **Byggeklodser stays behind `blocksGate.ts`** — no iPad pass yet.
+iPad landscape-only (e12798a). **Byggeklodser SHIPS in 1.3.1** (owner 2026-11-08, after his own iPad
+testing; gate deleted in eebd157), so the description says 26 games and **shot 4 is now Byggeklodser**
+(was the Perleplade picker; order unchanged). How it was made: a scripted build through the game's DEV
+hook `window.__blocks.project` — every placement verified against `data-blocks-cells` and a stray tap
+undone, layers built far-to-near — on Normal (open world, sun) with two wheel zoom-ins: a brick house
+with door, windows, red roof and chimney, a tree, a rainbow tower and flowers. Plain taps on projected
+points miss when something nearer covers the face, which is why the first attempts came out jumbled.
 
 ```
-Flere billeder i Krea — og mange små forbedringer.
+Nyt i Krea: Byggeklodser — og mange små forbedringer.
 
+• Nyt spil: Byggeklodser. Byg huse, tårne og hele byer af klodser i træ, mursten, sten, metal og glas — med døre og vinduer.
 • Krea har fået mange flere billeder: flere tegninger i Tegn med Mig og Farvelæg, og flere mønstre og plader i Perleplade.
 • Beige er kommet med blandt farverne.
 • Tegn: træk med et stempel for at lave en hel række.
@@ -394,13 +401,13 @@ Apple School Manager volume purchase, i.e. a school or municipality. Keep it out
 ### 1.5 Description — English (en-US locale, and useful context for the reviewer)
 
 ```
-Børnelæring is a calm Danish learning app for children in preschool and the first two years of Danish primary school (børnehaveklasse and 1. klasse). Four doors, 25 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
+Børnelæring is a calm Danish learning app for children in preschool and the first two years of Danish primary school (børnehaveklasse and 1. klasse). Four doors, 26 games, and a clear Danish voice that reads everything aloud — so a child can play alone, even before learning to read.
 
 FOUR DOORS
 • Letters and words — find letters, hear their sounds, spell and read short words
 • Numbers — count, compare, add and subtract, and load a fishing boat with tens and ones
 • English — first English words, read by an English voice
-• Colours and Krea — learn colours and mix them, draw freely or step by step, colour in and make bead pictures
+• Colours and Krea — learn colours and mix them, draw freely or step by step, colour in, make bead pictures and build with blocks
 
 A BOOK FULL OF REWARDS
 Children collect stickers in their own book. One path, one reward at a time, so it is always clear what
