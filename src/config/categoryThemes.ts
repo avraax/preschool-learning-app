@@ -238,7 +238,7 @@ const categoryContent: Record<CategoryId, CategoryContent> = {
         route: '/krea/perler',
         gradient: 'linear-gradient(135deg, #4FC3F7 0%, #0288D1 100%)'
       },
-      // Krea PRD-03 — staging-only (`blocksGate.ts`); the menus drop it through `gatedGames`.
+      // Krea PRD-03 — released in 1.3.1.
       {
         id: 'blocks',
         title: 'Byggeklodser',

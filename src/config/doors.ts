@@ -88,7 +88,7 @@ export const DOORS: readonly Door[] = [
       'krea.guide',
       'krea.color',
       'krea.beads',
-      // Krea PRD-03, the 10th tile — staging-only: the menu filters it through `gatedGames` (blocksGate.ts).
+      // Krea PRD-03, the 10th tile — released in 1.3.1.
       'krea.blocks',
     ],
   },

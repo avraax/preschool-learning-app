@@ -5,10 +5,10 @@ paths:
   - "scripts/krea-regions.mjs"
 ---
 
-# Krea — `krea.draw` (Fri Tegning) · `krea.guide` (Tegn med Mig) · `krea.color` (Farvelæg) · `krea.beads` (Perleplade) · `krea.blocks` (Byggeklodser, staging-only, `blocksGate.ts`)
+# Krea — `krea.draw` (Fri Tegning) · `krea.guide` (Tegn med Mig) · `krea.color` (Farvelæg) · `krea.beads` (Perleplade) · `krea.blocks` (Byggeklodser)
 
-The 6th section, behind `kreaGate.ts` until the owner releases it — and with it the four front-page
-doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redirects; `doors.ts`). PRD + progress log:
+The 6th section, released in 1.3 (Byggeklodser in 1.3.1; `kreaRelease.test.ts` fails if a route is
+gated again) — with the four front-page doors, where Krea's games stand in **Farver og Krea** at `/farver` (`/krea` redirects; `doors.ts`). PRD + progress log:
 `plans/krea/tmp-prd-krea-01-section-and-drawing.md` §10; Perleplade `tmp-prd-krea-02-perleplade.md` §10. Task-game rules
 (seam, timers, never-await) are in `game-development.md`; they apply here though its globs don't load.
 

@@ -51,7 +51,7 @@ import {
 } from './blocks/blockWorld'
 import { CAMERA, towardsCamera } from './blocks/cameraRig'
 
-// Byggeklodser (`krea.blocks`, Krea PRD-03), staging-only behind `blocksGate.ts`. Free build: cubes in
+// Byggeklodser (`krea.blocks`, Krea PRD-03), released in 1.3.1. Free build: cubes in
 // the 13 crayon colours, five material boxes (træ, mursten, sten, metal, glas), vindue and dør; eraser, undo, "Ny byggeplade?". Models come in W3–W4.
 //
 // Owner, 2026-11-06, after two iPad looks:

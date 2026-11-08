@@ -18,7 +18,7 @@ test('the "new" glow belongs to the release being built — remove it when the v
 })
 
 test('1.3 marks the four Krea games and Fyld Båden, and they all exist behind a door', () => {
-  assert.deepEqual([...NEW_GAME_IDS].sort(), ['krea.beads', 'krea.color', 'krea.draw', 'krea.guide', 'math.boat'])
+  assert.deepEqual([...NEW_GAME_IDS].sort(), ['krea.beads', 'krea.blocks', 'krea.color', 'krea.draw', 'krea.guide', 'math.boat'])
   const all = new Set(DOORS.flatMap((d) => d.games))
   for (const id of NEW_GAME_IDS) assert.ok(all.has(id), `${id} is not behind any door`)
   assert.equal(isNewGame('krea.draw'), true)
@@ -39,7 +39,8 @@ test('once opened, a game stops sparkling; a door stops only when all its new ga
 
   const someKrea = new Set(['krea.draw', 'krea.guide', 'krea.color'])
   assert.equal(showsNewDoor('colors', someKrea), true, 'Perleplade still unopened')
-  assert.equal(showsNewDoor('colors', new Set([...someKrea, 'krea.beads'])), false)
+  assert.equal(showsNewDoor('colors', new Set([...someKrea, 'krea.beads'])), true, 'Byggeklodser still unopened')
+  assert.equal(showsNewDoor('colors', new Set([...someKrea, 'krea.beads', 'krea.blocks'])), false)
   assert.equal(showsNewDoor('math', none), true)
   assert.equal(showsNewDoor('math', new Set(['math.boat'])), false)
   assert.equal(showsNewDoor('letters', none), false)

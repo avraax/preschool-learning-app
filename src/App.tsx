@@ -1,8 +1,6 @@
 import React, { useEffect, Suspense } from 'react'
 import { lazyWithReload as lazy } from './utils/lazyWithReload'
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { blocksShown } from './utils/blocksShown'
-import { BLOCKS_ROUTE } from './config/blocksGate'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { fourDoorsShown } from './utils/fourDoors'
 import { logIOSIssue } from './utils/remoteConsole'
 import { deviceInfo } from './utils/deviceDetection'
@@ -187,8 +185,6 @@ function App() {
   useEffect(() => {
     // The flag picks the four menu routes' event NAMES, because one build renders both front pages
     // and a row has to say which one the child was on (`PRE_DOOR_ROUTE_EVENTS`).
-    // A gated route is not a screen production can show, so it is not counted there either.
-    if (location.pathname.replace(/\/+$/, '') === BLOCKS_ROUTE && !blocksShown()) return
     reportRoute(location.pathname, fourDoorsShown())
   }, [location.pathname])
 
@@ -331,8 +327,8 @@ function App() {
         <Route path="/krea/tegnmedmig" element={<TegnMedMigGame />} />
         <Route path="/krea/farvelaeg" element={<FarvelaegGame />} />
         <Route path="/krea/perler" element={<PerlepladeGame />} />
-        {/* Byggeklodser (Krea PRD-03) — staging-only until the owner releases it: production redirects home. */}
-        <Route path="/krea/klodser" element={blocksShown() ? <ByggeklodserGame /> : <Navigate to="/" replace />} />
+        {/* Byggeklodser (Krea PRD-03) — released in 1.3.1 (the staging gate `blocksGate.ts` is gone). */}
+        <Route path="/krea/klodser" element={<ByggeklodserGame />} />
 
         {/* Learning Routes */}
         {/* One route per memory TYPE — the board size is the difficulty level now, not the URL

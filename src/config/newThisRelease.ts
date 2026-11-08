@@ -25,6 +25,8 @@ export const NEW_GAME_IDS: readonly string[] = [
   'krea.guide',
   'krea.color',
   'krea.beads',
+  // 1.3.1 (owner, 2026-11-08): Byggeklodser shipped inside the 1.3 line, so it glows with the rest.
+  'krea.blocks',
 ]
 
 /** Does this game glow? */
